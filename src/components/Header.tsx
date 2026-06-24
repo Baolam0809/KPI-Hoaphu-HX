@@ -31,28 +31,8 @@ export default function Header({ currentUser, users, onSwitchSimulatedUser, onLo
           </div>
         </div>
         
-        {/* Quick Role Selector Simulator and Admin/Logout info */}
+        {/* Admin/Logout info - Simulator moved next to Admin Quản Trị */}
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-          {/* Role selector for simulation */}
-          <div className="bg-white/10 backdrop-blur-sm p-2 rounded-lg border border-white/20 text-xs w-full sm:w-auto">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-bold text-yellow-400 flex items-center gap-1 shrink-0">
-                <UserCog className="w-3.5 h-3.5" /> Giả lập vai trò:
-              </span>
-              <select 
-                id="role-selector" 
-                value={currentUser === 'admin' ? 'admin' : currentUser.id}
-                onChange={(e) => onSwitchSimulatedUser(e.target.value)}
-                className="bg-blue-950 text-white font-bold rounded px-2 py-1 border border-blue-500 focus:outline-none cursor-pointer text-xs"
-              >
-                <option value="admin">Quản trị tối cao (admin/admin)</option>
-                {users.map(u => (
-                  <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
           {/* User Profile & Logout Box */}
           <div className="flex items-center justify-between bg-black/30 px-3 py-2 rounded-lg border border-white/10 w-full sm:w-auto gap-3">
             <div className="text-right text-xs">

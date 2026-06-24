@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Calendar, MessageSquare, Info, ShieldAlert, Award, Star, BookOpen, Database, CloudUpload, RefreshCw, AlertCircle, Copy, Check, Settings } from 'lucide-react';
+import { Bell, Calendar, MessageSquare, Info, ShieldAlert, Award, Star, BookOpen, Database, CloudUpload, RefreshCw, AlertCircle, Copy, Check, Settings, UserCog, Clock } from 'lucide-react';
 import { User, OKR, KPI, Notification, SystemSettings, ScheduleItem } from './types';
 import { 
   INITIAL_USERS, 
@@ -58,6 +58,31 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [showSqlModal, setShowSqlModal] = useState(false);
   const [isSqlCopied, setIsSqlCopied] = useState(false);
+
+  // Realtime clock state for the school marquee bar
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const clockInterval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(clockInterval);
+  }, []);
+
+  const formatVietnameseDateTime = (date: Date) => {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+    const dayOfWeek = days[date.getDay()];
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${hours}:${minutes}:${seconds} — ${dayOfWeek}, ngày ${day}/${month}/${year}`;
+  };
 
   // Helper hiển thị thông báo Toast
   const showToast = (msg: string) => {
@@ -595,27 +620,47 @@ export default function App() {
       {/* 2. STICKY HORIZONTAL NAVBAR */}
       <nav className="bg-blue-950 border-t border-blue-900 text-white shadow-sm z-10 sticky top-0" id="sticky-navbar">
         <div className="max-w-7xl mx-auto px-4 flex flex-wrap justify-between items-center text-xs md:text-sm font-bold gap-2 py-1 md:py-0">
-          <div className="flex">
-            <button 
-              onClick={() => setActiveTab('tab-main')} 
-              className={`px-4 py-3 border-b-2 transition flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'tab-main' 
-                  ? 'border-yellow-400 bg-blue-900/40 text-yellow-300 font-black' 
-                  : 'border-transparent hover:border-yellow-400 hover:bg-blue-900/40'
-              }`}
-            >
-              Trang Chủ
-            </button>
-            <button 
-              onClick={() => setActiveTab('tab-users')} 
-              className={`px-4 py-3 border-b-2 transition flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'tab-users' 
-                  ? 'border-yellow-400 bg-blue-900/40 text-yellow-300 font-black' 
-                  : 'border-transparent hover:border-yellow-400 hover:bg-blue-900/40'
-              }`}
-            >
-              Admin Quản Trị
-            </button>
+          <div className="flex items-center gap-3">
+            <div className="flex">
+              <button 
+                onClick={() => setActiveTab('tab-main')} 
+                className={`px-4 py-3 border-b-2 transition flex items-center gap-1.5 cursor-pointer ${
+                  activeTab === 'tab-main' 
+                    ? 'border-yellow-400 bg-blue-900/40 text-yellow-300 font-black' 
+                    : 'border-transparent hover:border-yellow-400 hover:bg-blue-900/40'
+                }`}
+              >
+                Trang Chủ
+              </button>
+              <button 
+                onClick={() => setActiveTab('tab-users')} 
+                className={`px-4 py-3 border-b-2 transition flex items-center gap-1.5 cursor-pointer ${
+                  activeTab === 'tab-users' 
+                    ? 'border-yellow-400 bg-blue-900/40 text-yellow-300 font-black' 
+                    : 'border-transparent hover:border-yellow-400 hover:bg-blue-900/40'
+                }`}
+              >
+                Admin Quản Trị
+              </button>
+            </div>
+
+            {/* Account Selector Simulator - next to Admin Quản Trị */}
+            <div className="bg-blue-900/50 hover:bg-blue-900/75 transition px-2 py-1 rounded-md border border-blue-800 flex items-center gap-2 text-xs" id="navbar-account-simulator">
+              <span className="font-extrabold text-yellow-400 flex items-center gap-1 shrink-0 uppercase tracking-wider text-[10px]">
+                <UserCog className="w-3.5 h-3.5" /> Tài khoản:
+              </span>
+              <select 
+                id="navbar-role-selector" 
+                value={currentUser === 'admin' ? 'admin' : currentUser.id}
+                onChange={(e) => handleSwitchSimulatedUser(e.target.value)}
+                className="bg-blue-950 text-white font-extrabold rounded px-2 py-0.5 border border-blue-700 focus:outline-none cursor-pointer text-[11px]"
+              >
+                <option value="admin">Quản trị tối cao (admin)</option>
+                {users.map(u => (
+                  <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="py-2 px-3 text-xs text-blue-200 flex items-center flex-wrap gap-3">
             <span className="hidden sm:inline bg-blue-900/50 px-2.5 py-1 rounded border border-blue-800 text-[10px] uppercase font-black tracking-wider">
@@ -687,9 +732,13 @@ export default function App() {
         </div>
       </nav>
 
-      {/* 3. SCROLLING MARQUEE TEXT */}
-      <div className="bg-yellow-500 text-slate-900 font-extrabold py-2 border-b border-yellow-600 overflow-hidden relative select-none text-xs md:text-sm shadow-inner">
-        <div className="flex whitespace-nowrap">
+      {/* 3. SCROLLING MARQUEE TEXT & LIVE CLOCK */}
+      <div className="bg-yellow-500 text-slate-900 font-extrabold border-b border-yellow-600 overflow-hidden relative select-none text-xs md:text-sm shadow-inner flex flex-col sm:flex-row items-stretch sm:items-center" id="marquee-bar">
+        <div className="bg-yellow-600 text-slate-950 px-4 py-2 font-black shrink-0 border-b sm:border-b-0 sm:border-r border-yellow-700 flex items-center justify-center sm:justify-start gap-1.5 shadow-md z-10" id="live-clock">
+          <Clock className="w-4 h-4 text-slate-950 animate-pulse" />
+          <span>{formatVietnameseDateTime(currentTime)}</span>
+        </div>
+        <div className="flex-1 overflow-hidden relative py-2 px-4 sm:px-0">
           <div className="animate-marquee inline-block uppercase tracking-wider">
             ★ {settings.marqueeText} ★ {settings.marqueeText}
           </div>
