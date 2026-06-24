@@ -1,0 +1,6 @@
+{
+  "name": "Hệ thống Quản lý KPI-OKR THCS Hòa Phú",
+  "description": "Hệ thống Đánh giá & Phát triển OKR - KPI Giáo dục dành cho Ban Giám hiệu, Giáo viên và Nhân viên trường THCS Hòa Phú.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
