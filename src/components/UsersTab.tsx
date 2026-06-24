@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Users, Search, Download, FileSpreadsheet, UserPlus, Trash2, Edit, X, FileCheck, Info, Eye } from 'lucide-react';
 import { User } from '../types';
+import * as XLSX from 'xlsx';
 
 interface UsersTabProps {
   users: User[];
@@ -127,27 +128,62 @@ export default function UsersTab({
     }
   };
 
-  // 1. Download CSV template with password column
+  // 1. Download Excel template with password column (.xlsx)
   const downloadTemplate = () => {
-    const BOM = "\uFEFF";
-    const csvContent = BOM + "Mã nhân sự,Họ và tên,Tổ nhóm (BGH/GiaoVien/NhanVien),Chức vụ cụ thể,Mật khẩu khởi tạo\n" +
-      "THCS-HP-020,Phạm Quang Linh,GiaoVien,Giáo viên môn Vật lý (Tổ tự nhiên),Linh@HP2026\n" +
-      "THCS-HP-021,Nguyễn Khánh An,NhanVien,Nhân viên Kế toán hành chính,An@HP2026\n" +
-      "THCS-HP-022,Bùi Tiến Dũng,BGH,Phó Hiệu trưởng cơ sở vật chất,Dung@HP2026\n" +
-      "THCS-HP-023,Đoàn Thị Vân,GiaoVien,Giáo viên Tiếng Anh - Tổ trưởng chuyên môn,Van@HP2026";
+    try {
+      const templateData = [
+        {
+          "Mã nhân sự": "THCS-HP-020",
+          "Họ và tên": "Phạm Quang Linh",
+          "Tổ nhóm (BGH/GiaoVien/NhanVien)": "GiaoVien",
+          "Chức vụ cụ thể": "Giáo viên môn Vật lý (Tổ tự nhiên)",
+          "Mật khẩu khởi tạo": "Linh@HP2026"
+        },
+        {
+          "Mã nhân sự": "THCS-HP-021",
+          "Họ và tên": "Nguyễn Khánh An",
+          "Tổ nhóm (BGH/GiaoVien/NhanVien)": "NhanVien",
+          "Chức vụ cụ thể": "Nhân viên Kế toán hành chính",
+          "Mật khẩu khởi tạo": "An@HP2026"
+        },
+        {
+          "Mã nhân sự": "THCS-HP-022",
+          "Họ và tên": "Bùi Tiến Dũng",
+          "Tổ nhóm (BGH/GiaoVien/NhanVien)": "BGH",
+          "Chức vụ cụ thể": "Phó Hiệu trưởng cơ sở vật chất",
+          "Mật khẩu khởi tạo": "Dung@HP2026"
+        },
+        {
+          "Mã nhân sự": "THCS-HP-023",
+          "Họ và tên": "Đoàn Thị Vân",
+          "Tổ nhóm (BGH/GiaoVien/NhanVien)": "GiaoVien",
+          "Chức vụ cụ thể": "Giáo viên Tiếng Anh - Tổ trưởng chuyên môn",
+          "Mật khẩu khởi tạo": "Van@HP2026"
+        }
+      ];
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "bieu_mau_cap_tai_khoan_kem_mat_khau.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast("Tải biểu mẫu cấp tài khoản (.csv) thành công!");
+      const worksheet = XLSX.utils.json_to_sheet(templateData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSachNhanSu");
+
+      // Set nice column widths for professional Excel looks
+      worksheet['!cols'] = [
+        { wch: 15 }, // Mã nhân sự
+        { wch: 22 }, // Họ và tên
+        { wch: 32 }, // Tổ nhóm
+        { wch: 38 }, // Chức vụ cụ thể
+        { wch: 18 }  // Mật khẩu khởi tạo
+      ];
+
+      XLSX.writeFile(workbook, "bieu_mau_cap_tai_khoan_kem_mat_khau.xlsx");
+      showToast("Tải biểu mẫu cấp tài khoản (.xlsx) thành công!");
+    } catch (err) {
+      console.error("Lỗi khi tải file mẫu Excel:", err);
+      showToast("Có lỗi xảy ra khi tạo tệp Excel mẫu!");
+    }
   };
 
-  // 2. Import CSV action
+  // 2. Import Excel/CSV action
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -156,45 +192,86 @@ export default function UsersTab({
     const extension = file.name.split('.').pop()?.toLowerCase();
 
     reader.onload = (event) => {
-      const text = event.target?.result as string;
       let parsed: Omit<User, 'avatar' | 'email'>[] = [];
 
-      if (extension === 'csv') {
-        const lines = text.split('\n');
-        for (let i = 1; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
-          
-          const cols = line.split(',');
-          if (cols.length >= 4) {
-            const id = cols[0].trim() || `THCS-HP-${Math.floor(100 + Math.random() * 900)}`;
-            const nameCol = cols[1].trim();
-            const groupType = (cols[2].trim() as 'BGH' | 'GiaoVien' | 'NhanVien') || 'GiaoVien';
-            const roleCol = cols[3].trim();
-            const pwd = (cols[4] && cols[4].trim()) ? cols[4].trim() : `HP@${Math.floor(1000 + Math.random() * 9000)}`;
+      try {
+        if (extension === 'xlsx' || extension === 'xls') {
+          const data = new Uint8Array(event.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
 
-            parsed.push({
-              id,
-              name: nameCol,
-              role: roleCol,
-              isTeacher: groupType === 'GiaoVien',
-              type: groupType,
-              bio: `Thành viên mới của khối ${groupType === 'GiaoVien' ? 'Giáo viên' : 'Nhân viên'} trường THCS Hòa Phú.`,
-              password: pwd
-            });
+          jsonData.forEach((row: any) => {
+            const idCol = row["Mã nhân sự"] || row["ID"] || row["Mã cán bộ"] || row["Mã nhân viên"];
+            const nameCol = row["Họ và tên"] || row["Họ tên"] || row["Tên nhân sự"] || row["Tên"];
+            const groupTypeCol = row["Tổ nhóm (BGH/GiaoVien/NhanVien)"] || row["Tổ nhóm"] || row["Loại nhân sự"] || row["Nhóm"];
+            const roleCol = row["Chức vụ cụ thể"] || row["Chức vụ"] || row["Vai trò"] || row["Nhiệm vụ"];
+            const pwdCol = row["Mật khẩu khởi tạo"] || row["Mật khẩu"] || row["Password"];
+
+            if (nameCol) {
+              const id = idCol ? idCol.toString().trim() : `THCS-HP-${Math.floor(100 + Math.random() * 900)}`;
+              const groupType = (groupTypeCol ? groupTypeCol.toString().trim() as 'BGH' | 'GiaoVien' | 'NhanVien' : 'GiaoVien');
+              const role = roleCol ? roleCol.toString().trim() : 'Giáo viên';
+              const pwd = pwdCol ? pwdCol.toString().trim() : `HP@${Math.floor(1000 + Math.random() * 9000)}`;
+
+              parsed.push({
+                id,
+                name: nameCol.toString().trim(),
+                role,
+                isTeacher: groupType === 'GiaoVien',
+                type: groupType,
+                bio: `Thành viên mới của khối ${groupType === 'GiaoVien' ? 'Giáo viên' : 'Nhân viên'} trường THCS Hòa Phú.`,
+                password: pwd
+              });
+            }
+          });
+        } else {
+          // Fallback to CSV text parser
+          const text = event.target?.result as string;
+          const lines = text.split('\n');
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            
+            const cols = line.split(',');
+            if (cols.length >= 2) {
+              const id = cols[0].trim() || `THCS-HP-${Math.floor(100 + Math.random() * 900)}`;
+              const nameCol = cols[1].trim();
+              const groupType = (cols[2] && cols[2].trim() as 'BGH' | 'GiaoVien' | 'NhanVien') || 'GiaoVien';
+              const roleCol = cols[3] ? cols[3].trim() : 'Giáo viên';
+              const pwd = (cols[4] && cols[4].trim()) ? cols[4].trim() : `HP@${Math.floor(1000 + Math.random() * 9000)}`;
+
+              if (nameCol && nameCol !== "Họ và tên") {
+                parsed.push({
+                  id,
+                  name: nameCol,
+                  role: roleCol,
+                  isTeacher: groupType === 'GiaoVien',
+                  type: groupType,
+                  bio: `Thành viên mới của khối ${groupType === 'GiaoVien' ? 'Giáo viên' : 'Nhân viên'} trường THCS Hòa Phú.`,
+                  password: pwd
+                });
+              }
+            }
           }
         }
+      } catch (err) {
+        console.error("Lỗi khi đọc file nhập cán bộ:", err);
+        showToast("Có lỗi xảy ra khi phân tích tệp dữ liệu!");
       }
 
-      // If parser yielded nothing (or xlsx upload), load mock bulk records for excellent representation
+      // If parser yielded nothing, load fallback defaults
       if (parsed.length === 0) {
         parsed = [
           { id: "THCS-HP-020", name: "Phạm Quang Linh", type: "GiaoVien", isTeacher: true, role: "Giáo viên môn Vật lý (Tổ tự nhiên)", password: "Linh@HP2026", bio: "Giáo viên mới tuyển dụng" },
           { id: "THCS-HP-021", name: "Nguyễn Khánh An", type: "NhanVien", isTeacher: false, role: "Nhân viên Kế toán hành chính", password: "An@HP2026", bio: "Hỗ trợ văn phòng" },
-          { id: "THCS-HP-022", name: "Bùi Tiến Dũng", type: "BGH", isTeacher: false, role: "Phó Hiệu trưởng cơ sở vật chất", password: `HP@${Math.floor(1000 + Math.random() * 9000)}`, bio: "Ban Giám Hiệu" },
+          { id: "THCS-HP-022", name: "Bùi Tiến Dũng", type: "BGH", isTeacher: false, role: "Phó Hiệu trưởng cơ sở vật chất", password: "Dung@HP2026", bio: "Ban Giám Hiệu" },
           { id: "THCS-HP-023", name: "Đoàn Thị Vân", type: "GiaoVien", isTeacher: true, role: "Giáo viên Tiếng Anh - Tổ trưởng", password: "Van@HP2026", bio: "Đội ngũ chuyên môn" }
         ];
-        showToast("Hệ thống tự động đồng bộ & tạo mật khẩu ngẫu nhiên cho các cột bị thiếu trong tệp Excel!");
+        showToast("Tệp không có dữ liệu hợp lệ. Đang tải dữ liệu mẫu chuẩn để demo!");
+      } else {
+        showToast(`Đã tải thành công dữ liệu từ tệp với ${parsed.length} tài khoản hợp lệ!`);
       }
 
       setPendingRecords(parsed);
@@ -202,7 +279,11 @@ export default function UsersTab({
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    reader.readAsText(file, "UTF-8");
+    if (extension === 'xlsx' || extension === 'xls') {
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.readAsText(file, "UTF-8");
+    }
   };
 
   const handleConfirmBulkInsert = () => {
@@ -237,9 +318,9 @@ export default function UsersTab({
           <button 
             onClick={downloadTemplate}
             className="flex-1 sm:flex-initial bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 border border-slate-300 transition cursor-pointer"
-            title="Tải biểu mẫu Excel/CSV mẫu về máy tính"
+            title="Tải biểu mẫu Excel (.xlsx) mẫu về máy tính"
           >
-            <Download className="w-3.5 h-3.5" /> Tải file mẫu (.csv)
+            <Download className="w-3.5 h-3.5" /> Tải file mẫu (.xlsx)
           </button>
           
           <button 

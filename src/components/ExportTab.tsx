@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Printer, Download, FileText, Sheet, FileSpreadsheet, Package, RefreshCw, Check } from 'lucide-react';
 import { User, OKR, KPI } from '../types';
+import * as XLSX from 'xlsx';
 
 interface ExportTabProps {
   showToast: (msg: string) => void;
@@ -281,17 +282,12 @@ export default function ExportTab({
       fileBytes.set(htmlBytes, bomBytes.length);
       
       blob = new Blob([fileBytes], { type: 'application/msword;charset=utf-8' });
-    } else if (format === 'csv') {
-      mimeType = 'text/csv;charset=utf-8';
+    } else if (format === 'xlsx' || format === 'csv') {
+      mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
       
-      let csvContent = `BẢNG TỔNG HỢP ĐIỂM SỐ THI ĐUA VÀ XẾP LOẠI KPI TOÀN TRƯỜNG\n`;
-      csvContent += `Đơn vị: Trường THCS Hòa Phú - Ứng Hòa - Hà Nội\n`;
-      csvContent += `Thời kỳ báo cáo: Học kỳ I & Năm học 2026 - 2027\n\n`;
-      csvContent += `STT,Mã Cán Bộ,Họ và Tên,Chức danh / Vai trò,Loại Nhân sự,Mục Tiêu OKR (SL),Điểm Tự Chấm KPI,Xếp Loại Thi Đua\n`;
-      
-      listUsers.forEach((usr, idx) => {
-        const uOkrs = allOkrs[usr.id] || [];
-        const uKpis = allKpis[usr.id] || [];
+      const rows = listUsers.map((usr, idx) => {
+        const uOkrs = (allOkrs && allOkrs[usr.id]) || [];
+        const uKpis = (allKpis && allKpis[usr.id]) || [];
         const kpiScore = uKpis.length === 0 ? 82 : Math.round(uKpis.reduce((acc, k) => acc + (k.value * k.weight / 100), 0));
         
         let rank = 'Khá';
@@ -300,17 +296,66 @@ export default function ExportTab({
         else if (kpiScore >= 65) rank = 'Khá';
         else rank = 'Trung bình';
 
-        csvContent += `${idx + 1},${usr.id},"${usr.name}","${usr.role}",${usr.type === 'BGH' ? 'Ban Giám Hiệu' : usr.type === 'GiaoVien' ? 'Giáo viên' : 'Nhân viên'},${uOkrs.length},${kpiScore},${rank}\n`;
+        return {
+          "STT": idx + 1,
+          "Mã Cán Bộ": usr.id,
+          "Họ và Tên": usr.name,
+          "Chức danh / Vai trò": usr.role,
+          "Loại Nhân sự": usr.type === 'BGH' ? 'Ban Giám Hiệu' : usr.type === 'GiaoVien' ? 'Giáo viên' : 'Nhân viên',
+          "Mục Tiêu OKR (SL)": uOkrs.length,
+          "Điểm Tự Chấm KPI": kpiScore,
+          "Xếp Loại Thi Đua": rank
+        };
       });
 
-      // Encode with BOM for perfect Excel CSV Vietnamese character display
-      const csvBytes = new TextEncoder().encode(csvContent);
-      const bomBytes = new Uint8Array([0xEF, 0xBB, 0xBF]);
-      const fileBytes = new Uint8Array(bomBytes.length + csvBytes.length);
-      fileBytes.set(bomBytes, 0);
-      fileBytes.set(csvBytes, bomBytes.length);
+      // Let's design a beautiful multi-row header for Excel
+      const titleRows: (string | number)[][] = [
+        ["BẢNG TỔNG HỢP ĐIỂM SỐ THI ĐUA VÀ XẾP LOẠI KPI TOÀN TRƯỜNG"],
+        ["Đơn vị: Trường THCS Hòa Phú - Ứng Hòa - Hà Nội"],
+        ["Thời kỳ báo cáo: Học kỳ I & Năm học 2026 - 2027"],
+        [], // Empty spacing row
+        ["STT", "Mã Cán Bộ", "Họ và Tên", "Chức danh / Vai trò", "Loại Nhân sự", "Mục Tiêu OKR (SL)", "Điểm Tự Chấm KPI", "Xếp Loại Thi Đua"]
+      ];
+
+      rows.forEach(r => {
+        titleRows.push([
+          r["STT"],
+          r["Mã Cán Bộ"],
+          r["Họ và Tên"],
+          r["Chức danh / Vai trò"],
+          r["Loại Nhân sự"],
+          r["Mục Tiêu OKR (SL)"],
+          r["Điểm Tự Chấm KPI"],
+          r["Xếp Loại Thi Đua"]
+        ]);
+      });
+
+      const worksheet = XLSX.utils.aoa_to_sheet(titleRows);
       
-      blob = new Blob([fileBytes], { type: mimeType });
+      // Auto-merge the top title lines
+      worksheet['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 7 } }
+      ];
+
+      // Set beautiful column widths
+      worksheet['!cols'] = [
+        { wch: 8 },  // STT
+        { wch: 15 }, // Mã Cán Bộ
+        { wch: 22 }, // Họ và Tên
+        { wch: 32 }, // Chức danh / Vai trò
+        { wch: 18 }, // Loại Nhân sự
+        { wch: 20 }, // Mục Tiêu OKR (SL)
+        { wch: 18 }, // Điểm Tự Chấm KPI
+        { wch: 18 }  // Xếp Loại Thi Đua
+      ];
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "KPI_OKR_Toan_Truong");
+
+      const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      blob = new Blob([wbout], { type: mimeType });
     } else if (format === 'pdf') {
       mimeType = 'application/pdf';
       const docDate = `Ngay ky: ${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
@@ -502,9 +547,9 @@ ${xrefOffset}
       color: 'text-blue-700 bg-blue-100 border-blue-200 hover:border-blue-500 hover:shadow-md'
     },
     {
-      title: 'Bảng Tổng Điểm KPI Toàn Bộ Tổ (.csv)',
+      title: 'Bảng Tổng Điểm KPI Toàn Bộ Tổ (.xlsx)',
       desc: 'Kết xuất bảng tổng hợp điểm số thi đua, xếp loại của tất cả giáo viên thuộc tổ tự nhiên/tổ xã hội/nhân viên, tự động xếp hạng thi đua.',
-      format: 'csv',
+      format: 'xlsx',
       fileName: 'Bang_tong_diem_KPI_Toan_truong_Hoc_Ky_1',
       icon: Sheet,
       color: 'text-emerald-700 bg-emerald-100 border-emerald-200 hover:border-emerald-500 hover:shadow-md'
