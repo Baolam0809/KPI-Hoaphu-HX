@@ -643,24 +643,6 @@ export default function App() {
                 Admin Quản Trị
               </button>
             </div>
-
-            {/* Account Selector Simulator - next to Admin Quản Trị */}
-            <div className="bg-blue-900/50 hover:bg-blue-900/75 transition px-2 py-1 rounded-md border border-blue-800 flex items-center gap-2 text-xs" id="navbar-account-simulator">
-              <span className="font-extrabold text-yellow-400 flex items-center gap-1 shrink-0 uppercase tracking-wider text-[10px]">
-                <UserCog className="w-3.5 h-3.5" /> Tài khoản:
-              </span>
-              <select 
-                id="navbar-role-selector" 
-                value={currentUser === 'admin' ? 'admin' : currentUser.id}
-                onChange={(e) => handleSwitchSimulatedUser(e.target.value)}
-                className="bg-blue-950 text-white font-extrabold rounded px-2 py-0.5 border border-blue-700 focus:outline-none cursor-pointer text-[11px]"
-              >
-                <option value="admin">Quản trị tối cao (admin)</option>
-                {users.map(u => (
-                  <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
-                ))}
-              </select>
-            </div>
           </div>
           <div className="py-2 px-3 text-xs text-blue-200 flex items-center flex-wrap gap-3">
             <span className="hidden sm:inline bg-blue-900/50 px-2.5 py-1 rounded border border-blue-800 text-[10px] uppercase font-black tracking-wider">
