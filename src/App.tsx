@@ -733,13 +733,13 @@ export default function App() {
       </nav>
 
       {/* 3. SCROLLING MARQUEE TEXT & LIVE CLOCK */}
-      <div className="bg-yellow-500 text-slate-900 font-extrabold border-b border-yellow-600 overflow-hidden relative select-none text-xs md:text-sm shadow-inner flex flex-col sm:flex-row items-stretch sm:items-center" id="marquee-bar">
-        <div className="bg-yellow-600 text-slate-950 px-4 py-2 font-black shrink-0 border-b sm:border-b-0 sm:border-r border-yellow-700 flex items-center justify-center sm:justify-start gap-1.5 shadow-md z-10" id="live-clock">
-          <Clock className="w-4 h-4 text-slate-950 animate-pulse" />
+      <div className="bg-yellow-500 text-slate-900 font-extrabold border-b border-yellow-600 overflow-hidden relative select-none text-xs md:text-sm shadow-inner flex flex-col sm:flex-row items-stretch sm:items-center h-auto" id="marquee-bar">
+        <div className="bg-yellow-600 text-slate-950 px-3 py-1.5 font-black shrink-0 border-b sm:border-b-0 sm:border-r border-yellow-700 flex items-center justify-center sm:justify-start gap-1.5 shadow-md z-10 text-[11px] md:text-xs" id="live-clock">
+          <Clock className="w-3.5 h-3.5 text-slate-950 animate-pulse" />
           <span>{formatVietnameseDateTime(currentTime)}</span>
         </div>
-        <div className="flex-1 overflow-hidden relative py-2 px-4 sm:px-0">
-          <div className="animate-marquee inline-block uppercase tracking-wider">
+        <div className="flex-1 overflow-hidden relative py-1.5 px-4 sm:px-3 whitespace-nowrap flex items-center" id="marquee-text-container">
+          <div className="animate-marquee inline-block uppercase tracking-wider whitespace-nowrap text-[11px] md:text-xs">
             ★ {settings.marqueeText} ★ {settings.marqueeText}
           </div>
         </div>
