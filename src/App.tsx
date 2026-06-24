@@ -553,12 +553,32 @@ export default function App() {
     }
   };
 
+  const handleChangePasswordViaLogin = async (userId: string, newPwd: string) => {
+    const updatedUsersList = users.map(u => 
+      u.id === userId ? { ...u, password: newPwd } : u
+    );
+    saveUsersToCache(updatedUsersList);
+    
+    const foundUser = updatedUsersList.find(u => u.id === userId);
+    
+    if (foundUser && supabaseStatus === 'connected') {
+      try {
+        await saveUserToSupabase(foundUser);
+        showToast(`Đã đồng bộ cập nhật mật khẩu mới của cán bộ ${foundUser.name} lên Supabase!`);
+      } catch (err) {
+        console.error('Lỗi đồng bộ mật khẩu mới lên Supabase:', err);
+      }
+    } else {
+      showToast('Đã đổi mật khẩu mới thành công!');
+    }
+  };
+
   // Tính thống kê OKR
   const totalUsersWithOkr = Object.keys(allOkrs).filter(k => allOkrs[k]?.length > 0).length;
 
   // Nếu chưa đăng nhập, hiển thị Form Đăng nhập
   if (!currentUser) {
-    return <Login onLogin={handleLogin} users={users} />;
+    return <Login onLogin={handleLogin} users={users} onChangePassword={handleChangePasswordViaLogin} />;
   }
 
   return (

@@ -303,6 +303,43 @@ export default function UsersTab({
     return matchesSearch && matchesGroup;
   });
 
+  const exportUserList = () => {
+    try {
+      const dataToExport = filteredUsers.map((u, idx) => ({
+        "STT": idx + 1,
+        "Mã cán bộ / Mã nhân sự": u.id,
+        "Họ và tên": u.name,
+        "Tổ nhóm": u.type === 'BGH' ? 'Ban Giám Hiệu' : u.type === 'GiaoVien' ? 'Giáo viên' : 'Nhân viên',
+        "Chức vụ cụ thể": u.role,
+        "Mật khẩu tài khoản": u.password || '',
+        "Email liên hệ": u.email || `${u.id.toLowerCase()}@thcshoaphu.edu.vn`,
+        "Mô tả / Tiểu sử": u.bio || ''
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSachTaiKhoan");
+
+      // Column widths
+      worksheet['!cols'] = [
+        { wch: 8 },  // STT
+        { wch: 20 }, // Mã cán bộ / Mã nhân sự
+        { wch: 25 }, // Họ và tên
+        { wch: 18 }, // Tổ nhóm
+        { wch: 35 }, // Chức vụ cụ thể
+        { wch: 22 }, // Mật khẩu tài khoản
+        { wch: 32 }, // Email liên hệ
+        { wch: 40 }  // Mô tả / Tiểu sử
+      ];
+
+      XLSX.writeFile(workbook, "Danh_sach_tai_khoan_can_bo_THCS_Hoa_Phu.xlsx");
+      showToast("Xuất file danh sách tài khoản (.xlsx) thành công!");
+    } catch (err) {
+      console.error("Lỗi khi xuất danh sách tài khoản:", err);
+      showToast("Có lỗi xảy ra khi xuất danh sách tài khoản!");
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5" id="users-directory-tab">
       <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between border-b border-slate-100 pb-3 mb-4 gap-2">
@@ -338,6 +375,15 @@ export default function UsersTab({
             className="hidden" 
             onChange={handleImportFile}
           />
+          
+          <button 
+            onClick={exportUserList}
+            className="flex-1 sm:flex-initial bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer"
+            title="Xuất toàn bộ danh sách tài khoản hiện tại ra file Excel (.xlsx)"
+            id="btn-export-user-list"
+          >
+            <Download className="w-3.5 h-3.5" /> Xuất danh sách (.xlsx)
+          </button>
           
           <button 
             onClick={handleOpenAddModal}
