@@ -981,9 +981,6 @@ export default function App() {
                 }}
               >
                 <div className="z-10 text-white">
-                  <span className="bg-yellow-400 text-slate-950 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider select-none shadow">
-                    BANNER TRUYỀN THÔNG HOẠT ĐỘNG
-                  </span>
                   <h2 className="text-base sm:text-xl md:text-2xl font-black mt-2 drop-shadow text-yellow-300">
                     Trường THCS Hòa Phú Đổi Mới & Sáng Tạo
                   </h2>
