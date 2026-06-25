@@ -533,7 +533,7 @@ export default function KpiSection({
                   onClick={() => setActiveKpiIndex(null)}
                   className="border border-slate-300 px-3.5 py-2 rounded-lg font-bold hover:bg-slate-50 cursor-pointer"
                 >
-                  Quay về
+                  Quay lại
                 </button>
                 <button
                   type="button"

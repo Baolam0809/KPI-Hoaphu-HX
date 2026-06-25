@@ -1190,7 +1190,7 @@ export default function App() {
                   onClick={() => setShowSqlModal(false)}
                   className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-4 rounded-lg text-xs md:text-sm text-center transition cursor-pointer"
                 >
-                  Quay về
+                  Quay lại
                 </button>
               </div>
             </div>
