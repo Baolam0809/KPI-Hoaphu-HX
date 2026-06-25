@@ -204,6 +204,16 @@ export default function KpiSection({
     setUploadError('');
   };
 
+  const handleCloseEvidenceModal = () => {
+    setActiveKpiIndex(null);
+    setEvidenceName('');
+    setEvidenceType('image');
+    setLinkUrl('');
+    setLinkType('drive');
+    setImageBase64('');
+    setUploadError('');
+  };
+
   const handleDeleteEvidence = (kpiIndex: number, evidenceId: string) => {
     if (readOnly || !onKpiEvidencesChange) return;
     if (window.confirm('Bạn có chắc chắn muốn xóa tệp minh chứng này không?')) {
@@ -375,7 +385,7 @@ export default function KpiSection({
       {activeKpiIndex !== null && (
         <div 
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60] cursor-pointer"
-          onClick={() => setActiveKpiIndex(null)}
+          onClick={handleCloseEvidenceModal}
         >
           <div 
             className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6 animate-fade-in cursor-default"
@@ -388,7 +398,7 @@ export default function KpiSection({
               </div>
               <button
                 type="button"
-                onClick={() => setActiveKpiIndex(null)}
+                onClick={handleCloseEvidenceModal}
                 className="text-slate-400 hover:text-slate-600 rounded-lg p-1 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -530,7 +540,7 @@ export default function KpiSection({
               <div className="flex justify-end gap-2 text-xs pt-2 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setActiveKpiIndex(null)}
+                  onClick={handleCloseEvidenceModal}
                   className="border border-slate-300 px-3.5 py-2 rounded-lg font-bold hover:bg-slate-50 cursor-pointer"
                 >
                   Quay lại
