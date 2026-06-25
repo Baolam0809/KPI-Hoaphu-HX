@@ -58,6 +58,17 @@ const DEFAULT_OKR_TEMPLATES: OKRTemplate[] = [
     kr2Progress: 0,
     kr3: 'Không có học sinh vi phạm kỷ luật nghiêm trọng hoặc xếp loại đạo đức yếu.',
     kr3Progress: 0
+  },
+  {
+    id: 'tmpl-5',
+    name: 'Mẫu 5: Đổi mới phương pháp dạy học & chuyên môn',
+    title: 'Đẩy mạnh sinh hoạt chuyên môn theo nghiên cứu bài học, ứng dụng phương pháp dạy học tích cực',
+    kr1: 'Tổ chức thành công ít nhất 2 chuyên đề dạy học tích cực cấp tổ/trường.',
+    kr1Progress: 0,
+    kr2: '100% giáo viên trong tổ tham gia dự giờ đầy đủ và rút kinh nghiệm chuyên môn.',
+    kr2Progress: 0,
+    kr3: 'Phát triển ngân hàng câu hỏi kiểm tra đánh giá định kỳ theo định hướng năng lực.',
+    kr3Progress: 0
   }
 ];
 
@@ -98,6 +109,27 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
   const [kr3Progress, setKr3Progress] = useState(0);
 
   const [error, setError] = useState('');
+
+  // Bản nháp OKR của Thêm mới & Hiệu chỉnh để khi kích chuột ra khoảng trống đóng modal thì thông tin dở vẫn được giữ nguyên
+  const [addOkrDraft, setAddOkrDraft] = useState<{
+    title: string;
+    kr1: string;
+    kr1Progress: number;
+    kr2: string;
+    kr2Progress: number;
+    kr3: string;
+    kr3Progress: number;
+  } | null>(null);
+
+  const [editOkrDrafts, setEditOkrDrafts] = useState<Record<string, {
+    title: string;
+    kr1: string;
+    kr1Progress: number;
+    kr2: string;
+    kr2Progress: number;
+    kr3: string;
+    kr3Progress: number;
+  }>>({});
 
   // Beautiful UI confirmation modal states (replaces window.confirm/alert/prompt in iframe)
   const [okrToDelete, setOkrToDelete] = useState<OKR | null>(null);
@@ -189,15 +221,38 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
   };
 
   const openAddModal = () => {
-    setTitle('');
-    setKr1('');
-    setKr1Progress(0);
-    setKr2('');
-    setKr2Progress(0);
-    setKr3('');
-    setKr3Progress(0);
+    if (addOkrDraft) {
+      setTitle(addOkrDraft.title);
+      setKr1(addOkrDraft.kr1);
+      setKr1Progress(addOkrDraft.kr1Progress);
+      setKr2(addOkrDraft.kr2);
+      setKr2Progress(addOkrDraft.kr2Progress);
+      setKr3(addOkrDraft.kr3);
+      setKr3Progress(addOkrDraft.kr3Progress);
+    } else {
+      setTitle('');
+      setKr1('');
+      setKr1Progress(0);
+      setKr2('');
+      setKr2Progress(0);
+      setKr3('');
+      setKr3Progress(0);
+    }
     setError('');
     setIsAddModalOpen(true);
+  };
+
+  const handleCloseAddModal = () => {
+    setAddOkrDraft({
+      title,
+      kr1,
+      kr1Progress,
+      kr2,
+      kr2Progress,
+      kr3,
+      kr3Progress
+    });
+    setIsAddModalOpen(false);
   };
 
   const handleAddSubmit = (e: React.FormEvent) => {
@@ -215,20 +270,51 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
       kr3: kr3.trim(),
       kr3Progress,
     });
+    setAddOkrDraft(null); // Xóa nháp sau khi thêm mới thành công
     setIsAddModalOpen(false);
   };
 
   const openEditModal = (okr: OKR) => {
     setSelectedOkr(okr);
-    setTitle(okr.title);
-    setKr1(okr.kr1);
-    setKr1Progress(okr.kr1Progress);
-    setKr2(okr.kr2);
-    setKr2Progress(okr.kr2Progress);
-    setKr3(okr.kr3);
-    setKr3Progress(okr.kr3Progress);
+    const draft = editOkrDrafts[okr.id];
+    if (draft) {
+      setTitle(draft.title);
+      setKr1(draft.kr1);
+      setKr1Progress(draft.kr1Progress);
+      setKr2(draft.kr2);
+      setKr2Progress(draft.kr2Progress);
+      setKr3(draft.kr3);
+      setKr3Progress(draft.kr3Progress);
+    } else {
+      setTitle(okr.title);
+      setKr1(okr.kr1);
+      setKr1Progress(okr.kr1Progress);
+      setKr2(okr.kr2);
+      setKr2Progress(okr.kr2Progress);
+      setKr3(okr.kr3);
+      setKr3Progress(okr.kr3Progress);
+    }
     setError('');
     setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    if (selectedOkr) {
+      setEditOkrDrafts(prev => ({
+        ...prev,
+        [selectedOkr.id]: {
+          title,
+          kr1,
+          kr1Progress,
+          kr2,
+          kr2Progress,
+          kr3,
+          kr3Progress
+        }
+      }));
+    }
+    setIsEditModalOpen(false);
+    setSelectedOkr(null);
   };
 
   const handleEditSubmit = (e: React.FormEvent) => {
@@ -247,7 +333,16 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
       kr3: kr3.trim(),
       kr3Progress,
     });
+    
+    // Xóa nháp sau khi cập nhật thành công
+    setEditOkrDrafts(prev => {
+      const copy = { ...prev };
+      delete copy[selectedOkr.id];
+      return copy;
+    });
+
     setIsEditModalOpen(false);
+    setSelectedOkr(null);
   };
 
   const handleDelete = (okr: OKR) => {
@@ -381,7 +476,7 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
       {isAddModalOpen && (
         <div 
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 cursor-pointer"
-          onClick={() => setIsAddModalOpen(false)}
+          onClick={handleCloseAddModal}
         >
           <div 
             className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6 cursor-default"
@@ -495,7 +590,7 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
                   )}
                 </div>
                 
-                <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer ml-1">
+                <button onClick={handleCloseAddModal} className="text-slate-400 hover:text-slate-600 cursor-pointer ml-1">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -573,7 +668,7 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
               <div className="mt-6 flex justify-end gap-2 text-xs pt-3 border-t border-slate-100">
                 <button 
                   type="button" 
-                  onClick={() => setIsAddModalOpen(false)} 
+                  onClick={handleCloseAddModal} 
                   className="border border-slate-300 px-3 py-1.5 rounded-lg font-bold hover:bg-slate-50 cursor-pointer"
                 >
                   Hủy
@@ -594,7 +689,7 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
       {isEditModalOpen && selectedOkr && (
         <div 
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 cursor-pointer"
-          onClick={() => setIsEditModalOpen(false)}
+          onClick={handleCloseEditModal}
         >
           <div 
             className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6 cursor-default"
@@ -708,7 +803,7 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
                   )}
                 </div>
                 
-                <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer ml-1">
+                <button onClick={handleCloseEditModal} className="text-slate-400 hover:text-slate-600 cursor-pointer ml-1">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -783,7 +878,7 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
               <div className="mt-6 flex justify-end gap-2 text-xs pt-3 border-t border-slate-100">
                 <button 
                   type="button" 
-                  onClick={() => setIsEditModalOpen(false)} 
+                  onClick={handleCloseEditModal} 
                   className="border border-slate-300 px-3 py-1.5 rounded-lg font-bold hover:bg-slate-50 cursor-pointer"
                 >
                   Hủy
