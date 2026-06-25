@@ -15,7 +15,10 @@ import {
   X,
   ExternalLink,
   Eye,
-  Paperclip
+  Paperclip,
+  RotateCcw,
+  Edit3,
+  Save
 } from 'lucide-react';
 import { KPI, Evidence } from '../types';
 
@@ -23,6 +26,8 @@ interface KpiSectionProps {
   kpis: KPI[];
   onKpiValueChange: (index: number, value: number) => void;
   onKpiEvidencesChange?: (index: number, evidences: Evidence[]) => void;
+  onKpisChange?: (kpis: KPI[]) => void;
+  onResetKpis?: () => void;
   readOnly?: boolean;
 }
 
@@ -62,6 +67,8 @@ export default function KpiSection({
   kpis, 
   onKpiValueChange, 
   onKpiEvidencesChange,
+  onKpisChange,
+  onResetKpis,
   readOnly = false 
 }: KpiSectionProps) {
   
@@ -74,6 +81,68 @@ export default function KpiSection({
   const [imageBase64, setImageBase64] = useState<string>('');
   const [uploadError, setUploadError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // States for editing criteria and weights
+  const [isEditing, setIsEditing] = useState(false);
+  const [editKpis, setEditKpis] = useState<KPI[]>([]);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Deduplicate KPIs to avoid display issues if any duplicate records exist
+  const displayedKpis = kpis.filter((item, index) => 
+    kpis.findIndex(k => k.criterion === item.criterion) === index
+  );
+
+  const handleStartEditing = () => {
+    setEditKpis(JSON.parse(JSON.stringify(displayedKpis)));
+    setValidationError(null);
+    setIsEditing(true);
+  };
+
+  const handleCancelEditing = () => {
+    setValidationError(null);
+    setIsEditing(false);
+  };
+
+  const handleSaveEditing = () => {
+    if (onKpisChange) {
+      const totalWeight = editKpis.reduce((sum, k) => sum + k.weight, 0);
+      if (totalWeight !== 100) {
+        setValidationError(`Tổng trọng số KPI của các tiêu chí phải bằng 100%! Hiện tại là: ${totalWeight}%`);
+        return;
+      }
+      setValidationError(null);
+      onKpisChange(editKpis);
+    }
+    setIsEditing(false);
+  };
+
+  const handleEditKpiField = (index: number, field: keyof KPI, val: any) => {
+    const updated = [...editKpis];
+    if (updated[index]) {
+      updated[index] = {
+        ...updated[index],
+        [field]: val
+      };
+      setEditKpis(updated);
+    }
+  };
+
+  const handleDeleteEditKpi = (index: number) => {
+    const updated = editKpis.filter((_, i) => i !== index);
+    setEditKpis(updated);
+  };
+
+  const handleAddEditKpi = () => {
+    setEditKpis([
+      ...editKpis,
+      {
+        criterion: `${editKpis.length + 1}. Tiêu chí mới`,
+        weight: 0,
+        desc: "Mô tả chỉ số đo lường và mục tiêu chuẩn.",
+        value: 100
+      }
+    ]);
+  };
 
   // Lưu thông tin bản nháp (draft) của minh chứng đang làm dở/chưa xong theo từng tiêu chí KPI
   const [drafts, setDrafts] = useState<Record<number, {
@@ -93,13 +162,15 @@ export default function KpiSection({
     let weightedSum = 0;
     let totalWeight = 0;
 
-    kpis.forEach(kpi => {
-      weightedSum += kpi.value * (kpi.weight / 100);
+    const sourceList = isEditing ? editKpis : displayedKpis;
+
+    sourceList.forEach(kpi => {
+      weightedSum += kpi.value * kpi.weight;
       totalWeight += kpi.weight;
     });
 
     if (totalWeight === 0) return 0;
-    return Math.round(weightedSum);
+    return Math.round(weightedSum / totalWeight);
   };
 
   const finalScore = calculateTotal();
@@ -278,7 +349,7 @@ export default function KpiSection({
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5" id="kpi-workspace">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 mb-4 gap-2">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-100 pb-3 mb-4 gap-3">
         <div className="flex items-center gap-2">
           <span className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
             <LineChart className="w-5 h-5" />
@@ -289,15 +360,69 @@ export default function KpiSection({
           </div>
         </div>
         
-        {/* Score badge */}
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg px-3 py-1.5 text-center flex items-center justify-between gap-2 self-start sm:self-auto">
-          <span className="text-xs font-bold whitespace-nowrap">Tổng Điểm KPI:</span>
-          <span className="text-lg font-black text-emerald-600">{finalScore}/100</span>
-          <span className={`text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap ${rating.class}`}>
-            {rating.text}
-          </span>
+        <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto">
+          {/* Reset button */}
+          {!readOnly && onResetKpis && (
+            <button
+              onClick={onResetKpis}
+              type="button"
+              className="text-xs font-bold text-slate-600 hover:text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 flex items-center gap-1 transition shadow-2xs cursor-pointer select-none"
+              title="Khôi phục toàn bộ chỉ số KPI về mẫu chuẩn mặc định"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+              Đặt lại mặc định
+            </button>
+          )}
+
+          {/* Edit/Save button */}
+          {!readOnly && onKpisChange && (
+            isEditing ? (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handleSaveEditing}
+                  type="button"
+                  className="text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg px-3 py-2 flex items-center gap-1 transition shadow-2xs cursor-pointer select-none"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  Lưu thay đổi
+                </button>
+                <button
+                  onClick={handleCancelEditing}
+                  type="button"
+                  className="text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg px-3 py-2 flex items-center gap-1 transition cursor-pointer select-none"
+                >
+                  Hủy
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleStartEditing}
+                type="button"
+                className="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-lg px-3 py-2 flex items-center gap-1 transition shadow-2xs cursor-pointer select-none"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-emerald-600" />
+                Thiết lập chỉ số &amp; Trọng số
+              </button>
+            )
+          )}
+
+          {/* Score badge */}
+          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg px-3 py-1.5 text-center flex items-center justify-between gap-2">
+            <span className="text-xs font-bold whitespace-nowrap">Tổng Điểm KPI:</span>
+            <span className="text-lg font-black text-emerald-600">{finalScore}/100</span>
+            <span className={`text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap ${rating.class}`}>
+              {rating.text}
+            </span>
+          </div>
         </div>
       </div>
+
+      {validationError && (
+        <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex gap-1.5 items-center">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-red-600 animate-pulse" />
+          <span className="font-bold">{validationError}</span>
+        </div>
+      )}
 
       {readOnly ? (
         <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex gap-1.5 items-start">
@@ -307,12 +432,14 @@ export default function KpiSection({
           </span>
         </div>
       ) : (
-        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex gap-1.5 items-start">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
-          <span>
-            <strong>Mẹo giả lập:</strong> Bạn có thể sử dụng thanh trượt hoặc trường nhập liệu trực tiếp dưới đây để thay đổi điểm số thực đạt. Điểm tổng và xếp loại thi đua cuối kỳ sẽ được tự động tính toán lại ngay tức thì!
-          </span>
-        </div>
+        !isEditing && (
+          <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex gap-1.5 items-start">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+            <span>
+              <strong>Mẹo giả lập:</strong> Bạn có thể sử dụng thanh trượt hoặc trường nhập liệu trực tiếp dưới đây để thay đổi điểm số thực đạt. Điểm tổng và xếp loại thi đua cuối kỳ sẽ được tự động tính toán lại ngay tức thì!
+            </span>
+          </div>
+        )
       )}
 
       {/* KPI Items Table */}
@@ -321,23 +448,65 @@ export default function KpiSection({
           <thead>
             <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
               <th className="p-2.5 font-bold rounded-l-lg">Nhóm tiêu chí</th>
-              <th className="p-2.5 font-bold text-center w-20">Trọng số</th>
+              <th className="p-2.5 font-bold text-center w-24">Trọng số</th>
               <th className="p-2.5 font-bold">Chỉ số đo lường (KPIs) &amp; Mục tiêu chuẩn</th>
               <th className="p-2.5 font-bold text-center w-36">Thực đạt (Giả lập)</th>
               <th className="p-2.5 font-bold w-64 rounded-r-lg">Hồ sơ minh chứng</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {kpis.map((kpi, index) => (
+            {(isEditing ? editKpis : displayedKpis).map((kpi, index) => (
               <tr key={index} className="hover:bg-slate-50/50 transition">
-                <td className="p-3 font-bold text-slate-900 align-top max-w-[150px]">
-                  {kpi.criterion}
+                <td className="p-3 font-bold text-slate-900 align-top max-w-[200px]">
+                  {isEditing ? (
+                    <div className="flex gap-1.5 items-start">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteEditKpi(index)}
+                        className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded p-1 transition mt-0.5 cursor-pointer shrink-0 animate-scale-in"
+                        title="Xóa tiêu chí này"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      <input 
+                        type="text"
+                        value={kpi.criterion}
+                        onChange={(e) => handleEditKpiField(index, 'criterion', e.target.value)}
+                        className="w-full border border-slate-300 rounded p-1 text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                    </div>
+                  ) : (
+                    kpi.criterion
+                  )}
                 </td>
                 <td className="p-3 text-center text-slate-500 font-extrabold align-top">
-                  {kpi.weight}%
+                  {isEditing ? (
+                    <div className="flex items-center gap-0.5 justify-center">
+                      <input 
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={kpi.weight}
+                        onChange={(e) => handleEditKpiField(index, 'weight', parseInt(e.target.value) || 0)}
+                        className="w-12 border border-slate-300 rounded text-center p-1 text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                      <span className="font-extrabold text-slate-500">%</span>
+                    </div>
+                  ) : (
+                    `${kpi.weight}%`
+                  )}
                 </td>
                 <td className="p-3 align-top text-slate-600 leading-relaxed">
-                  {kpi.desc}
+                  {isEditing ? (
+                    <textarea 
+                      value={kpi.desc}
+                      onChange={(e) => handleEditKpiField(index, 'desc', e.target.value)}
+                      rows={2}
+                      className="w-full border border-slate-300 rounded p-1 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500 leading-relaxed resize-y"
+                    />
+                  ) : (
+                    kpi.desc
+                  )}
                 </td>
                 <td className="p-3 align-top">
                   <div className="flex flex-col gap-1.5 items-center justify-center">
@@ -346,10 +515,10 @@ export default function KpiSection({
                       min="0" 
                       max="100" 
                       value={kpi.value} 
-                      onChange={(e) => !readOnly && handleInputChange(index, e.target.value)}
-                      disabled={readOnly}
+                      onChange={(e) => !readOnly && !isEditing && handleInputChange(index, e.target.value)}
+                      disabled={readOnly || isEditing}
                       className={`w-16 border rounded text-center font-bold p-1 text-xs focus:outline-none ${
-                        readOnly 
+                        (readOnly || isEditing) 
                           ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed' 
                           : 'border-slate-300 text-slate-800 focus:ring-1 focus:ring-emerald-500'
                       }`}
@@ -359,10 +528,10 @@ export default function KpiSection({
                       min="0" 
                       max="100" 
                       value={kpi.value} 
-                      onChange={(e) => !readOnly && onKpiValueChange(index, parseInt(e.target.value) || 0)}
-                      disabled={readOnly}
+                      onChange={(e) => !readOnly && !isEditing && onKpiValueChange(index, parseInt(e.target.value) || 0)}
+                      disabled={readOnly || isEditing}
                       className={`w-24 h-1.5 ${
-                        readOnly 
+                        (readOnly || isEditing) 
                           ? 'accent-slate-300 cursor-not-allowed opacity-60' 
                           : 'accent-emerald-600 cursor-pointer'
                       }`}
@@ -388,7 +557,7 @@ export default function KpiSection({
                               {getEvidenceIcon(ev.type, ev.fileType)}
                               <span className="truncate max-w-[120px]">{ev.name}</span>
                             </button>
-                            {!readOnly && onKpiEvidencesChange && (
+                            {!readOnly && !isEditing && onKpiEvidencesChange && (
                               <button
                                 type="button"
                                 onClick={() => handleDeleteEvidence(index, ev.id)}
@@ -406,7 +575,7 @@ export default function KpiSection({
                     </div>
 
                     {/* Add evidence button */}
-                    {!readOnly && onKpiEvidencesChange && (
+                    {!readOnly && !isEditing && onKpiEvidencesChange && (
                       <button
                         type="button"
                         onClick={() => openEvidenceModal(index)}
@@ -419,6 +588,20 @@ export default function KpiSection({
                 </td>
               </tr>
             ))}
+            {isEditing && (
+              <tr>
+                <td colSpan={5} className="p-3.5 text-center bg-slate-50 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={handleAddEditKpi}
+                    className="text-xs font-bold text-emerald-600 bg-white hover:bg-emerald-50 border border-emerald-200 hover:border-emerald-300 rounded-lg px-4 py-2 transition inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <Plus className="w-4 h-4 text-emerald-500 animate-pulse" />
+                    Thêm tiêu chuẩn KPI mới
+                  </button>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

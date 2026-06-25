@@ -462,6 +462,55 @@ export default function App() {
     }
   };
 
+  const handleKpisChange = async (updatedUserKpis: KPI[]) => {
+    const updatedKpis = {
+      ...allKpis,
+      [activeUserId]: updatedUserKpis
+    };
+    saveKpisToCache(updatedKpis);
+
+    if (supabaseStatus === 'connected') {
+      try {
+        await saveUserKpisToSupabase(activeUserId, updatedUserKpis);
+        showToast('Đã cập nhật chỉ số vận hành KPI mới thành công!');
+      } catch (err: any) {
+        console.error('Error syncing KPIs:', err);
+        showToast('Lỗi đồng bộ chỉ số KPI lên Supabase.');
+      }
+    } else {
+      showToast('Đã cập nhật chỉ số vận hành KPI mới thành công!');
+    }
+  };
+
+  const handleResetKpis = async () => {
+    const defaultKpisForUser = INITIAL_KPIS[activeUserId] || [
+      { criterion: "1. Khối lượng & Tiến độ", weight: 30, desc: "Hoàn thành các đầu việc được giao đúng kế hoạch tuần.", value: 80 },
+      { criterion: "2. Chất lượng công việc", weight: 30, desc: "Báo cáo chính xác, nghiệp vụ chuyên môn đạt chuẩn thanh tra.", value: 85 },
+      { criterion: "3. Hồ sơ & Sổ sách sổ điểm", weight: 20, desc: "Sắp xếp, đồng bộ hóa hồ sơ điện tử ngăn nắp đúng hạn.", value: 75 },
+      { criterion: "4. Kỷ luật & Trách nhiệm", weight: 20, desc: "Đạo đức nhà giáo gương mẫu, tuân thủ giờ giấc hành chính.", value: 90 }
+    ];
+    
+    const resetKpis = JSON.parse(JSON.stringify(defaultKpisForUser));
+    
+    const updatedKpis = {
+      ...allKpis,
+      [activeUserId]: resetKpis
+    };
+    saveKpisToCache(updatedKpis);
+
+    if (supabaseStatus === 'connected') {
+      try {
+        await saveUserKpisToSupabase(activeUserId, resetKpis);
+        showToast('Đã khôi phục chỉ số KPI về mẫu mặc định thành công!');
+      } catch (err: any) {
+        console.error('Error resetting KPIs:', err);
+        showToast('Lỗi khôi phục chỉ số KPI lên Supabase.');
+      }
+    } else {
+      showToast('Đã khôi phục chỉ số KPI về mẫu mặc định thành công!');
+    }
+  };
+
   // 7. Thêm/Sửa/Xóa Nhân sự (Chỉ admin hoặc Super Admin được quyền)
   const handleAddUser = async (newUserData: Omit<User, 'avatar'>) => {
     // Generate initials for avatar
@@ -908,6 +957,8 @@ export default function App() {
               kpis={activeUserKpis}
               onKpiValueChange={handleKpiValueChange}
               onKpiEvidencesChange={handleKpiEvidencesChange}
+              onKpisChange={handleKpisChange}
+              onResetKpis={handleResetKpis}
               readOnly={!canEditActiveData}
             />
           </div>
