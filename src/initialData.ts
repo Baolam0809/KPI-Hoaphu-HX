@@ -256,19 +256,22 @@ export const DEFAULT_NOTIFICATIONS: Notification[] = [
     id: "notif-1",
     title: "Hạn chót phê duyệt OKR Học kỳ I",
     time: "Thời hạn: Trước ngày 15 tháng sau",
-    type: "urgent"
+    type: "urgent",
+    read: false
   },
   {
     id: "notif-2",
     title: "Kiểm tra toàn bộ hồ sơ phòng máy & thí nghiệm",
     time: "Bởi: Hiệu phó phụ trách cơ sở vật chất",
-    type: "info"
+    type: "info",
+    read: false
   },
   {
     id: "notif-3",
     title: "Đợt khảo sát sự hài lòng từ phụ huynh học sinh",
     time: "Khảo sát trực tuyến qua App",
-    type: "normal"
+    type: "normal",
+    read: false
   }
 ];
 

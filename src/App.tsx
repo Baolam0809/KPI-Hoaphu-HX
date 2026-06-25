@@ -20,6 +20,7 @@ import ProfileTab from './components/ProfileTab';
 import ExportTab from './components/ExportTab';
 import UtilitiesTab from './components/UtilitiesTab';
 import SettingsTab from './components/SettingsTab';
+import NotificationsTab from './components/NotificationsTab';
 
 import { 
   checkSupabaseConnection, 
@@ -738,6 +739,7 @@ export default function App() {
           usersCount={users.length}
           activeOkrCount={totalUsersWithOkr}
           totalOkrCount={users.length}
+          notifications={notifications}
         />
 
         {/* CENTER COLUMN: MAIN WORKSPACE */}
@@ -817,6 +819,16 @@ export default function App() {
             <UtilitiesTab />
           )}
 
+          {/* ====== TAB THÔNG BÁO ====== */}
+          {activeTab === 'tab-notifications' && (
+            <NotificationsTab 
+              notifications={notifications}
+              onSaveNotifications={saveNotificationsToCache}
+              currentUser={currentUser}
+              showToast={showToast}
+            />
+          )}
+
           {/* ====== TAB 6: CÀI ĐẶT HỆ THỐNG ====== */}
           {activeTab === 'tab-settings' && (
             <SettingsTab 
@@ -856,29 +868,60 @@ export default function App() {
                     <Settings className="w-3.5 h-3.5" />
                   </button>
                 )}
-                <span className="bg-red-100 text-red-800 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                <span className="bg-slate-100 text-slate-700 text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider">
                   {notifications.length} Bản tin
                 </span>
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
+                    {notifications.filter(n => !n.read).length} Mới
+                  </span>
+                )}
               </div>
             </h3>
             <div className="space-y-3 text-xs">
-              {notifications.slice(0, 4).map((notif) => (
-                <div 
-                  key={notif.id} 
-                  className={`p-2.5 rounded transition border ${
-                    notif.type === 'urgent' 
-                      ? 'bg-red-50/50 border-red-100 border-l-2 border-l-red-600' 
-                      : notif.type === 'info'
-                      ? 'bg-blue-50/50 border-blue-100 border-l-2 border-l-blue-600'
-                      : 'hover:bg-slate-50 border-slate-100'
-                  }`}
-                >
-                  <p className="font-bold text-slate-800 leading-tight">{notif.title}</p>
-                  <span className="text-[10px] text-slate-400 block mt-1 font-medium">{notif.time}</span>
-                </div>
-              ))}
+              {notifications.slice(0, 4).map((notif) => {
+                const isUnread = !notif.read;
+                return (
+                  <div 
+                    key={notif.id} 
+                    onClick={() => {
+                      const updated = notifications.map(n => 
+                        n.id === notif.id ? { ...n, read: !n.read } : n
+                      );
+                      saveNotificationsToCache(updated);
+                      showToast(`Đã đánh dấu "${notif.title}" là ${isUnread ? 'đã đọc' : 'chưa đọc'}`);
+                    }}
+                    className={`p-2.5 rounded transition border relative cursor-pointer select-none group ${
+                      isUnread 
+                        ? 'bg-blue-50/60 border-blue-200 border-l-2 border-l-blue-600 shadow-2xs' 
+                        : 'bg-white hover:bg-slate-50 border-slate-150 opacity-75'
+                    }`}
+                  >
+                    {isUnread && (
+                      <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                    )}
+                    <p className={`font-bold text-slate-800 leading-tight pr-4 ${!isUnread ? 'line-through text-slate-500 font-normal' : ''}`}>
+                      {notif.title}
+                    </p>
+                    <span className="text-[10px] text-slate-400 block mt-1 font-medium flex items-center justify-between">
+                      <span>{notif.time}</span>
+                      <span className="text-[9px] text-blue-700 font-extrabold opacity-0 group-hover:opacity-100 transition">
+                        {isUnread ? 'Đánh dấu đã đọc' : 'Đánh dấu chưa đọc'}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
               {notifications.length === 0 && (
                 <p className="text-center py-4 text-xs text-slate-400 italic">Không có thông báo mới.</p>
+              )}
+              {notifications.length > 0 && (
+                <button
+                  onClick={() => setActiveTab('tab-notifications')}
+                  className="w-full text-center py-2 mt-1 border border-dashed border-blue-200 text-blue-950 font-extrabold hover:bg-blue-50 rounded-lg text-[10px] uppercase tracking-wider transition cursor-pointer block"
+                >
+                  Xem tất cả bản tin ({notifications.length})
+                </button>
               )}
             </div>
           </div>

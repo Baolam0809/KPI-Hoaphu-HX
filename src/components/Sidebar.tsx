@@ -1,6 +1,6 @@
 import React from 'react';
-import { LayoutDashboard, User, Users, Printer, HelpCircle, Settings, Award, ChevronRight } from 'lucide-react';
-import { User as UserType } from '../types';
+import { LayoutDashboard, User, Users, Printer, HelpCircle, Settings, Award, ChevronRight, Bell } from 'lucide-react';
+import { User as UserType, Notification } from '../types';
 
 interface SidebarProps {
   currentUser: UserType | 'admin';
@@ -9,6 +9,7 @@ interface SidebarProps {
   usersCount: number;
   activeOkrCount: number;
   totalOkrCount: number;
+  notifications: Notification[];
 }
 
 export default function Sidebar({ 
@@ -17,16 +18,20 @@ export default function Sidebar({
   onTabChange, 
   usersCount,
   activeOkrCount,
-  totalOkrCount
+  totalOkrCount,
+  notifications = []
 }: SidebarProps) {
   // Profile info
   const name = currentUser === 'admin' ? 'Nghiêm Hồng Quân' : currentUser.name;
   const role = currentUser === 'admin' ? 'Giáo viên - Super Admin' : currentUser.role;
   const avatar = currentUser === 'admin' ? 'HQ' : currentUser.avatar;
 
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   const menuItems = [
     { id: 'tab-main', label: 'Trang chủ: Tổng quan', icon: LayoutDashboard, badge: null },
     { id: 'tab-profile', label: 'Quản lý tài khoản', icon: User, badge: null },
+    { id: 'tab-notifications', label: 'Bản tin & Thông báo', icon: Bell, badge: unreadCount > 0 ? unreadCount : null, isNotification: true },
     { id: 'tab-users', label: 'BGH/Giáo viên/Nhân viên', icon: Users, badge: usersCount },
     { id: 'tab-export', label: 'In ấn & Xuất file Word/PDF', icon: Printer, badge: null },
     { id: 'tab-utilities', label: 'Liên hệ & Tiện ích', icon: HelpCircle, badge: null },
@@ -66,7 +71,11 @@ export default function Sidebar({
                     <span className="truncate">{item.label}</span>
                   </span>
                   {item.badge !== null ? (
-                    <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                    <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shrink-0 ${
+                      item.isNotification 
+                        ? 'bg-red-500 text-white animate-pulse' 
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
                       {item.badge}
                     </span>
                   ) : (

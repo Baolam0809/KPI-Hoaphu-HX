@@ -33,6 +33,7 @@ export interface Notification {
   title: string;
   time: string;
   type: 'urgent' | 'info' | 'normal';
+  read?: boolean;
 }
 
 export interface ScheduleItem {
