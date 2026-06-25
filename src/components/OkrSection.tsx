@@ -69,6 +69,28 @@ const DEFAULT_OKR_TEMPLATES: OKRTemplate[] = [
     kr2Progress: 0,
     kr3: 'Phát triển ngân hàng câu hỏi kiểm tra đánh giá định kỳ theo định hướng năng lực.',
     kr3Progress: 0
+  },
+  {
+    id: 'tmpl-6',
+    name: 'Mẫu 6: Ôn thi học sinh giỏi & bồi dưỡng năng khiếu',
+    title: 'Bồi dưỡng đội tuyển học sinh giỏi chuyên sâu, nâng cao thành tích thi chọn HSG cấp Huyện/Tỉnh',
+    kr1: 'Hoàn thiện đề cương bồi dưỡng HSG chi tiết với ít nhất 10 chuyên đề nâng cao.',
+    kr1Progress: 0,
+    kr2: '100% học sinh đội tuyển tham gia đầy đủ các buổi học tập huấn và khảo sát chất lượng định kỳ.',
+    kr2Progress: 0,
+    kr3: 'Có ít nhất 1 học sinh đạt giải Ba cấp Huyện trở lên và 2 học sinh đạt giải Khuyến khích.',
+    kr3Progress: 0
+  },
+  {
+    id: 'tmpl-7',
+    name: 'Mẫu 7: Xây dựng trường học hạnh phúc & giáo dục đạo đức',
+    title: 'Tăng cường các hoạt động trải nghiệm thực tế, tư vấn tâm lý học đường, xây dựng lớp học hạnh phúc',
+    kr1: 'Tổ chức ít nhất 1 chuyên đề ngoại khóa về kỹ năng giao tiếp ứng xử và phòng chống bạo lực học đường.',
+    kr1Progress: 0,
+    kr2: 'Tư vấn và hỗ trợ tâm lý kịp thời cho 100% học sinh gặp khó khăn hoặc có biểu hiện tâm lý bất thường.',
+    kr2Progress: 0,
+    kr3: '98% học sinh xếp loại rèn luyện (đạo đức) Khá/Tốt trở lên, không có học sinh trung bình.',
+    kr3Progress: 0
   }
 ];
 
@@ -87,11 +109,21 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
 
   // Template management states
   const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState(false);
+  const [isMainTemplateDropdownOpen, setIsMainTemplateDropdownOpen] = useState(false);
   const [templates, setTemplates] = useState<OKRTemplate[]>(() => {
     const cached = localStorage.getItem('thcs_hp_okr_templates');
     if (cached) {
       try {
-        return JSON.parse(cached);
+        const parsed = JSON.parse(cached) as OKRTemplate[];
+        // Merge: Keep all user cached templates, but if any default template is missing by ID, append it!
+        const parsedIds = new Set(parsed.map(t => t.id));
+        const missingDefaults = DEFAULT_OKR_TEMPLATES.filter(t => !parsedIds.has(t.id));
+        if (missingDefaults.length > 0) {
+          const merged = [...parsed, ...missingDefaults];
+          localStorage.setItem('thcs_hp_okr_templates', JSON.stringify(merged));
+          return merged;
+        }
+        return parsed;
       } catch (e) {
         console.error('Error parsing cached OKR templates:', e);
       }
@@ -369,12 +401,78 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
           </div>
         </div>
         {!readOnly ? (
-          <button 
-            onClick={openAddModal} 
-            className="bg-red-700 hover:bg-red-800 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 transition shadow-sm cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" /> Thêm OKR mới
-          </button>
+          <div className="flex items-center gap-2 relative">
+            {/* Quick Template Selector on Card Header */}
+            <div className="relative">
+              <button 
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsMainTemplateDropdownOpen(!isMainTemplateDropdownOpen);
+                }}
+                className="bg-red-50 hover:bg-red-100 text-red-800 border border-red-100 text-[11px] md:text-xs font-extrabold px-2.5 py-2 rounded-lg flex items-center gap-1.5 cursor-pointer transition select-none"
+              >
+                <FolderOpen className="w-3.5 h-3.5 text-red-700 animate-bounce" />
+                Lấy nhanh biểu mẫu
+              </button>
+              
+              {isMainTemplateDropdownOpen && (
+                <div className="absolute right-0 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl w-72 md:w-80 z-[100] p-3 text-xs space-y-2.5 animate-scale-in">
+                  <div className="font-extrabold text-slate-500 border-b pb-1.5 px-1 text-[10px] uppercase tracking-wider flex justify-between items-center select-none">
+                    <span>Kho biểu mẫu OKR</span>
+                    <button 
+                      type="button" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsMainTemplateDropdownOpen(false);
+                      }}
+                      className="text-slate-400 hover:text-slate-600 text-xs p-0.5"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  
+                  <div className="max-h-[350px] overflow-y-auto space-y-1.5 pr-0.5 scrollbar-thin">
+                    {templates.map((tmpl) => (
+                      <button
+                        key={tmpl.id}
+                        type="button"
+                        onClick={() => {
+                          onAddOkr({
+                            title: tmpl.title,
+                            kr1: tmpl.kr1,
+                            kr1Progress: tmpl.kr1Progress,
+                            kr2: tmpl.kr2,
+                            kr2Progress: tmpl.kr2Progress,
+                            kr3: tmpl.kr3,
+                            kr3Progress: tmpl.kr3Progress,
+                          });
+                          setIsMainTemplateDropdownOpen(false);
+                        }}
+                        className="w-full text-left p-2 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-100 transition flex flex-col gap-0.5 group cursor-pointer"
+                      >
+                        <span className="font-extrabold text-slate-700 group-hover:text-red-700 truncate">
+                          {tmpl.name}
+                        </span>
+                        <span className="text-[10px] text-slate-400 group-hover:text-slate-500 line-clamp-1 italic">
+                          O: {tmpl.title}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button 
+              onClick={openAddModal} 
+              className="bg-red-700 hover:bg-red-800 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 transition shadow-sm cursor-pointer whitespace-nowrap"
+            >
+              <Plus className="w-3.5 h-3.5" /> Thêm OKR mới
+            </button>
+          </div>
         ) : (
           <span className="bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shadow-2xs select-none">
             <Lock className="w-3 h-3 text-slate-400" /> Chế độ chỉ xem
@@ -385,12 +483,48 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
       {/* List of OKRs */}
       <div className="space-y-4">
         {okrs.length === 0 ? (
-          <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
-            <AlertTriangle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+          <div className="text-center py-8 px-4 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+            <AlertTriangle className="w-8 h-8 text-slate-300 mx-auto mb-2 animate-bounce" />
             <p className="text-xs text-slate-500 font-bold">Chưa có mục tiêu OKR nào được tạo cho cán bộ này!</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              {readOnly ? 'Hồ sơ hiện tại không có dữ liệu OKR.' : 'Nhấp vào nút "Thêm OKR mới" ở trên để khởi tạo.'}
+            <p className="text-[11px] text-slate-400 mt-0.5 mb-5">
+              {readOnly ? 'Hồ sơ hiện tại không có dữ liệu OKR.' : 'Nhấp vào nút "Thêm OKR mới" hoặc chọn nhanh biểu mẫu dưới đây để khởi tạo.'}
             </p>
+
+            {!readOnly && (
+              <div className="max-w-2xl mx-auto border-t border-slate-200 pt-5 mt-2">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-3 text-center">
+                  Khởi tạo nhanh bằng biểu mẫu có sẵn ngay tại chỗ:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                  {templates.map((tmpl) => (
+                    <button
+                      key={tmpl.id}
+                      type="button"
+                      onClick={() => {
+                        onAddOkr({
+                          title: tmpl.title,
+                          kr1: tmpl.kr1,
+                          kr1Progress: tmpl.kr1Progress,
+                          kr2: tmpl.kr2,
+                          kr2Progress: tmpl.kr2Progress,
+                          kr3: tmpl.kr3,
+                          kr3Progress: tmpl.kr3Progress,
+                        });
+                      }}
+                      className="text-left bg-white hover:bg-red-50 hover:border-red-300 border border-slate-200 rounded-xl p-3.5 transition duration-200 text-xs flex flex-col gap-1.5 cursor-pointer group shadow-2xs"
+                    >
+                      <span className="font-extrabold text-slate-800 group-hover:text-red-700 flex items-center gap-1.5 transition-colors">
+                        <span className="w-2 h-2 rounded-full bg-red-600 shrink-0"></span>
+                        {tmpl.name}
+                      </span>
+                      <span className="text-[11px] text-slate-500 line-clamp-2 italic group-hover:text-slate-600">
+                        {tmpl.title}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           okrs.map((okr, index) => {
@@ -519,7 +653,7 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
                         </button>
                       </div>
                       
-                      <div className="max-h-48 overflow-y-auto space-y-1 pr-0.5">
+                      <div className="max-h-[350px] overflow-y-auto space-y-1 pr-0.5">
                         {templates.map((tmpl) => (
                           <div 
                             key={tmpl.id} 
@@ -732,7 +866,7 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
                         </button>
                       </div>
                       
-                      <div className="max-h-48 overflow-y-auto space-y-1 pr-0.5">
+                      <div className="max-h-[350px] overflow-y-auto space-y-1 pr-0.5">
                         {templates.map((tmpl) => (
                           <div 
                             key={tmpl.id} 
