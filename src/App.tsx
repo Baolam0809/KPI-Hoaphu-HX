@@ -973,7 +973,7 @@ export default function App() {
             {settings.heroBannerUrl && (
               <div 
                 className="w-full h-40 sm:h-48 md:h-52 rounded-xl shadow-sm relative overflow-hidden flex items-end p-5 border border-slate-200"
-                id="main-hero-banner"
+                id="main-hero-showcase"
                 style={{
                   backgroundImage: `linear-gradient(to top, rgba(15, 23, 42, 0.95) 15%, rgba(15, 23, 42, 0.25) 100%), url("${settings.heroBannerUrl}")`,
                   backgroundSize: 'cover',

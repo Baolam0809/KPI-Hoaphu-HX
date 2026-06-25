@@ -111,7 +111,7 @@ export default function SettingsTab({
       if (target === 'hero') setHeroBannerUrl(base64);
       else if (target === 'navbar') setNavbarBannerUrl(base64);
       else if (target === 'logo') setTextLogoUrl(base64);
-      showToast(`Đã tải ảnh lên thành công cho ${target === 'hero' ? 'Hero Banner' : target === 'navbar' ? 'Navbar Banner' : 'Ảnh chữ'}!`);
+      showToast(`Đã tải ảnh lên thành công cho ${target === 'hero' ? 'Ảnh nền chính (Trang chủ)' : target === 'navbar' ? 'Ảnh nền thanh điều hướng' : 'Logo chữ'}!`);
     };
     reader.readAsDataURL(file);
   };
@@ -415,18 +415,18 @@ export default function SettingsTab({
             </div>
           </div>
 
-          {/* QUẢN TRỊ BANNERS, HÌNH ẢNH & LOGO CHỮ */}
-          <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-4 shadow-sm" id="banners-logo-management">
+          {/* QUẢN TRỊ HÌNH ẢNH GIAO DIỆN & LOGO CHỮ */}
+          <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-4 shadow-sm" id="interface-visual-management">
             <h4 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
-              <Sliders className="w-4 h-4 text-blue-900" /> Quản trị Giao diện hình ảnh, Banners & Logo Chữ
+              <Sliders className="w-4 h-4 text-blue-900" /> Cấu hình Hình ảnh Giao diện & Logo Chữ
             </h4>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
-              {/* ITEM 1: HERO BANNER */}
+              {/* ITEM 1: ẢNH NỀN CHÍNH (TRANG CHỦ) */}
               <div className="flex flex-col gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
                 <div>
-                  <span className="block font-bold text-slate-700 uppercase">1. Hero Banner (Trang chủ)</span>
-                  <p className="text-[10px] text-slate-500 mt-0.5 mb-1.5 leading-tight">Hiển thị ở đầu trang tổng quan với lớp phủ tối.</p>
+                  <span className="block font-bold text-slate-700 uppercase">1. Ảnh nền chính (Trang chủ)</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5 mb-1.5 leading-tight">Hiển thị ở phần đầu trang tổng quan với lớp phủ màu tối tối ưu.</p>
                 </div>
                 
                 {/* Image Preview */}
@@ -452,7 +452,7 @@ export default function SettingsTab({
                   <label className="flex-1 text-center bg-blue-900 hover:bg-blue-950 text-white font-bold py-1.5 rounded-md cursor-pointer transition text-[10px]">
                     Tải tệp ảnh
                     <input 
-                      type="file" 
+                       type="file" 
                       accept="image/*" 
                       className="hidden" 
                       disabled={!isBghOrAdmin}
@@ -468,25 +468,25 @@ export default function SettingsTab({
                     onClick={() => setHeroBannerUrl("https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?q=80&w=1200")}
                     className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-2 py-1.5 rounded-md transition text-[10px] disabled:opacity-50"
                   >
-                    Dùng mẫu
+                    Dùng ảnh mẫu
                   </button>
                 </div>
                 
                 <input 
                   type="text" 
                   disabled={!isBghOrAdmin}
-                  placeholder="Hoặc nhập liên kết URL..." 
+                  placeholder="Hoặc nhập địa chỉ liên kết URL..." 
                   value={heroBannerUrl.startsWith('data:') ? '' : heroBannerUrl}
                   onChange={(e) => setHeroBannerUrl(e.target.value)}
                   className="w-full border border-slate-300 rounded p-1.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-900 mt-1"
                 />
               </div>
 
-              {/* ITEM 2: NAVBAR BANNER */}
+              {/* ITEM 2: ẢNH NỀN TIÊU ĐỀ */}
               <div className="flex flex-col gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
                 <div>
-                  <span className="block font-bold text-slate-700 uppercase">2. Navbar Banner (Tiêu đề)</span>
-                  <p className="text-[10px] text-slate-500 mt-0.5 mb-1.5 leading-tight">Ảnh nền cho Header của hệ thống.</p>
+                  <span className="block font-bold text-slate-700 uppercase">2. Ảnh nền tiêu đề (Header)</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5 mb-1.5 leading-tight">Hình ảnh làm nền cho thanh tiêu đề trên cùng của hệ thống.</p>
                 </div>
                 
                 {/* Image Preview */}
@@ -528,25 +528,25 @@ export default function SettingsTab({
                     onClick={() => setNavbarBannerUrl("https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1000")}
                     className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-2 py-1.5 rounded-md transition text-[10px] disabled:opacity-50"
                   >
-                    Dùng mẫu
+                    Dùng ảnh mẫu
                   </button>
                 </div>
                 
                 <input 
                   type="text" 
                   disabled={!isBghOrAdmin}
-                  placeholder="Hoặc nhập liên kết URL..." 
+                  placeholder="Hoặc nhập địa chỉ liên kết URL..." 
                   value={navbarBannerUrl.startsWith('data:') ? '' : navbarBannerUrl}
                   onChange={(e) => setNavbarBannerUrl(e.target.value)}
                   className="w-full border border-slate-300 rounded p-1.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-900 mt-1"
                 />
               </div>
 
-              {/* ITEM 3: ẢNH CHỮ (WORDART LOGO TEXT IMAGE) */}
+              {/* ITEM 3: ẢNH CHỮ TIÊU ĐỀ */}
               <div className="flex flex-col gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
                 <div>
-                  <span className="block font-bold text-slate-700 uppercase">3. Ảnh chữ (Logo Chữ)</span>
-                  <p className="text-[10px] text-slate-500 mt-0.5 mb-1.5 leading-tight">Dùng ảnh thay chữ "TRƯỜNG THCS HÒA PHÚ".</p>
+                  <span className="block font-bold text-slate-700 uppercase">3. Hình ảnh thay thế chữ tiêu đề</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5 mb-1.5 leading-tight">Sử dụng tệp hình ảnh để thay thế hoàn toàn cho dòng chữ tiêu đề mặc định.</p>
                 </div>
                 
                 {/* Image Preview */}
@@ -588,14 +588,14 @@ export default function SettingsTab({
                     onClick={() => setTextLogoUrl("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000")}
                     className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-2 py-1.5 rounded-md transition text-[10px] disabled:opacity-50"
                   >
-                    Dùng mẫu
+                    Dùng ảnh mẫu
                   </button>
                 </div>
                 
                 <input 
                   type="text" 
                   disabled={!isBghOrAdmin}
-                  placeholder="Hoặc nhập liên kết URL..." 
+                  placeholder="Hoặc nhập địa chỉ liên kết URL..." 
                   value={textLogoUrl.startsWith('data:') ? '' : textLogoUrl}
                   onChange={(e) => setTextLogoUrl(e.target.value)}
                   className="w-full border border-slate-300 rounded p-1.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-900 mt-1"
