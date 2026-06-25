@@ -1092,7 +1092,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-center md:text-left">
             <p className="font-extrabold text-white text-xs md:text-sm">HỘI ĐỒNG SƯ PHẠM TRƯỜNG THCS HÒA PHÚ</p>
-            <p className="mt-1 text-slate-500 font-medium">Địa chỉ: Xã Hòa Xá, Huyện Ứng Hòa, Thành Phố Hà Nội</p>
+            <p className="mt-1 text-slate-500 font-medium">Địa chỉ: Xã Hòa Xá, Thành Phố Hà Nội</p>
           </div>
           <div className="text-center md:text-right">
             <p className="font-semibold text-slate-300">Thiết kế và quản trị: <strong>Nghiêm Hồng Quân</strong></p>
