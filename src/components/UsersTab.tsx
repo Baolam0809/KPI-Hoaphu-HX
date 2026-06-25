@@ -141,7 +141,7 @@ export default function UsersTab({
   };
 
   const handleDelete = (user: User) => {
-    if (user.id === 'THCS-HP-012' || user.id.toLowerCase() === 'admin') {
+    if (user.id === 'THCS-HP-020' || user.id.toLowerCase() === 'admin') {
       showToast('Cảnh báo: Đây là tài khoản Admin hệ thống, không được phép xóa!');
       return;
     }

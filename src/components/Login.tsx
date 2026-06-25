@@ -192,7 +192,7 @@ export default function Login({ onLogin, users, onChangePassword }: LoginProps) 
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder={loginType === 'admin' ? 'Nhập "admin"' : 'Ví dụ: THCS-HP-012 hoặc Email'}
+                    placeholder={loginType === 'admin' ? 'Nhập "admin"' : 'Ví dụ: THCS-HP-020 hoặc Email'}
                     className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-950 bg-slate-50 focus:bg-white transition"
                   />
                 </div>
@@ -255,7 +255,7 @@ export default function Login({ onLogin, users, onChangePassword }: LoginProps) 
                 <ul className="list-disc pl-4 space-y-1 text-slate-600">
                   <li><strong>Giáo viên Văn (Mai):</strong> THCS-HP-001 / Mai@HP2026</li>
                   <li><strong>Kế toán (Vy):</strong> THCS-HP-005 / Vy@HP2026</li>
-                  <li><strong>Thầy Quân (Admin cá nhân):</strong> THCS-HP-012 / Admin@HP2026</li>
+                  <li><strong>Thầy Quân (Admin cá nhân):</strong> THCS-HP-020 / Admin@HP2026</li>
                 </ul>
               </div>
             </form>

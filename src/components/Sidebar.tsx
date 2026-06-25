@@ -4,6 +4,7 @@ import { User as UserType, Notification } from '../types';
 
 interface SidebarProps {
   currentUser: UserType | 'admin';
+  users?: UserType[];
   activeTab: string;
   onTabChange: (tabId: string) => void;
   usersCount: number;
@@ -14,6 +15,7 @@ interface SidebarProps {
 
 export default function Sidebar({ 
   currentUser, 
+  users = [],
   activeTab, 
   onTabChange, 
   usersCount,
@@ -22,9 +24,10 @@ export default function Sidebar({
   notifications = []
 }: SidebarProps) {
   // Profile info
-  const name = currentUser === 'admin' ? 'Nghiêm Hồng Quân' : currentUser.name;
-  const role = currentUser === 'admin' ? 'Giáo viên - Super Admin' : currentUser.role;
-  const avatar = currentUser === 'admin' ? 'HQ' : currentUser.avatar;
+  const adminUser = currentUser === 'admin' ? users.find(u => u.id === 'THCS-HP-020') : null;
+  const name = currentUser === 'admin' ? (adminUser?.name || 'Nghiêm Hồng Quân') : currentUser.name;
+  const role = currentUser === 'admin' ? (adminUser?.role || 'Giáo viên - Super Admin') : currentUser.role;
+  const avatar = currentUser === 'admin' ? (adminUser?.avatar || 'HQ') : currentUser.avatar;
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

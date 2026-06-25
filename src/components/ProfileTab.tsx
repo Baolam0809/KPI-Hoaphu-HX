@@ -185,7 +185,7 @@ export default function ProfileTab({ currentUser, onUpdateProfile, onDeleteProfi
           <label className="block font-bold text-slate-600 uppercase mb-1">Mã nhân sự</label>
           <input 
             type="text" 
-            value={currentUser === 'admin' ? 'THCS-HP-012' : currentUser.id}
+            value={currentUser === 'admin' ? 'THCS-HP-020' : currentUser.id}
             disabled
             className="w-full bg-slate-100 border border-slate-200 text-slate-500 rounded-lg p-2.5 text-sm cursor-not-allowed font-bold"
           />

@@ -103,9 +103,9 @@ export default function ExportTab({
     const listOkrs: Record<string, OKR[]> = Object.keys(allOkrs).length > 0 ? allOkrs : JSON.parse(localStorage.getItem('thcs_hp_okrs') || '{}');
     const listKpis: Record<string, KPI[]> = Object.keys(allKpis).length > 0 ? allKpis : JSON.parse(localStorage.getItem('thcs_hp_kpis') || '{}');
 
-    const activeId = currentUser === 'admin' ? 'THCS-HP-012' : (currentUser?.id || 'THCS-HP-012');
+    const activeId = currentUser === 'admin' ? 'THCS-HP-020' : (currentUser?.id || 'THCS-HP-020');
     const activeUser = listUsers.find(u => u.id === activeId) || {
-      id: "THCS-HP-012",
+      id: "THCS-HP-020",
       name: "Nghiêm Hồng Quân",
       role: "Super Admin - Giáo viên",
       email: "nghiemhongquan@thcshoaphu.edu.vn",

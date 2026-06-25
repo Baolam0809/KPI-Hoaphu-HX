@@ -2,7 +2,7 @@ import { User, OKR, KPI, Notification, SystemSettings, ScheduleItem } from './ty
 
 export const INITIAL_USERS: User[] = [
   {
-    id: "THCS-HP-012",
+    id: "THCS-HP-020",
     name: "Nghiêm Hồng Quân",
     role: "Super Admin - Giáo viên",
     avatar: "HQ",
@@ -92,7 +92,7 @@ export const INITIAL_USERS: User[] = [
 ];
 
 export const INITIAL_OKRS: Record<string, OKR[]> = {
-  "THCS-HP-012": [
+  "THCS-HP-020": [
     {
       id: "okr-1",
       title: "Chỉ đạo chiến lược chuyển đổi số trường học",
@@ -201,7 +201,7 @@ export const INITIAL_OKRS: Record<string, OKR[]> = {
 };
 
 export const INITIAL_KPIS: Record<string, KPI[]> = {
-  "THCS-HP-012": [
+  "THCS-HP-020": [
     { criterion: "1. Quản lý điều hành", weight: 40, desc: "Tỷ lệ giáo viên nhân viên hoàn thành kế hoạch tuần đúng hạn.", value: 95 },
     { criterion: "2. Hồ sơ sổ sách trường", weight: 30, desc: "Kiểm tra học bạ, hồ sơ pháp lý không xảy ra lỗi thanh tra.", value: 100 },
     { criterion: "3. Phát triển nhà trường", weight: 20, desc: "Thu hút hoạt động ngoại khóa, xây dựng cơ sở vật chất đổi mới.", value: 90 },

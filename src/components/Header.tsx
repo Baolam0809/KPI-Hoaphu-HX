@@ -12,7 +12,8 @@ interface HeaderProps {
 
 export default function Header({ currentUser, users, onSwitchSimulatedUser, onLogout, settings }: HeaderProps) {
   // Trích xuất tên hiển thị
-  const displayName = currentUser === 'admin' ? 'Nghiêm Hồng Quân (Super Admin)' : currentUser.name;
+  const adminUser = currentUser === 'admin' ? users.find(u => u.id === 'THCS-HP-020') : null;
+  const displayName = currentUser === 'admin' ? (adminUser?.name ? `${adminUser.name} (Super Admin)` : 'Nghiêm Hồng Quân (Super Admin)') : currentUser.name;
   const displayRole = currentUser === 'admin' ? 'Chủ tài khoản hệ thống' : currentUser.role;
 
   return (

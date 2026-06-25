@@ -327,7 +327,7 @@ export default function App() {
   };
 
   // Lấy ID cán bộ hiện tại đang làm việc
-  const activeUserId = viewedUserId || (currentUser === 'admin' ? 'THCS-HP-012' : (currentUser?.id || 'THCS-HP-012'));
+  const activeUserId = viewedUserId || (currentUser === 'admin' ? 'THCS-HP-020' : (currentUser?.id || 'THCS-HP-020'));
   const canEditActiveData = currentUser === 'admin' || (currentUser && currentUser !== 'admin' && activeUserId === currentUser.id);
   const isBghOrAdmin = currentUser === 'admin' || (currentUser && currentUser !== 'admin' && currentUser.type === 'BGH');
 
@@ -529,7 +529,7 @@ export default function App() {
   };
 
   const handleDeleteUser = async (id: string) => {
-    if (id === 'THCS-HP-012' || id.toLowerCase() === 'admin') {
+    if (id === 'THCS-HP-020' || id.toLowerCase() === 'admin') {
       showToast('Cảnh báo: Đây là tài khoản Admin hệ thống, không được phép xóa!');
       return;
     }
@@ -571,7 +571,7 @@ export default function App() {
   // 8. Chỉnh sửa hồ sơ cá nhân hiện tại
   const handleUpdateProfile = async (updatedProfile: Partial<User>) => {
     if (currentUser === 'admin') {
-      const adminId = 'THCS-HP-012';
+      const adminId = 'THCS-HP-020';
       const updatedUsersList = users.map(u => 
         u.id === adminId ? { ...u, ...updatedProfile } : u
       );
@@ -662,7 +662,7 @@ export default function App() {
       
       {/* 1. HEADER BANNER WITH SIMULATOR & LOGOUT */}
       <Header 
-        currentUser={currentUser === 'admin' ? (users.find(u => u.id === 'THCS-HP-012') || 'admin') : currentUser} 
+        currentUser={currentUser} 
         users={users} 
         onSwitchSimulatedUser={handleSwitchSimulatedUser} 
         onLogout={handleLogout} 
@@ -786,7 +786,8 @@ export default function App() {
         
         {/* LEFT COLUMN: SIDEBAR */}
         <Sidebar 
-          currentUser={currentUser === 'admin' ? (users.find(u => u.id === 'THCS-HP-012') || 'admin') : currentUser} 
+          currentUser={currentUser} 
+          users={users}
           activeTab={activeTab} 
           onTabChange={setActiveTab}
           usersCount={users.length}
@@ -845,7 +846,7 @@ export default function App() {
               </div>
 
               {/* Viewed User Info Banner (Read-only mode warning) */}
-              {viewedUserId && viewedUserId !== (currentUser === 'admin' ? 'THCS-HP-012' : currentUser?.id) && (
+              {viewedUserId && viewedUserId !== (currentUser === 'admin' ? 'THCS-HP-020' : currentUser?.id) && (
                 <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-fade-in">
                   <div className="flex items-start gap-3">
                     <span className="p-2 bg-blue-100 rounded-lg text-blue-700 shrink-0 mt-0.5 sm:mt-0">
@@ -894,7 +895,7 @@ export default function App() {
           {/* ====== TAB 2: QUẢN LÝ TÀI KHOẢN ====== */}
           {activeTab === 'tab-profile' && (
             <ProfileTab 
-              currentUser={currentUser === 'admin' ? (users.find(u => u.id === 'THCS-HP-012') || 'admin') : currentUser}
+              currentUser={currentUser === 'admin' ? (users.find(u => u.id === 'THCS-HP-020') || 'admin') : currentUser}
               onUpdateProfile={handleUpdateProfile}
               onDeleteProfile={handleDeleteProfile}
             />
