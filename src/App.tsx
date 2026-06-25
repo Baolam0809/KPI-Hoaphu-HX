@@ -529,6 +529,10 @@ export default function App() {
   };
 
   const handleDeleteUser = async (id: string) => {
+    if (id === 'THCS-HP-012' || id.toLowerCase() === 'admin') {
+      showToast('Cảnh báo: Đây là tài khoản Admin hệ thống, không được phép xóa!');
+      return;
+    }
     const updatedUsersList = users.filter(u => u.id !== id);
     saveUsersToCache(updatedUsersList);
 
