@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 
 interface UsersTabProps {
   users: User[];
-  onAddUser: (user: Omit<User, 'avatar' | 'email'>) => void;
+  onAddUser: (user: Omit<User, 'avatar'>) => void;
   onUpdateUser: (id: string, updatedUser: Partial<User>) => void;
   onDeleteUser: (id: string) => void;
   onViewEmployee: (userId: string) => void;
@@ -42,6 +42,7 @@ export default function UsersTab({
   const [name, setName] = useState('');
   const [type, setType] = useState<'BGH' | 'GiaoVien' | 'NhanVien'>('GiaoVien');
   const [role, setRole] = useState('');
+  const [userEmail, setUserEmail] = useState('');
   const [password, setPassword] = useState('');
 
   // Bulk import state
@@ -72,6 +73,7 @@ export default function UsersTab({
     setName('');
     setType('GiaoVien');
     setRole('');
+    setUserEmail('');
     setPassword(generateRandomPassword());
     setIsAddModalOpen(true);
   };
@@ -92,6 +94,7 @@ export default function UsersTab({
       id: randId,
       name: name.trim(),
       role: role.trim(),
+      email: userEmail.trim(),
       isTeacher: type === 'GiaoVien',
       type,
       bio: `Thành viên mới của ${type === 'GiaoVien' ? 'khối Giáo viên' : 'hội đồng sư phạm'} trường THCS Hòa Phú.`,
@@ -107,6 +110,7 @@ export default function UsersTab({
     setName(user.name);
     setType(user.type);
     setRole(user.role);
+    setUserEmail(user.email || '');
     setPassword(user.password || '');
     setIsEditModalOpen(true);
   };
@@ -127,6 +131,7 @@ export default function UsersTab({
       name: name.trim(),
       type,
       role: role.trim(),
+      email: userEmail.trim(),
       isTeacher: type === 'GiaoVien',
       password: password.trim()
     });
@@ -579,6 +584,16 @@ export default function UsersTab({
                   className="w-full border border-slate-300 rounded-lg p-2 focus:ring-1 focus:ring-blue-950 focus:outline-none"
                 />
               </div>
+              <div>
+                <label className="block font-bold text-slate-600 uppercase mb-1">Địa chỉ Email (Để trống sẽ tự động tạo)</label>
+                <input 
+                  type="email" 
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  placeholder="Ví dụ: nguyenthimai@thcshoaphu.edu.vn"
+                  className="w-full border border-slate-300 rounded-lg p-2 focus:ring-1 focus:ring-blue-950 focus:outline-none"
+                />
+              </div>
               
               {/* NEW PASSWORD FIELD FOR SINGLE ACCOUNT CREATION */}
               <div>
@@ -678,6 +693,16 @@ export default function UsersTab({
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   className="w-full border border-slate-300 rounded-lg p-2 focus:ring-1 focus:ring-blue-950 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-600 uppercase mb-1">Địa chỉ Email</label>
+                <input 
+                  type="email" 
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  placeholder="Ví dụ: user@thcshoaphu.edu.vn"
+                  className="w-full border border-slate-300 rounded-lg p-2 focus:ring-1 focus:ring-blue-950 focus:outline-none font-bold text-slate-800"
                 />
               </div>
               

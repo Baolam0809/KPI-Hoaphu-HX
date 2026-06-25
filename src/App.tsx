@@ -444,12 +444,12 @@ export default function App() {
   };
 
   // 7. Thêm/Sửa/Xóa Nhân sự (Chỉ admin hoặc Super Admin được quyền)
-  const handleAddUser = async (newUserData: Omit<User, 'avatar' | 'email'>) => {
+  const handleAddUser = async (newUserData: Omit<User, 'avatar'>) => {
     // Generate initials for avatar
     const nameParts = newUserData.name.split(' ');
     const lastWord = nameParts[nameParts.length - 1] || 'U';
     const avatar = lastWord.substring(0, 2).toUpperCase();
-    const email = `${newUserData.name.toLowerCase().replace(/\s+/g, '')}@thcshoaphu.edu.vn`;
+    const email = newUserData.email?.trim() || `${newUserData.name.toLowerCase().replace(/\s+/g, '')}@thcshoaphu.edu.vn`;
 
     const newUser: User = {
       ...newUserData,
@@ -571,7 +571,25 @@ export default function App() {
   // 8. Chỉnh sửa hồ sơ cá nhân hiện tại
   const handleUpdateProfile = async (updatedProfile: Partial<User>) => {
     if (currentUser === 'admin') {
-      showToast('Đã cập nhật thông tin cá nhân của Super Admin!');
+      const adminId = 'THCS-HP-012';
+      const updatedUsersList = users.map(u => 
+        u.id === adminId ? { ...u, ...updatedProfile } : u
+      );
+      saveUsersToCache(updatedUsersList);
+      showToast('Đã lưu chỉnh sửa thông tin hồ sơ cá nhân và cập nhật mật khẩu mới của Super Admin thành công!');
+
+      if (supabaseStatus === 'connected') {
+        const adminUser = updatedUsersList.find(u => u.id === adminId);
+        if (adminUser) {
+          try {
+            await saveUserToSupabase(adminUser);
+            showToast('Đã đồng bộ cập nhật hồ sơ Admin lên Supabase!');
+          } catch (err: any) {
+            console.error('Error syncing admin update profile:', err);
+            showToast('Lỗi đồng bộ hồ sơ Admin lên Supabase.');
+          }
+        }
+      }
     } else if (currentUser) {
       const updatedUsersList = users.map(u => 
         u.id === currentUser.id ? { ...u, ...updatedProfile } : u

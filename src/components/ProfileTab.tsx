@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserCog, Edit, Trash2, Check, Eye, EyeOff } from 'lucide-react';
 import { User } from '../types';
 
@@ -18,6 +18,14 @@ export default function ProfileTab({ currentUser, onUpdateProfile, onDeleteProfi
   const [email, setEmail] = useState(currentUser === 'admin' ? 'nghiemhongquan@thcshoaphu.edu.vn' : currentUser.email);
   const [bio, setBio] = useState(currentUser === 'admin' ? 'Tận tụy vì học sinh thân yêu, quyết tâm số hóa thành công các quy trình quản lý của trường THCS Hòa Phú.' : currentUser.bio);
   const [password, setPassword] = useState(currentUser === 'admin' ? 'Bomyvn78@' : (currentUser.password || ''));
+
+  // Sync state whenever currentUser changes
+  useEffect(() => {
+    setName(currentUser === 'admin' ? 'Nghiêm Hồng Quân' : currentUser.name);
+    setEmail(currentUser === 'admin' ? 'nghiemhongquan@thcshoaphu.edu.vn' : currentUser.email);
+    setBio(currentUser === 'admin' ? 'Tận tụy vì học sinh thân yêu, quyết tâm số hóa thành công các quy trình quản lý của trường THCS Hòa Phú.' : currentUser.bio);
+    setPassword(currentUser === 'admin' ? 'Bomyvn78@' : (currentUser.password || ''));
+  }, [currentUser]);
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -43,15 +51,6 @@ export default function ProfileTab({ currentUser, onUpdateProfile, onDeleteProfi
     setIsEditing(false);
   };
 
-  const handleDeleteAccount = () => {
-    setShowDeleteConfirm(true);
-  };
-
-  const confirmDeleteAccount = () => {
-    onDeleteProfile();
-    setShowDeleteConfirm(false);
-  };
-
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative" id="profile-tab-section">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-100 pb-3 mb-4 gap-2">
@@ -71,13 +70,6 @@ export default function ProfileTab({ currentUser, onUpdateProfile, onDeleteProfi
           >
             <Edit className="w-3.5 h-3.5" /> 
             {isEditing ? 'Hủy chỉnh sửa' : 'Chỉnh sửa'}
-          </button>
-          
-          <button 
-            onClick={handleDeleteAccount}
-            className="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 border border-red-200 transition cursor-pointer"
-          >
-            <Trash2 className="w-3.5 h-3.5" /> Xóa tài khoản
           </button>
         </div>
       </div>
@@ -186,43 +178,6 @@ export default function ProfileTab({ currentUser, onUpdateProfile, onDeleteProfi
           >
             <Check className="w-4 h-4" /> Lưu lại thông tin
           </button>
-        </div>
-      )}
-
-      {/* ====== MODAL: XÁC NHẬN XÓA TÀI KHOẢN CÁ NHÂN ====== */}
-      {showDeleteConfirm && (
-        <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60] cursor-pointer"
-          onClick={() => setShowDeleteConfirm(false)}
-        >
-          <div 
-            className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full p-6 cursor-default"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-2 text-red-600 mb-3">
-              <Trash2 className="w-6 h-6 shrink-0" />
-              <h4 className="font-extrabold text-slate-900 text-base">Xóa tài khoản cá nhân</h4>
-            </div>
-            <p className="text-xs text-slate-600 leading-relaxed mb-4">
-              Bạn có chắc chắn muốn xóa tài khoản này không? Mọi dữ liệu liên quan đến kết quả OKR/KPI của bạn sẽ bị xóa vĩnh viễn và bạn sẽ không thể đăng nhập được nữa.
-            </p>
-            <div className="flex justify-end gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="border border-slate-300 px-3 py-1.5 rounded-lg font-bold hover:bg-slate-50 cursor-pointer"
-              >
-                Hủy
-              </button>
-              <button
-                type="button"
-                onClick={confirmDeleteAccount}
-                className="bg-red-700 hover:bg-red-800 text-white font-bold px-4 py-1.5 rounded-lg cursor-pointer"
-              >
-                Xác nhận xóa tài khoản
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>
