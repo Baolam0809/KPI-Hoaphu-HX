@@ -9,11 +9,21 @@ export interface OKR {
   kr3Progress: number;
 }
 
+export interface Evidence {
+  id: string;
+  name: string;
+  type: 'image' | 'link';
+  url: string; // base64 data URL or external web link
+  fileType?: 'drive' | 'youtube' | 'word' | 'excel' | 'image' | 'other';
+  uploadedAt: string;
+}
+
 export interface KPI {
   criterion: string;
   weight: number;
   desc: string;
   value: number;
+  evidences?: Evidence[];
 }
 
 export interface User {

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Users, Search, Download, FileSpreadsheet, UserPlus, Trash2, Edit, X, FileCheck, Info, Eye } from 'lucide-react';
+import { Users, Search, Download, FileSpreadsheet, UserPlus, Trash2, Edit, X, FileCheck, Info, Eye, Key } from 'lucide-react';
 import { User } from '../types';
 import * as XLSX from 'xlsx';
 
@@ -32,6 +32,11 @@ export default function UsersTab({
   
   // Custom confirmation state for delete user
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+
+  // Custom states for resetting password
+  const [isResetPwdModalOpen, setIsResetPwdModalOpen] = useState(false);
+  const [resetPwdUser, setResetPwdUser] = useState<User | null>(null);
+  const [newGeneratedPwd, setNewGeneratedPwd] = useState('');
   
   // Single creation inputs
   const [name, setName] = useState('');
@@ -47,6 +52,20 @@ export default function UsersTab({
   const generateRandomPassword = () => {
     const randomCode = Math.floor(1000 + Math.random() * 9000);
     return `HP@${randomCode}`;
+  };
+
+  const handleOpenResetPwdModal = (user: User) => {
+    setResetPwdUser(user);
+    setNewGeneratedPwd(generateRandomPassword());
+    setIsResetPwdModalOpen(true);
+  };
+
+  const handleConfirmResetPwd = () => {
+    if (!resetPwdUser) return;
+    onUpdateUser(resetPwdUser.id, { password: newGeneratedPwd });
+    setIsResetPwdModalOpen(false);
+    showToast(`Đã cấp lại mật khẩu mới cho cán bộ ${resetPwdUser.name}: ${newGeneratedPwd}`);
+    setResetPwdUser(null);
   };
 
   const handleOpenAddModal = () => {
@@ -475,6 +494,13 @@ export default function UsersTab({
                         <Eye className="w-3 h-3" /> Xem
                       </button>
                       <button 
+                        onClick={() => handleOpenResetPwdModal(user)}
+                        className="text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold px-2 py-1 rounded transition border border-amber-200 cursor-pointer flex items-center gap-0.5"
+                        title="Cấp lại mật khẩu nhanh cho cán bộ"
+                      >
+                        <Key className="w-3 h-3" /> Cấp lại MK
+                      </button>
+                      <button 
                         onClick={() => handleOpenEditModal(user)}
                         className="text-[11px] bg-white hover:bg-blue-50 text-blue-600 font-bold px-2 py-1 rounded transition border border-blue-200 cursor-pointer flex items-center gap-0.5"
                         title="Sửa nhân viên và mật khẩu"
@@ -752,7 +778,7 @@ export default function UsersTab({
         </div>
       )}
 
-      {/* ====== MODAL: XÁC NHẬN XÓA TÀI KHOẢN CÁN BỘ ====== */}
+      {/* ====== MODAL: XÁC NHẬN XÓA TÀI KHÁN CÁN BỘ ====== */}
       {userToDelete && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full p-6">
@@ -777,6 +803,65 @@ export default function UsersTab({
                 className="bg-red-700 hover:bg-red-800 text-white font-bold px-4 py-1.5 rounded-lg cursor-pointer"
               >
                 Xác nhận xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====== MODAL: CẤP LẠI MẬT KHẨU ====== */}
+      {isResetPwdModalOpen && resetPwdUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full p-6 animate-fade-in">
+            <div className="flex items-center gap-2 text-amber-600 mb-3">
+              <Key className="w-6 h-6 shrink-0 animate-pulse" />
+              <h4 className="font-extrabold text-slate-900 text-base">Cấp lại mật khẩu nhanh</h4>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed mb-4">
+              Bạn đang yêu cầu cấp lại mật khẩu cho cán bộ <strong className="text-slate-800 font-extrabold">"{resetPwdUser.name}"</strong> (Mã nhân sự: <span className="font-mono font-bold text-blue-900">{resetPwdUser.id}</span>).
+            </p>
+            
+            <div className="mb-4">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Mật khẩu mới đề xuất</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={newGeneratedPwd}
+                  onChange={(e) => setNewGeneratedPwd(e.target.value)}
+                  className="flex-1 border border-slate-300 rounded-lg p-2.5 font-mono text-sm focus:ring-1 focus:ring-amber-500 focus:outline-none font-bold text-blue-950 bg-amber-50/30"
+                />
+                <button 
+                  type="button"
+                  onClick={() => setNewGeneratedPwd(generateRandomPassword())}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg border border-slate-300 transition cursor-pointer"
+                >
+                  Đổi
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-100 p-2.5 rounded-lg mb-4 text-[11px] text-amber-800 flex gap-1.5">
+              <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+              <span>Sau khi xác nhận, mật khẩu của cán bộ này sẽ thay đổi ngay lập tức. Hãy sao chép mật khẩu mới này để bàn giao cho cán bộ.</span>
+            </div>
+
+            <div className="flex justify-end gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsResetPwdModalOpen(false);
+                  setResetPwdUser(null);
+                }}
+                className="border border-slate-300 px-3 py-1.5 rounded-lg font-bold hover:bg-slate-50 cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmResetPwd}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-1.5 rounded-lg cursor-pointer shadow-sm"
+              >
+                Xác nhận cấp lại
               </button>
             </div>
           </div>

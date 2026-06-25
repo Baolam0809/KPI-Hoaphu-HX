@@ -173,7 +173,24 @@ export async function loadAllDataFromSupabase(): Promise<{
       const { user_id, id, created_at, ...rest } = kpi;
       if (user_id) {
         if (!allKpis[user_id]) allKpis[user_id] = [];
-        allKpis[user_id].push(rest as KPI);
+        
+        let desc = rest.desc || '';
+        let evidences: any[] = [];
+        const match = desc.match(/ \[EVIDENCES_JSON_METADATA:(.*)\]$/);
+        if (match) {
+          try {
+            evidences = JSON.parse(match[1]);
+            desc = desc.replace(/ \[EVIDENCES_JSON_METADATA:(.*)\]$/, '');
+          } catch (e) {
+            console.error('Error parsing evidences metadata:', e);
+          }
+        }
+        
+        allKpis[user_id].push({
+          ...rest,
+          desc,
+          evidences: evidences.length > 0 ? evidences : undefined
+        });
       }
     });
   }
@@ -266,13 +283,19 @@ export async function saveUserKpisToSupabase(userId: string, kpis: KPI[]): Promi
 
   if (kpis.length === 0) return;
 
-  const rowsToInsert = kpis.map(kpi => ({
-    user_id: userId,
-    criterion: kpi.criterion,
-    weight: kpi.weight,
-    desc: kpi.desc,
-    value: kpi.value
-  }));
+  const rowsToInsert = kpis.map(kpi => {
+    let finalDesc = kpi.desc;
+    if (kpi.evidences && kpi.evidences.length > 0) {
+      finalDesc = `${kpi.desc} [EVIDENCES_JSON_METADATA:${JSON.stringify(kpi.evidences)}]`;
+    }
+    return {
+      user_id: userId,
+      criterion: kpi.criterion,
+      weight: kpi.weight,
+      desc: finalDesc,
+      value: kpi.value
+    };
+  });
 
   const { error: insertError } = await supabase
     .from('thcs_hp_kpis')

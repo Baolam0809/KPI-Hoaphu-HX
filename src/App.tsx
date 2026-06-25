@@ -423,6 +423,26 @@ export default function App() {
     }
   };
 
+  const handleKpiEvidencesChange = async (index: number, evidences: any[]) => {
+    const updatedUserKpis = [...activeUserKpis];
+    if (updatedUserKpis[index]) {
+      updatedUserKpis[index].evidences = evidences;
+    }
+    const updatedKpis = {
+      ...allKpis,
+      [activeUserId]: updatedUserKpis
+    };
+    saveKpisToCache(updatedKpis);
+
+    if (supabaseStatus === 'connected') {
+      try {
+        await saveUserKpisToSupabase(activeUserId, updatedUserKpis);
+      } catch (err: any) {
+        console.error('Error syncing KPIs evidences:', err);
+      }
+    }
+  };
+
   // 7. Thêm/Sửa/Xóa Nhân sự (Chỉ admin hoặc Super Admin được quyền)
   const handleAddUser = async (newUserData: Omit<User, 'avatar' | 'email'>) => {
     // Generate initials for avatar
@@ -641,16 +661,18 @@ export default function App() {
               >
                 Trang Chủ
               </button>
-              <button 
-                onClick={() => setActiveTab('tab-users')} 
-                className={`px-4 py-3 border-b-2 transition flex items-center gap-1.5 cursor-pointer ${
-                  activeTab === 'tab-users' 
-                    ? 'border-yellow-400 bg-blue-900/40 text-yellow-300 font-black' 
-                    : 'border-transparent hover:border-yellow-400 hover:bg-blue-900/40'
-                }`}
-              >
-                Admin Quản Trị
-              </button>
+              {currentUser === 'admin' && (
+                <button 
+                  onClick={() => setActiveTab('tab-users')} 
+                  className={`px-4 py-3 border-b-2 transition flex items-center gap-1.5 cursor-pointer ${
+                    activeTab === 'tab-users' 
+                      ? 'border-yellow-400 bg-blue-900/40 text-yellow-300 font-black' 
+                      : 'border-transparent hover:border-yellow-400 hover:bg-blue-900/40'
+                  }`}
+                >
+                  Admin Quản Trị
+                </button>
+              )}
             </div>
           </div>
           <div className="py-2 px-3 text-xs text-blue-200 flex items-center flex-wrap gap-3">
@@ -815,6 +837,7 @@ export default function App() {
               <KpiSection 
                 kpis={activeUserKpis}
                 onKpiValueChange={handleKpiValueChange}
+                onKpiEvidencesChange={handleKpiEvidencesChange}
                 readOnly={!canEditActiveData}
               />
             </div>
@@ -830,7 +853,7 @@ export default function App() {
           )}
 
           {/* ====== TAB 3: DANH SÁCH NHÂN SỰ ====== */}
-          {activeTab === 'tab-users' && (
+          {activeTab === 'tab-users' && currentUser === 'admin' && (
             <UsersTab 
               users={users}
               onAddUser={handleAddUser}
