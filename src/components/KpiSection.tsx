@@ -373,7 +373,12 @@ export default function KpiSection({
 
       {/* ====== MODAL: THÊM MINH CHỨNG ====== */}
       {activeKpiIndex !== null && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setActiveKpiIndex(null);
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6 animate-fade-in">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
               <div className="flex items-center gap-1.5 text-emerald-700">
@@ -527,7 +532,7 @@ export default function KpiSection({
                   onClick={() => setActiveKpiIndex(null)}
                   className="border border-slate-300 px-3.5 py-2 rounded-lg font-bold hover:bg-slate-50 cursor-pointer"
                 >
-                  Hủy bỏ
+                  Quay về
                 </button>
                 <button
                   type="button"
@@ -544,7 +549,12 @@ export default function KpiSection({
 
       {/* ====== MODAL: XEM ẢNH MINH CHỨNG FULL SIZE ====== */}
       {previewImage && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 z-[70]">
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 z-[70]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setPreviewImage(null);
+          }}
+        >
           <div className="bg-white rounded-xl shadow-2xl border border-slate-300 max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
             <div className="bg-slate-900 text-white p-4 flex items-center justify-between">
               <span className="font-extrabold text-sm truncate">{previewImage.name}</span>

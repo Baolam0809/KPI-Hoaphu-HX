@@ -752,7 +752,13 @@ export default function SettingsTab({
 
       {/* ====== MODAL: XÁC NHẬN XÓA THÔNG BÁO BGH ====== */}
       {notifToDelete && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]" id="confirm-delete-notif-modal">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]" 
+          id="confirm-delete-notif-modal"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setNotifToDelete(null);
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full p-6">
             <div className="flex items-center gap-2 text-red-600 mb-3">
               <Trash2 className="w-6 h-6 shrink-0" />
@@ -788,7 +794,13 @@ export default function SettingsTab({
 
       {/* ====== MODAL: XÁC NHẬN XÓA LỊCH HOẠT ĐỘNG ====== */}
       {schedToDelete && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]" id="confirm-delete-sched-modal">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]" 
+          id="confirm-delete-sched-modal"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSchedToDelete(null);
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full p-6">
             <div className="flex items-center gap-2 text-red-600 mb-3">
               <Trash2 className="w-6 h-6 shrink-0" />

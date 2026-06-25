@@ -191,7 +191,12 @@ export default function ProfileTab({ currentUser, onUpdateProfile, onDeleteProfi
 
       {/* ====== MODAL: XÁC NHẬN XÓA TÀI KHOẢN CÁ NHÂN ====== */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowDeleteConfirm(false);
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full p-6">
             <div className="flex items-center gap-2 text-red-600 mb-3">
               <Trash2 className="w-6 h-6 shrink-0" />

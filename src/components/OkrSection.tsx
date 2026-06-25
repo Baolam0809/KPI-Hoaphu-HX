@@ -379,7 +379,12 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
 
       {/* ====== MODAL: THÊM MỚI OKR ====== */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsAddModalOpen(false);
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6">
             <div className="relative flex items-center justify-between border-b pb-3 mb-4">
               <h3 className="font-extrabold text-slate-900 flex items-center gap-1 text-xs sm:text-sm md:text-base">
@@ -586,7 +591,12 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
 
       {/* ====== MODAL: HIỆU CHỈNH OKR ====== */}
       {isEditModalOpen && selectedOkr && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsEditModalOpen(false);
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6">
             <div className="relative flex items-center justify-between border-b pb-3 mb-4">
               <h3 className="font-extrabold text-slate-900 flex items-center gap-1 text-xs sm:text-sm md:text-base">
@@ -790,7 +800,12 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
 
       {/* ====== MODAL: XÁC NHẬN XÓA OKR ====== */}
       {okrToDelete && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setOkrToDelete(null);
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full p-6">
             <div className="flex items-center gap-2 text-red-600 mb-3">
               <AlertTriangle className="w-6 h-6 shrink-0" />
@@ -821,7 +836,12 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
 
       {/* ====== MODAL: XÁC NHẬN XÓA BIỂU MẪU ====== */}
       {tmplToDelete && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setTmplToDelete(null);
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full p-6">
             <div className="flex items-center gap-2 text-red-600 mb-3">
               <AlertTriangle className="w-6 h-6 shrink-0" />
@@ -852,7 +872,12 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
 
       {/* ====== MODAL: ĐỔI TÊN BIỂU MẪU ====== */}
       {tmplToRename && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setTmplToRename(null);
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full p-6">
             <div className="flex items-center gap-2 text-blue-750 mb-3">
               <Edit3 className="w-5 h-5 shrink-0 text-blue-700" />
@@ -893,7 +918,15 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
 
       {/* ====== MODAL: LƯU BIỂU MẪU MỚI ====== */}
       {isSavingTemplate && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsSavingTemplate(false);
+              setValidationError('');
+            }
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full p-6">
             <div className="flex items-center gap-2 text-slate-800 mb-3">
               <FolderOpen className="w-5 h-5 shrink-0 text-red-700" />

@@ -525,7 +525,12 @@ export default function UsersTab({
 
       {/* ====== DIALOG: THÊM MỚI NHÂN VIÊN ====== */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsAddModalOpen(false);
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border max-w-sm w-full p-6">
             <div className="flex items-center justify-between border-b pb-3 mb-4">
               <h3 className="font-extrabold text-slate-900 flex items-center gap-1.5 text-base">
@@ -613,7 +618,12 @@ export default function UsersTab({
 
       {/* ====== DIALOG: HIỆU CHỈNH NHÂN VIÊN ====== */}
       {isEditModalOpen && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsEditModalOpen(false);
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border max-w-sm w-full p-6">
             <div className="flex items-center justify-between border-b pb-3 mb-4">
               <h3 className="font-extrabold text-slate-900 flex items-center gap-1.5 text-base">
@@ -707,7 +717,12 @@ export default function UsersTab({
 
       {/* ====== PREVIEW CẤP TÀI KHOẢN ĐỒNG LOẠT (MOCK PREVIEW) ====== */}
       {isBulkModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsBulkModalOpen(false);
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-2xl w-full p-6">
             <div className="flex items-center justify-between border-b pb-3 mb-4">
               <h3 className="font-extrabold text-slate-900 flex items-center gap-1.5 text-base">
@@ -780,7 +795,12 @@ export default function UsersTab({
 
       {/* ====== MODAL: XÁC NHẬN XÓA TÀI KHÁN CÁN BỘ ====== */}
       {userToDelete && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setUserToDelete(null);
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full p-6">
             <div className="flex items-center gap-2 text-red-600 mb-3">
               <Trash2 className="w-6 h-6 shrink-0" />
@@ -811,7 +831,15 @@ export default function UsersTab({
 
       {/* ====== MODAL: CẤP LẠI MẬT KHẨU ====== */}
       {isResetPwdModalOpen && resetPwdUser && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsResetPwdModalOpen(false);
+              setResetPwdUser(null);
+            }
+          }}
+        >
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full p-6 animate-fade-in">
             <div className="flex items-center gap-2 text-amber-600 mb-3">
               <Key className="w-6 h-6 shrink-0 animate-pulse" />

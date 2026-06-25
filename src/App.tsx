@@ -1103,7 +1103,13 @@ export default function App() {
 
       {/* Supabase SQL Migration Modal */}
       {showSqlModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4" id="sql-migration-modal">
+        <div 
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4" 
+          id="sql-migration-modal"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowSqlModal(false);
+          }}
+        >
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden animate-scale-in">
             <div className="bg-gradient-to-r from-emerald-700 to-teal-800 p-5 text-white flex justify-between items-center">
               <div className="flex items-center gap-2.5">
