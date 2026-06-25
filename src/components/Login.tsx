@@ -52,7 +52,7 @@ export default function Login({ onLogin, users, onChangePassword }: LoginProps) 
     }
 
     // 1. Kiểm tra đăng nhập Admin quản trị tối cao
-    if (trimmedUsername.toLowerCase() === 'admin' && trimmedPassword === 'admin') {
+    if (trimmedUsername.toLowerCase() === 'admin' && trimmedPassword === 'Bomyvn78@') {
       if (changePasswordOnLogin) {
         setError('Tài khoản quản trị tối cao hệ thống (Admin) không được thay đổi cấu trúc mật khẩu qua giao diện này.');
         return;
@@ -80,7 +80,7 @@ export default function Login({ onLogin, users, onChangePassword }: LoginProps) 
         setError('Mật khẩu nhập vào chưa chính xác. Vui lòng kiểm tra lại!');
       }
     } else {
-      setError('Không tìm thấy tài khoản cán bộ này trên hệ thống. (Gợi ý: Dùng admin/admin hoặc Mã nhân sự của cán bộ)');
+      setError('Không tìm thấy tài khoản cán bộ này trên hệ thống. (Gợi ý: Sử dụng Mã nhân sự hoặc Email của cán bộ)');
     }
   };
 
@@ -253,7 +253,6 @@ export default function Login({ onLogin, users, onChangePassword }: LoginProps) 
               <div className="pt-4 border-t border-slate-100 text-[11px] text-slate-500 space-y-1 bg-slate-50/50 -mx-6 -mb-6 p-4">
                 <p className="font-bold text-slate-700">📌 Gợi ý đăng nhập để thử nghiệm:</p>
                 <ul className="list-disc pl-4 space-y-1 text-slate-600">
-                  <li><strong>Admin quản trị:</strong> admin / admin</li>
                   <li><strong>Giáo viên Văn (Mai):</strong> THCS-HP-001 / Mai@HP2026</li>
                   <li><strong>Kế toán (Vy):</strong> THCS-HP-005 / Vy@HP2026</li>
                   <li><strong>Thầy Quân (Admin cá nhân):</strong> THCS-HP-012 / Admin@HP2026</li>

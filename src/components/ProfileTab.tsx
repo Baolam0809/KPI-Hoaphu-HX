@@ -17,7 +17,7 @@ export default function ProfileTab({ currentUser, onUpdateProfile, onDeleteProfi
   const [name, setName] = useState(currentUser === 'admin' ? 'Nghiêm Hồng Quân' : currentUser.name);
   const [email, setEmail] = useState(currentUser === 'admin' ? 'nghiemhongquan@thcshoaphu.edu.vn' : currentUser.email);
   const [bio, setBio] = useState(currentUser === 'admin' ? 'Tận tụy vì học sinh thân yêu, quyết tâm số hóa thành công các quy trình quản lý của trường THCS Hòa Phú.' : currentUser.bio);
-  const [password, setPassword] = useState(currentUser === 'admin' ? 'Admin@HP2026' : (currentUser.password || ''));
+  const [password, setPassword] = useState(currentUser === 'admin' ? 'Bomyvn78@' : (currentUser.password || ''));
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -25,7 +25,7 @@ export default function ProfileTab({ currentUser, onUpdateProfile, onDeleteProfi
       setName(currentUser === 'admin' ? 'Nghiêm Hồng Quân' : currentUser.name);
       setEmail(currentUser === 'admin' ? 'nghiemhongquan@thcshoaphu.edu.vn' : currentUser.email);
       setBio(currentUser === 'admin' ? 'Tận tụy vì học sinh thân yêu, quyết tâm số hóa thành công các quy trình quản lý của trường THCS Hòa Phú.' : currentUser.bio);
-      setPassword(currentUser === 'admin' ? 'Admin@HP2026' : (currentUser.password || ''));
+      setPassword(currentUser === 'admin' ? 'Bomyvn78@' : (currentUser.password || ''));
       setIsEditing(false);
     } else {
       setIsEditing(true);
