@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Target, Plus, Edit3, Trash2, X, AlertTriangle, FolderOpen } from 'lucide-react';
+import { Target, Plus, Edit3, Trash2, X, AlertTriangle, FolderOpen, Lock } from 'lucide-react';
 import { OKR } from '../types';
 
 interface OKRTemplate {
@@ -66,9 +66,10 @@ interface OkrSectionProps {
   onAddOkr: (okr: Omit<OKR, 'id'>) => void;
   onUpdateOkr: (id: string, updatedOkr: Partial<OKR>) => void;
   onDeleteOkr: (id: string) => void;
+  readOnly?: boolean;
 }
 
-export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr }: OkrSectionProps) {
+export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, readOnly = false }: OkrSectionProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedOkr, setSelectedOkr] = useState<OKR | null>(null);
@@ -272,12 +273,18 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr }:
             <p className="text-xs text-slate-500">Mục tiêu đổi mới & nâng cao chất lượng giáo dục</p>
           </div>
         </div>
-        <button 
-          onClick={openAddModal} 
-          className="bg-red-700 hover:bg-red-800 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 transition shadow-sm cursor-pointer"
-        >
-          <Plus className="w-3.5 h-3.5" /> Thêm OKR mới
-        </button>
+        {!readOnly ? (
+          <button 
+            onClick={openAddModal} 
+            className="bg-red-700 hover:bg-red-800 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 transition shadow-sm cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" /> Thêm OKR mới
+          </button>
+        ) : (
+          <span className="bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shadow-2xs select-none">
+            <Lock className="w-3 h-3 text-slate-400" /> Chế độ chỉ xem
+          </span>
+        )}
       </div>
 
       {/* List of OKRs */}
@@ -286,7 +293,9 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr }:
           <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
             <AlertTriangle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
             <p className="text-xs text-slate-500 font-bold">Chưa có mục tiêu OKR nào được tạo cho cán bộ này!</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Nhấp vào nút "Thêm OKR mới" ở trên để khởi tạo.</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {readOnly ? 'Hồ sơ hiện tại không có dữ liệu OKR.' : 'Nhấp vào nút "Thêm OKR mới" ở trên để khởi tạo.'}
+            </p>
           </div>
         ) : (
           okrs.map((okr, index) => {
@@ -310,22 +319,24 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr }:
                   </div>
                   
                   {/* Action Buttons */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button 
-                      onClick={() => openEditModal(okr)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-blue-700 hover:bg-slate-100 transition cursor-pointer"
-                      title="Sửa OKR"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(okr)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-700 hover:bg-slate-100 transition cursor-pointer"
-                      title="Xóa OKR"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  {!readOnly && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button 
+                        onClick={() => openEditModal(okr)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-blue-700 hover:bg-slate-100 transition cursor-pointer"
+                        title="Sửa OKR"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(okr)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-700 hover:bg-slate-100 transition cursor-pointer"
+                        title="Xóa OKR"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Key Results Progress and Sliders */}
@@ -349,10 +360,13 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr }:
                           min="0" 
                           max="100" 
                           value={kr.progress} 
-                          onChange={(e) => onUpdateOkr(okr.id, { [kr.field]: parseInt(e.target.value) })}
-                          className="flex-1 accent-red-700 h-1.5 cursor-pointer"
+                          onChange={(e) => !readOnly && onUpdateOkr(okr.id, { [kr.field]: parseInt(e.target.value) })}
+                          disabled={readOnly}
+                          className={`flex-1 h-1.5 ${readOnly ? 'accent-slate-400 cursor-not-allowed' : 'accent-red-700 cursor-pointer'}`}
                         />
-                        <span className="text-[10px] text-slate-400 font-medium shrink-0">Kéo sửa nhanh</span>
+                        <span className="text-[10px] text-slate-400 font-medium shrink-0">
+                          {readOnly ? 'Chỉ xem' : 'Kéo sửa nhanh'}
+                        </span>
                       </div>
                     </div>
                   ))}

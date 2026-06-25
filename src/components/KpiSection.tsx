@@ -1,13 +1,14 @@
 import React from 'react';
-import { LineChart, AlertTriangle } from 'lucide-react';
+import { LineChart, AlertTriangle, Info } from 'lucide-react';
 import { KPI } from '../types';
 
 interface KpiSectionProps {
   kpis: KPI[];
   onKpiValueChange: (index: number, value: number) => void;
+  readOnly?: boolean;
 }
 
-export default function KpiSection({ kpis, onKpiValueChange }: KpiSectionProps) {
+export default function KpiSection({ kpis, onKpiValueChange, readOnly = false }: KpiSectionProps) {
   // Tính tổng điểm KPI có trọng số
   const calculateTotal = () => {
     let weightedSum = 0;
@@ -64,12 +65,21 @@ export default function KpiSection({ kpis, onKpiValueChange }: KpiSectionProps) 
         </div>
       </div>
 
-      <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex gap-1.5 items-start">
-        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
-        <span>
-          <strong>Mẹo giả lập:</strong> Bạn có thể sử dụng thanh trượt hoặc trường nhập liệu trực tiếp dưới đây để thay đổi điểm số thực đạt. Điểm tổng và xếp loại thi đua cuối kỳ sẽ được tự động tính toán lại ngay tức thì!
-        </span>
-      </div>
+      {readOnly ? (
+        <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex gap-1.5 items-start">
+          <Info className="w-4 h-4 shrink-0 mt-0.5 text-blue-600" />
+          <span>
+            <strong>Chế độ chỉ xem:</strong> Bạn đang xem điểm KPI của cán bộ khác. Toàn bộ các tiêu chí và điểm số dưới đây là cố định và không thể chỉnh sửa.
+          </span>
+        </div>
+      ) : (
+        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex gap-1.5 items-start">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+          <span>
+            <strong>Mẹo giả lập:</strong> Bạn có thể sử dụng thanh trượt hoặc trường nhập liệu trực tiếp dưới đây để thay đổi điểm số thực đạt. Điểm tổng và xếp loại thi đua cuối kỳ sẽ được tự động tính toán lại ngay tức thì!
+          </span>
+        </div>
+      )}
 
       {/* KPI Items Table */}
       <div className="overflow-x-auto">
@@ -101,16 +111,26 @@ export default function KpiSection({ kpis, onKpiValueChange }: KpiSectionProps) 
                       min="0" 
                       max="100" 
                       value={kpi.value} 
-                      onChange={(e) => handleInputChange(index, e.target.value)}
-                      className="w-16 border border-slate-300 rounded text-center font-bold text-slate-800 p-1 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                      onChange={(e) => !readOnly && handleInputChange(index, e.target.value)}
+                      disabled={readOnly}
+                      className={`w-16 border rounded text-center font-bold p-1 text-xs focus:outline-none ${
+                        readOnly 
+                          ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed' 
+                          : 'border-slate-300 text-slate-800 focus:ring-1 focus:ring-emerald-500'
+                      }`}
                     />
                     <input 
                       type="range" 
                       min="0" 
                       max="100" 
                       value={kpi.value} 
-                      onChange={(e) => onKpiValueChange(index, parseInt(e.target.value) || 0)}
-                      className="w-24 accent-emerald-600 h-1.5 cursor-pointer"
+                      onChange={(e) => !readOnly && onKpiValueChange(index, parseInt(e.target.value) || 0)}
+                      disabled={readOnly}
+                      className={`w-24 h-1.5 ${
+                        readOnly 
+                          ? 'accent-slate-300 cursor-not-allowed opacity-60' 
+                          : 'accent-emerald-600 cursor-pointer'
+                      }`}
                     />
                   </div>
                 </td>

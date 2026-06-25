@@ -38,6 +38,7 @@ import {
 export default function App() {
   // State đăng nhập
   const [currentUser, setCurrentUser] = useState<User | 'admin' | null>(null);
+  const [viewedUserId, setViewedUserId] = useState<string | null>(null);
 
   // States dữ liệu hệ thống (Lưu & Tải từ Local Storage)
   const [users, setUsers] = useState<User[]>([]);
@@ -297,6 +298,7 @@ export default function App() {
   // 3. Logic Đăng nhập / Đăng xuất
   const handleLogin = (user: User | 'admin') => {
     setCurrentUser(user);
+    setViewedUserId(null);
     setActiveTab('tab-main');
     
     const userName = user === 'admin' ? 'Nghiêm Hồng Quân (Super Admin)' : user.name;
@@ -305,11 +307,13 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    setViewedUserId(null);
     showToast('Đã đăng xuất tài khoản cá nhân an toàn!');
   };
 
   // 4. Logic chuyển đổi Simulator nhanh trên thanh Header
   const handleSwitchSimulatedUser = (userId: string | 'admin') => {
+    setViewedUserId(null);
     if (userId === 'admin') {
       setCurrentUser('admin');
       showToast('Đã chuyển đổi sang tài khoản Quản trị tối cao (Super Admin)');
@@ -323,8 +327,12 @@ export default function App() {
   };
 
   // Lấy ID cán bộ hiện tại đang làm việc
-  const activeUserId = currentUser === 'admin' ? 'THCS-HP-012' : (currentUser?.id || 'THCS-HP-012');
+  const activeUserId = viewedUserId || (currentUser === 'admin' ? 'THCS-HP-012' : (currentUser?.id || 'THCS-HP-012'));
+  const canEditActiveData = currentUser === 'admin' || (currentUser && currentUser !== 'admin' && activeUserId === currentUser.id);
   const isBghOrAdmin = currentUser === 'admin' || (currentUser && currentUser !== 'admin' && currentUser.type === 'BGH');
+
+  const activeUser = users.find(u => u.id === activeUserId);
+  const activeUserName = activeUser ? activeUser.name : (currentUser === 'admin' ? 'Nghiêm Hồng Quân' : (currentUser?.name || ''));
 
   // Lấy OKRs & KPIs của người dùng đang được chọn
   const activeUserOkrs = allOkrs[activeUserId] || [];
@@ -529,7 +537,7 @@ export default function App() {
   const handleViewEmployee = (userId: string) => {
     const found = users.find(u => u.id === userId);
     if (found) {
-      setCurrentUser(found);
+      setViewedUserId(userId);
       setActiveTab('tab-main');
       showToast(`Đang hiển thị mục tiêu OKR và điểm KPI của: ${found.name}`);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -766,18 +774,48 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Viewed User Info Banner (Read-only mode warning) */}
+              {viewedUserId && viewedUserId !== (currentUser === 'admin' ? 'THCS-HP-012' : currentUser?.id) && (
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-fade-in">
+                  <div className="flex items-start gap-3">
+                    <span className="p-2 bg-blue-100 rounded-lg text-blue-700 shrink-0 mt-0.5 sm:mt-0">
+                      <ShieldAlert className="w-5 h-5 animate-pulse text-blue-600" />
+                    </span>
+                    <div>
+                      <h3 className="font-extrabold text-slate-950 text-xs md:text-sm leading-snug">
+                        Chế độ xem hồ sơ đồng nghiệp
+                      </h3>
+                      <p className="text-[11px] text-slate-600 mt-1">
+                        Bạn đang xem dữ liệu OKR và điểm KPI của cán bộ: <strong className="text-blue-900 font-extrabold">{activeUserName}</strong>.
+                      </p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        Theo quy định an toàn hệ thống, bạn chỉ được quyền xem và không thể thực hiện thêm, sửa hoặc xóa dữ liệu này.
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setViewedUserId(null)}
+                    className="bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition shadow-sm cursor-pointer whitespace-nowrap self-start sm:self-auto"
+                  >
+                    Quay lại hồ sơ của tôi
+                  </button>
+                </div>
+              )}
+
               {/* OKR WORKSPACE SECTION */}
               <OkrSection 
                 okrs={activeUserOkrs}
                 onAddOkr={handleAddOkr}
                 onUpdateOkr={handleUpdateOkr}
                 onDeleteOkr={handleDeleteOkr}
+                readOnly={!canEditActiveData}
               />
 
               {/* KPI WORKSPACE SECTION */}
               <KpiSection 
                 kpis={activeUserKpis}
                 onKpiValueChange={handleKpiValueChange}
+                readOnly={!canEditActiveData}
               />
             </div>
           )}
