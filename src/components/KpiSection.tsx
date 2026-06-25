@@ -75,6 +75,16 @@ export default function KpiSection({
   const [uploadError, setUploadError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Lưu thông tin bản nháp (draft) của minh chứng đang làm dở/chưa xong theo từng tiêu chí KPI
+  const [drafts, setDrafts] = useState<Record<number, {
+    evidenceName: string;
+    evidenceType: 'image' | 'link';
+    linkUrl: string;
+    linkType: 'drive' | 'youtube' | 'word' | 'excel' | 'other';
+    imageBase64: string;
+    uploadError: string;
+  }>>({});
+
   // Preview full size image state
   const [previewImage, setPreviewImage] = useState<{name: string, url: string} | null>(null);
 
@@ -194,6 +204,13 @@ export default function KpiSection({
 
     onKpiEvidencesChange(activeKpiIndex, [...currentEvidences, newEvidence]);
     
+    // Xóa bản nháp sau khi đã lưu thành công
+    setDrafts(prev => {
+      const copy = { ...prev };
+      delete copy[activeKpiIndex];
+      return copy;
+    });
+
     // Reset states
     setActiveKpiIndex(null);
     setEvidenceName('');
@@ -204,14 +221,42 @@ export default function KpiSection({
     setUploadError('');
   };
 
+  const openEvidenceModal = (index: number) => {
+    setActiveKpiIndex(index);
+    const draft = drafts[index];
+    if (draft) {
+      setEvidenceName(draft.evidenceName);
+      setEvidenceType(draft.evidenceType);
+      setLinkUrl(draft.linkUrl);
+      setLinkType(draft.linkType);
+      setImageBase64(draft.imageBase64);
+      setUploadError(draft.uploadError);
+    } else {
+      setEvidenceName('');
+      setEvidenceType('image');
+      setLinkUrl('');
+      setLinkType('drive');
+      setImageBase64('');
+      setUploadError('');
+    }
+  };
+
   const handleCloseEvidenceModal = () => {
+    if (activeKpiIndex !== null) {
+      // Tự động lưu thông tin làm dở vào bản nháp khi đóng modal xuống (kích chuột ra khoảng trống hoặc ấn quay lại)
+      setDrafts(prev => ({
+        ...prev,
+        [activeKpiIndex]: {
+          evidenceName,
+          evidenceType,
+          linkUrl,
+          linkType,
+          imageBase64,
+          uploadError
+        }
+      }));
+    }
     setActiveKpiIndex(null);
-    setEvidenceName('');
-    setEvidenceType('image');
-    setLinkUrl('');
-    setLinkType('drive');
-    setImageBase64('');
-    setUploadError('');
   };
 
   const handleDeleteEvidence = (kpiIndex: number, evidenceId: string) => {
@@ -364,10 +409,7 @@ export default function KpiSection({
                     {!readOnly && onKpiEvidencesChange && (
                       <button
                         type="button"
-                        onClick={() => {
-                          setActiveKpiIndex(index);
-                          setUploadError('');
-                        }}
+                        onClick={() => openEvidenceModal(index)}
                         className="flex items-center gap-1 self-start px-2 py-1 text-[11px] font-extrabold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition cursor-pointer"
                       >
                         <Plus className="w-3 h-3" /> Đính kèm minh chứng
