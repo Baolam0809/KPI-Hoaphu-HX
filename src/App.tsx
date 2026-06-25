@@ -326,6 +326,25 @@ export default function App() {
     }
   };
 
+  // Xử lý đóng tab làm việc khi kích chuột ra khoảng trống màn hình
+  const handleBackgroundClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (activeTab === 'tab-main') return;
+
+    const target = e.target as HTMLElement;
+    
+    // Kiểm tra xem vị trí click có thuộc về các phân vùng chức năng hoạt động hay không
+    const isInsideWorkspace = target.closest('#main-workspace-section');
+    const isInsideSidebar = target.closest('#sidebar-aside') || target.closest('aside');
+    const isInsideNavbar = target.closest('#sticky-navbar') || target.closest('nav');
+    const isInsideHeader = target.closest('header') || target.closest('#app-header');
+    const isToast = target.closest('.hot-toast') || target.closest('#toast-container') || target.closest('[role="status"]');
+
+    // Nếu không click vào bất kỳ phân vùng nào ở trên, chuyển tab về trang chủ (tab-main) để đóng tab làm việc xuống
+    if (!isInsideWorkspace && !isInsideSidebar && !isInsideNavbar && !isInsideHeader && !isToast) {
+      setActiveTab('tab-main');
+    }
+  };
+
   // Lấy ID cán bộ hiện tại đang làm việc
   const activeUserId = viewedUserId || (currentUser === 'admin' ? 'THCS-HP-020' : (currentUser?.id || 'THCS-HP-020'));
   const canEditActiveData = currentUser === 'admin' || (currentUser && currentUser !== 'admin' && activeUserId === currentUser.id);
@@ -658,7 +677,10 @@ export default function App() {
   }
 
   return (
-    <div className="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased relative">
+    <div 
+      className="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased relative"
+      onClick={handleBackgroundClick}
+    >
       
       {/* 1. HEADER BANNER WITH SIMULATOR & LOGOUT */}
       <Header 
@@ -797,124 +819,124 @@ export default function App() {
         />
 
         {/* CENTER COLUMN: MAIN WORKSPACE */}
-        <section className="col-span-1 lg:col-span-6 flex flex-col gap-6">
+        <section className="col-span-1 lg:col-span-6 flex flex-col gap-6" id="main-workspace-section">
           
           {/* ====== TAB 1: TỔNG QUAN HỆ THỐNG ====== */}
-          {activeTab === 'tab-main' && (
-            <div className="space-y-6 animate-fade-in">
-              {/* Dynamic Hero Banner */}
-              {settings.heroBannerUrl && (
-                <div 
-                  className="w-full h-40 sm:h-48 md:h-52 rounded-xl shadow-sm relative overflow-hidden flex items-end p-5 border border-slate-200"
-                  id="main-hero-banner"
-                  style={{
-                    backgroundImage: `linear-gradient(to top, rgba(15, 23, 42, 0.95) 15%, rgba(15, 23, 42, 0.25) 100%), url(${settings.heroBannerUrl})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                >
-                  <div className="z-10 text-white">
-                    <span className="bg-yellow-400 text-slate-950 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider select-none shadow">
-                      BANNER TRUYỀN THÔNG HOẠT ĐỘNG
-                    </span>
-                    <h2 className="text-base sm:text-xl md:text-2xl font-black mt-2 drop-shadow text-yellow-300">
-                      Trường THCS Hòa Phú Đổi Mới & Sáng Tạo
-                    </h2>
-                    <p className="text-[10px] sm:text-xs text-slate-200 mt-1 max-w-xl drop-shadow font-medium">
-                      Bứt phá chất lượng chuyên môn giáo dục, xây dựng nhà trường thông minh và chuẩn hóa cơ sở vật chất kỹ thuật số hàng đầu khu vực.
+          <div className={activeTab === 'tab-main' ? 'space-y-6 animate-fade-in block' : 'hidden'}>
+            {/* Dynamic Hero Banner */}
+            {settings.heroBannerUrl && (
+              <div 
+                className="w-full h-40 sm:h-48 md:h-52 rounded-xl shadow-sm relative overflow-hidden flex items-end p-5 border border-slate-200"
+                id="main-hero-banner"
+                style={{
+                  backgroundImage: `linear-gradient(to top, rgba(15, 23, 42, 0.95) 15%, rgba(15, 23, 42, 0.25) 100%), url(${settings.heroBannerUrl})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
+              >
+                <div className="z-10 text-white">
+                  <span className="bg-yellow-400 text-slate-950 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider select-none shadow">
+                    BANNER TRUYỀN THÔNG HOẠT ĐỘNG
+                  </span>
+                  <h2 className="text-base sm:text-xl md:text-2xl font-black mt-2 drop-shadow text-yellow-300">
+                    Trường THCS Hòa Phú Đổi Mới & Sáng Tạo
+                  </h2>
+                  <p className="text-[10px] sm:text-xs text-slate-200 mt-1 max-w-xl drop-shadow font-medium">
+                    Bứt phá chất lượng chuyên môn giáo dục, xây dựng nhà trường thông minh và chuẩn hóa cơ sở vật chất kỹ thuật số hàng đầu khu vực.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Welcome Banner */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 relative overflow-hidden">
+              <div className="z-10 relative">
+                <span className="bg-sky-100 text-sky-800 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  Trang làm việc tổng quan
+                </span>
+                <h2 className="text-xl md:text-2xl font-black text-slate-900 mt-2">
+                  Xin chào, <span className="text-blue-900">{currentUser === 'admin' ? 'Nghiêm Hồng Quân' : currentUser.name}</span>!
+                </h2>
+                <p className="text-xs md:text-sm text-slate-600 mt-1 leading-relaxed">
+                  Hôm nay là một ngày làm việc tràn đầy sáng tạo. Hãy cập nhật các mục tiêu OKR và tự đánh giá chỉ số KPI để hoàn thiện hồ sơ thi đua nộp lên BGH trường đúng kỳ hạn nhé!
+                </p>
+              </div>
+              <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none">
+                <Award className="w-32 h-32 text-blue-900" />
+              </div>
+            </div>
+
+            {/* Viewed User Info Banner (Read-only mode warning) */}
+            {viewedUserId && viewedUserId !== (currentUser === 'admin' ? 'THCS-HP-020' : currentUser?.id) && (
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-fade-in">
+                <div className="flex items-start gap-3">
+                  <span className="p-2 bg-blue-100 rounded-lg text-blue-700 shrink-0 mt-0.5 sm:mt-0">
+                    <ShieldAlert className="w-5 h-5 animate-pulse text-blue-600" />
+                  </span>
+                  <div>
+                    <h3 className="font-extrabold text-slate-950 text-xs md:text-sm leading-snug">
+                      Chế độ xem hồ sơ đồng nghiệp
+                    </h3>
+                    <p className="text-[11px] text-slate-600 mt-1">
+                      Bạn đang xem dữ liệu OKR và điểm KPI của cán bộ: <strong className="text-blue-900 font-extrabold">{activeUserName}</strong>.
+                    </p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      Theo quy định an toàn hệ thống, bạn chỉ được quyền xem và không thể thực hiện thêm, sửa hoặc xóa dữ liệu này.
                     </p>
                   </div>
                 </div>
-              )}
-
-              {/* Welcome Banner */}
-              <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 relative overflow-hidden">
-                <div className="z-10 relative">
-                  <span className="bg-sky-100 text-sky-800 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
-                    Trang làm việc tổng quan
-                  </span>
-                  <h2 className="text-xl md:text-2xl font-black text-slate-900 mt-2">
-                    Xin chào, <span className="text-blue-900">{currentUser === 'admin' ? 'Nghiêm Hồng Quân' : currentUser.name}</span>!
-                  </h2>
-                  <p className="text-xs md:text-sm text-slate-600 mt-1 leading-relaxed">
-                    Hôm nay là một ngày làm việc tràn đầy sáng tạo. Hãy cập nhật các mục tiêu OKR và tự đánh giá chỉ số KPI để hoàn thiện hồ sơ thi đua nộp lên BGH trường đúng kỳ hạn nhé!
-                  </p>
-                </div>
-                <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none">
-                  <Award className="w-32 h-32 text-blue-900" />
-                </div>
+                <button 
+                  onClick={() => setViewedUserId(null)}
+                  className="bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition shadow-sm cursor-pointer whitespace-nowrap self-start sm:self-auto"
+                >
+                  Quay lại hồ sơ của tôi
+                </button>
               </div>
+            )}
 
-              {/* Viewed User Info Banner (Read-only mode warning) */}
-              {viewedUserId && viewedUserId !== (currentUser === 'admin' ? 'THCS-HP-020' : currentUser?.id) && (
-                <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-fade-in">
-                  <div className="flex items-start gap-3">
-                    <span className="p-2 bg-blue-100 rounded-lg text-blue-700 shrink-0 mt-0.5 sm:mt-0">
-                      <ShieldAlert className="w-5 h-5 animate-pulse text-blue-600" />
-                    </span>
-                    <div>
-                      <h3 className="font-extrabold text-slate-950 text-xs md:text-sm leading-snug">
-                        Chế độ xem hồ sơ đồng nghiệp
-                      </h3>
-                      <p className="text-[11px] text-slate-600 mt-1">
-                        Bạn đang xem dữ liệu OKR và điểm KPI của cán bộ: <strong className="text-blue-900 font-extrabold">{activeUserName}</strong>.
-                      </p>
-                      <p className="text-[10px] text-slate-500 mt-0.5">
-                        Theo quy định an toàn hệ thống, bạn chỉ được quyền xem và không thể thực hiện thêm, sửa hoặc xóa dữ liệu này.
-                      </p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setViewedUserId(null)}
-                    className="bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition shadow-sm cursor-pointer whitespace-nowrap self-start sm:self-auto"
-                  >
-                    Quay lại hồ sơ của tôi
-                  </button>
-                </div>
-              )}
+            {/* OKR WORKSPACE SECTION */}
+            <OkrSection 
+              okrs={activeUserOkrs}
+              onAddOkr={handleAddOkr}
+              onUpdateOkr={handleUpdateOkr}
+              onDeleteOkr={handleDeleteOkr}
+              readOnly={!canEditActiveData}
+            />
 
-              {/* OKR WORKSPACE SECTION */}
-              <OkrSection 
-                okrs={activeUserOkrs}
-                onAddOkr={handleAddOkr}
-                onUpdateOkr={handleUpdateOkr}
-                onDeleteOkr={handleDeleteOkr}
-                readOnly={!canEditActiveData}
-              />
-
-              {/* KPI WORKSPACE SECTION */}
-              <KpiSection 
-                kpis={activeUserKpis}
-                onKpiValueChange={handleKpiValueChange}
-                onKpiEvidencesChange={handleKpiEvidencesChange}
-                readOnly={!canEditActiveData}
-              />
-            </div>
-          )}
+            {/* KPI WORKSPACE SECTION */}
+            <KpiSection 
+              kpis={activeUserKpis}
+              onKpiValueChange={handleKpiValueChange}
+              onKpiEvidencesChange={handleKpiEvidencesChange}
+              readOnly={!canEditActiveData}
+            />
+          </div>
 
           {/* ====== TAB 2: QUẢN LÝ TÀI KHOẢN ====== */}
-          {activeTab === 'tab-profile' && (
+          <div className={activeTab === 'tab-profile' ? 'animate-fade-in block' : 'hidden'}>
             <ProfileTab 
               currentUser={currentUser === 'admin' ? (users.find(u => u.id === 'THCS-HP-020') || 'admin') : currentUser}
               onUpdateProfile={handleUpdateProfile}
               onDeleteProfile={handleDeleteProfile}
             />
-          )}
+          </div>
 
           {/* ====== TAB 3: DANH SÁCH NHÂN SỰ ====== */}
-          {activeTab === 'tab-users' && currentUser === 'admin' && (
-            <UsersTab 
-              users={users}
-              onAddUser={handleAddUser}
-              onUpdateUser={handleUpdateUser}
-              onDeleteUser={handleDeleteUser}
-              onViewEmployee={handleViewEmployee}
-              showToast={showToast}
-            />
+          {currentUser === 'admin' && (
+            <div className={activeTab === 'tab-users' ? 'animate-fade-in block' : 'hidden'}>
+              <UsersTab 
+                users={users}
+                onAddUser={handleAddUser}
+                onUpdateUser={handleUpdateUser}
+                onDeleteUser={handleDeleteUser}
+                onViewEmployee={handleViewEmployee}
+                showToast={showToast}
+              />
+            </div>
           )}
 
           {/* ====== TAB 4: TRUNG TÂM XUẤT BẢN BÁO CÁO ====== */}
-          {activeTab === 'tab-export' && (
+          <div className={activeTab === 'tab-export' ? 'animate-fade-in block' : 'hidden'}>
             <ExportTab 
               showToast={showToast} 
               currentUser={currentUser} 
@@ -922,25 +944,25 @@ export default function App() {
               allOkrs={allOkrs} 
               allKpis={allKpis} 
             />
-          )}
+          </div>
 
           {/* ====== TAB 5: LIÊN HỆ & TIỆN ÍCH ====== */}
-          {activeTab === 'tab-utilities' && (
+          <div className={activeTab === 'tab-utilities' ? 'animate-fade-in block' : 'hidden'}>
             <UtilitiesTab />
-          )}
+          </div>
 
           {/* ====== TAB THÔNG BÁO ====== */}
-          {activeTab === 'tab-notifications' && (
+          <div className={activeTab === 'tab-notifications' ? 'animate-fade-in block' : 'hidden'}>
             <NotificationsTab 
               notifications={notifications}
               onSaveNotifications={saveNotificationsToCache}
               currentUser={currentUser}
               showToast={showToast}
             />
-          )}
+          </div>
 
           {/* ====== TAB 6: CÀI ĐẶT HỆ THỐNG ====== */}
-          {activeTab === 'tab-settings' && (
+          <div className={activeTab === 'tab-settings' ? 'animate-fade-in block' : 'hidden'}>
             <SettingsTab 
               settings={settings}
               onSaveSettings={saveSettingsToCache}
@@ -953,7 +975,7 @@ export default function App() {
               initialSubTab={settingsSubTab}
               onSubTabChange={setSettingsSubTab}
             />
-          )}
+          </div>
         </section>
 
         {/* RIGHT COLUMN: SIDEBAR WIDGETS */}
