@@ -1104,13 +1104,14 @@ export default function App() {
       {/* Supabase SQL Migration Modal */}
       {showSqlModal && (
         <div 
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4" 
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 cursor-pointer" 
           id="sql-migration-modal"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowSqlModal(false);
-          }}
+          onClick={() => setShowSqlModal(false)}
         >
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden animate-scale-in">
+          <div 
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden animate-scale-in cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="bg-gradient-to-r from-emerald-700 to-teal-800 p-5 text-white flex justify-between items-center">
               <div className="flex items-center gap-2.5">
                 <Database className="w-5 h-5 text-teal-200 animate-pulse" />
@@ -1189,7 +1190,7 @@ export default function App() {
                   onClick={() => setShowSqlModal(false)}
                   className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-4 rounded-lg text-xs md:text-sm text-center transition cursor-pointer"
                 >
-                  Bỏ qua và dùng Offline
+                  Quay về
                 </button>
               </div>
             </div>
