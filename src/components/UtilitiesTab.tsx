@@ -105,7 +105,7 @@ export default function UtilitiesTab() {
             <Mail className="w-5 h-5 text-red-700 shrink-0" />
             <div>
               <p className="text-[10px] uppercase font-bold text-slate-500">Email kỹ thuật</p>
-              <p className="text-xs font-black text-slate-800">baoyen.tmxd@gamil.com</p>
+              <p className="text-xs font-black text-slate-800">baoyen.tmxd@gmail.com</p>
             </div>
           </div>
         </div>

@@ -481,6 +481,55 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
       </div>
 
       {/* List of OKRs */}
+      {/* Quick template selection panel on the spot - Always visible when not read-only */}
+      {!readOnly && (
+        <div className="mb-5 bg-rose-50/40 rounded-xl p-4 border border-rose-100 shadow-2xs">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-rose-900 flex items-center gap-1.5 select-none">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-600 shrink-0"></span>
+              Kho biểu mẫu OKR mẫu - Thêm nhanh ngay tại chỗ
+            </h4>
+            <span className="text-[10px] text-rose-700 bg-rose-100/60 px-2.5 py-0.5 rounded-full font-extrabold select-none">
+              Chỉ 1-Click tự động khởi tạo mục tiêu
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {templates.map((tmpl) => (
+              <button
+                key={tmpl.id}
+                type="button"
+                onClick={() => {
+                  onAddOkr({
+                    title: tmpl.title,
+                    kr1: tmpl.kr1,
+                    kr1Progress: tmpl.kr1Progress,
+                    kr2: tmpl.kr2,
+                    kr2Progress: tmpl.kr2Progress,
+                    kr3: tmpl.kr3,
+                    kr3Progress: tmpl.kr3Progress,
+                  });
+                }}
+                className="text-left bg-white hover:bg-rose-50 hover:border-rose-300 border border-slate-200 rounded-lg p-3 transition duration-200 text-xs flex flex-col gap-1.5 cursor-pointer group shadow-2xs"
+                title={`Nhấp để thêm nhanh mẫu này: ${tmpl.title}`}
+              >
+                <div className="flex items-center gap-1.5 justify-between w-full">
+                  <span className="font-extrabold text-slate-800 group-hover:text-rose-800 transition-colors flex items-center gap-1 min-w-0">
+                    <FolderOpen className="w-3.5 h-3.5 text-rose-600 shrink-0 group-hover:animate-bounce" />
+                    <span className="truncate">{tmpl.name}</span>
+                  </span>
+                  <span className="bg-rose-100 text-rose-800 text-[9px] font-black px-1.5 py-0.5 rounded shrink-0 opacity-0 group-hover:opacity-100 transition">
+                    + THÊM
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-500 line-clamp-2 italic group-hover:text-slate-700 leading-snug">
+                  {tmpl.title}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-4">
         {okrs.length === 0 ? (
           <div className="text-center py-8 px-4 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">

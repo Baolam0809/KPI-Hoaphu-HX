@@ -240,7 +240,7 @@ export const INITIAL_KPIS: Record<string, KPI[]> = {
   "THCS-HP-009": [
     { criterion: "1. An ninh & An toàn tài sản", weight: 40, desc: "0% xảy ra mất trộm tài sản trường học; Kiểm soát 100% người lạ xuất trình giấy tờ trước khi vào.", value: 100 },
     { criterion: "2. Tuần tra & PCCC", weight: 30, desc: "Tuần tra ban đêm chặt chẽ; Ngắt 100% hệ thống điện nước, cửa phòng học cuối giờ học.", value: 100 },
-    { criterion: "3. Điều tiết giao thông", weight: 20, desc: "Đám bảo thông thoáng cổng trường giờ tan tầm đưa đón học sinh; Xếp xe giáo viên ngay ngắn.", value: 85 },
+    { criterion: "3. Điều tiết giao thông", weight: 20, desc: "Đảm bảo thông thoáng cổng trường giờ tan tầm đưa đón học sinh; Xếp xe giáo viên ngay ngắn.", value: 85 },
     { criterion: "4. Thái độ & Tác phong", weight: 10, desc: "Đeo đồng phục bảo vệ đầy đủ; Thái độ lịch thiệp đúng mực với phụ huynh, học sinh.", value: 90 }
   ],
   "THCS-HP-010": [

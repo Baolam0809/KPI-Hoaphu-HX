@@ -482,13 +482,115 @@ export default function App() {
     }
   };
 
-  const handleResetKpis = async () => {
-    const defaultKpisForUser = INITIAL_KPIS[activeUserId] || [
+  const getDefaultKpisForUser = (role: string, type: string): KPI[] => {
+    const roleLower = role.toLowerCase();
+    
+    if (type === 'BGH' || roleLower.includes('bgh') || roleLower.includes('hiệu trưởng') || roleLower.includes('hiệu phó') || roleLower.includes('quản trị')) {
+      return [
+        { criterion: "1. Quản lý điều hành", weight: 40, desc: "Tỷ lệ giáo viên nhân viên hoàn thành kế hoạch tuần đúng hạn.", value: 95 },
+        { criterion: "2. Hồ sơ sổ sách trường", weight: 30, desc: "Kiểm tra học bạ, hồ sơ pháp lý không xảy ra lỗi thanh tra.", value: 100 },
+        { criterion: "3. Phát triển nhà trường", weight: 20, desc: "Thu hút hoạt động ngoại khóa, xây dựng cơ sở vật chất đổi mới.", value: 90 },
+        { criterion: "4. Tuân thủ & Trách nhiệm", weight: 10, desc: "Ý thức kỷ luật, đạo đức đầu tàu gương mẫu sư phạm.", value: 100 }
+      ];
+    }
+    
+    if (roleLower.includes('gvcn') || roleLower.includes('chủ nhiệm')) {
+      return [
+        { criterion: "1. Khối lượng & Tiến độ giảng dạy", weight: 30, desc: "Số tiết thực dạy/tuần; Tỷ lệ hoàn thành chương trình đúng hạn, không cháy giáo án.", value: 100 },
+        { criterion: "2. Chất lượng chuyên môn", weight: 30, desc: "Học sinh khá giỏi đạt chuẩn (Khá/Giỏi >= 40%, Yếu <= 5%); Điểm đánh giá dự giờ của Tổ/BGH.", value: 92 },
+        { criterion: "3. Hồ sơ và Nghiệp vụ sư phạm", weight: 20, desc: "Đúng hạn 100% giáo án sổ điểm; Có sáng kiến kinh nghiệm (SKKN) được đánh giá Khá trở lên.", value: 85 },
+        { criterion: "4. Công tác chủ nhiệm & Kỷ luật", weight: 20, desc: "Tỷ lệ học sinh vi phạm kỷ luật thấp; Đạt lớp Tiên Tiến xuất sắc; Xếp loại thi đua học kỳ A2.", value: 90 }
+      ];
+    }
+
+    if (type === 'GiaoVien' || roleLower.includes('giáo viên') || roleLower.includes('gvbm') || roleLower.includes('bộ môn') || roleLower.includes('môn')) {
+      return [
+        { criterion: "1. Khối lượng & Tiến độ giảng dạy", weight: 30, desc: "Số tiết thực dạy/tuần; Tỷ lệ hoàn thành chương trình đúng hạn, không cháy giáo án.", value: 95 },
+        { criterion: "2. Chất lượng chuyên môn", weight: 30, desc: "Học sinh khá giỏi đạt chuẩn (Khá/Giỏi >= 40%, Yếu <= 5%); Điểm đánh giá dự giờ của Tổ/BGH.", value: 90 },
+        { criterion: "3. Hồ sơ và Nghiệp vụ sư phạm", weight: 25, desc: "Đúng hạn 100% giáo án sổ điểm; Có sáng kiến kinh nghiệm được đánh giá Đạt trở lên.", value: 85 },
+        { criterion: "4. Kỷ luật & Trách nhiệm hành chính", weight: 15, desc: "Chấp hành nghiêm chỉnh giờ giấc cơ quan, quy tắc ứng xử và đạo đức nhà giáo.", value: 95 }
+      ];
+    }
+    
+    if (roleLower.includes('kế toán')) {
+      return [
+        { criterion: "1. Chính xác & Đúng hạn tài chính", weight: 40, desc: "Báo cáo thuế, báo cáo quyết toán đúng hạn 100%, 0% sai sót xuất toán.", value: 98 },
+        { criterion: "2. Quản lý Thu - Chi học đường", weight: 30, desc: "Tỷ lệ hoàn thành thu học phí đúng hạn đầu kỳ đạt trên 95% tổng số học sinh.", value: 90 },
+        { criterion: "3. Sổ sách & Hồ sơ kế toán", weight: 20, desc: "Lưu trữ khoa học, trích lục nhanh chóng trong vòng 30 phút khi BGH cần.", value: 95 },
+        { criterion: "4. Trách nhiệm & Hợp tác", weight: 10, desc: "Sự phối hợp với các tổ chuyên môn, thực hiện nghiêm quy định kỷ luật.", value: 100 }
+      ];
+    }
+    
+    if (roleLower.includes('thiết bị') || roleLower.includes('thí nghiệm') || roleLower.includes('lab') || roleLower.includes('phòng thực hành')) {
+      return [
+        { criterion: "1. Sẵn sàng & Đầy đủ thiết bị", weight: 40, desc: "Tỷ lệ chuẩn bị đủ dụng cụ/hóa chất thực hành theo đăng ký giáo viên; Hoàn thành trước giờ học 15p.", value: 100 },
+        { criterion: "2. An toàn & Bảo quản", weight: 30, desc: "0 xảy ra sự cố cháy nổ phòng Lab do lỗi chủ quan; Kiểm kê thiết bị định kỳ 1 lần/tháng.", value: 100 },
+        { criterion: "3. Hồ sơ & Sổ sách theo dõi", weight: 20, desc: "Nhật ký mượn trả thiết bị chính xác 100%; Đề xuất mua sắm bổ sung vật tư đúng hạn.", value: 80 },
+        { criterion: "4. Trách nhiệm & Hợp tác", weight: 10, desc: "Mức độ hài lòng của giáo viên bộ môn khi sử dụng phòng thực hành đạt trên 90%.", value: 95 }
+      ];
+    }
+    
+    if (roleLower.includes('văn thư') || roleLower.includes('lưu trữ') || roleLower.includes('hành chính')) {
+      return [
+        { criterion: "1. Xử lý công văn & Hành chính", weight: 40, desc: "Tiếp nhận và chuyển giao công văn đi đến đúng quy chuẩn trong ngày (Văn bản khẩn < 2 giờ).", value: 95 },
+        { criterion: "2. Quản lý hồ sơ & Học bạ", weight: 30, desc: "Bảo mật và an toàn hồ sơ học sinh, giáo viên. Trích lục hồ sơ tìm kiếm nhanh dưới 5 phút.", value: 100 },
+        { criterion: "3. Hỗ trợ dịch vụ hành chính", weight: 20, desc: "Xử lý hồ sơ chuyển trường, rút học bạ đúng hẹn. Thái độ tiếp phụ huynh chuẩn sư phạm.", value: 90 },
+        { criterion: "4. Kỷ luật & Trách nhiệm", weight: 10, desc: "Chấp hành giờ giấc nghiêm ngặt, bảo mật tuyệt đối các thông tin văn bản nội bộ.", value: 100 }
+      ];
+    }
+    
+    if (roleLower.includes('thư viện')) {
+      return [
+        { criterion: "1. Quản lý tài sản thư viện", weight: 30, desc: "Tỷ lệ hao hụt, mất sách truyện dưới 1%/năm; Sắp xếp khoa học đúng mã phân loại DDC.", value: 95 },
+        { criterion: "2. Phục vụ bạn đọc (GV & HS)", weight: 30, desc: "Mở cửa đúng giờ 100%; Đăng ký mượn trả đầy đủ trên phần mềm quản lý thư viện.", value: 90 },
+        { criterion: "3. Cập nhật dữ liệu & Báo cáo", weight: 20, desc: "Cập nhật đầu sách mới vào hệ thống trong vòng 3 ngày; Báo cáo lượt đọc chính xác.", value: 85 },
+        { criterion: "4. Không gian & Hoạt động", weight: 20, desc: "Đổi mới bày biện không gian đọc; Hỗ trợ các tiết học thư viện theo đúng thời khóa biểu.", value: 100 }
+      ];
+    }
+    
+    if (roleLower.includes('bảo vệ')) {
+      return [
+        { criterion: "1. An ninh & An toàn tài sản", weight: 40, desc: "0% xảy ra mất trộm tài sản trường học; Kiểm soát 100% người lạ xuất trình giấy tờ trước khi vào.", value: 100 },
+        { criterion: "2. Tuần tra & PCCC", weight: 30, desc: "Tuần tra ban đêm chặt chẽ; Ngắt 100% hệ thống điện nước, cửa phòng học cuối giờ học.", value: 100 },
+        { criterion: "3. Điều tiết giao thông", weight: 20, desc: "Đảm bảo thông thoáng cổng trường giờ tan tầm đưa đón học sinh; Xếp xe giáo viên ngay ngắn.", value: 85 },
+        { criterion: "4. Thái độ & Tác phong", weight: 10, desc: "Đeo đồng phục bảo vệ đầy đủ; Thái độ lịch thiệp đúng mực với phụ huynh, học sinh.", value: 90 }
+      ];
+    }
+    
+    if (roleLower.includes('y tế')) {
+      return [
+        { criterion: "1. Sơ cấp cứu & Chăm sóc", weight: 40, desc: "Có mặt kịp thời xử lý chấn thương ban đầu; Không để xảy ra sai sót y tế gây hậu quả nặng.", value: 100 },
+        { criterion: "2. Quản lý dược phẩm & Hồ sơ", weight: 30, desc: "Thuốc tủ y tế không quá hạn; Cập nhật 100% học sinh có hồ sơ theo dõi thể trạng đầy đủ.", value: 90 },
+        { criterion: "3. Giám sát dịch bệnh & ATTP", weight: 20, desc: "Giám sát vệ sinh học đường & lưu mẫu thức ăn bán trú hằng ngày; Kịp thời báo cáo dịch bệnh.", value: 95 },
+        { criterion: "4. Truyền thông giáo dục sức khỏe", weight: 10, desc: "Thực hiện ít nhất 1 bài viết hoặc buổi tuyên truyền giáo dục sức khỏe/tháng.", value: 80 }
+      ];
+    }
+    
+    if (roleLower.includes('quỹ') || roleLower.includes('thủ quỹ')) {
+      return [
+        { criterion: "1. Quản lý thu chi quỹ mặt", weight: 40, desc: "Thu, chi tiền mặt đúng quy trình, kiểm quỹ hằng tuần không xảy ra chênh lệch thừa thiếu.", value: 95 },
+        { criterion: "2. Sổ sách thủ quỹ", weight: 30, desc: "Ghi chép sổ quỹ chi tiết, rõ ràng, cập nhật chứng từ hằng ngày.", value: 90 },
+        { criterion: "3. Phối hợp kế toán", weight: 20, desc: "Đối chiếu khớp số liệu tồn quỹ với kế toán định kỳ và đột xuất.", value: 95 },
+        { criterion: "4. Tuân thủ kỷ luật", weight: 10, desc: "Đảm bảo giờ giấc, đạo đức tác phong sư phạm, tuân thủ nội quy cơ quan.", value: 100 }
+      ];
+    }
+    
+    // Default fallback
+    return [
       { criterion: "1. Khối lượng & Tiến độ", weight: 30, desc: "Hoàn thành các đầu việc được giao đúng kế hoạch tuần.", value: 80 },
       { criterion: "2. Chất lượng công việc", weight: 30, desc: "Báo cáo chính xác, nghiệp vụ chuyên môn đạt chuẩn thanh tra.", value: 85 },
       { criterion: "3. Hồ sơ & Sổ sách sổ điểm", weight: 20, desc: "Sắp xếp, đồng bộ hóa hồ sơ điện tử ngăn nắp đúng hạn.", value: 75 },
       { criterion: "4. Kỷ luật & Trách nhiệm", weight: 20, desc: "Đạo đức nhà giáo gương mẫu, tuân thủ giờ giấc hành chính.", value: 90 }
     ];
+  };
+
+  const handleResetKpis = async () => {
+    const user = users.find(u => u.id === activeUserId);
+    const userRole = user?.role || '';
+    const userType = user?.type || 'GiaoVien';
+    
+    // Check if there is predefined static initial KPIs, otherwise generate based on role
+    const defaultKpisForUser = INITIAL_KPIS[activeUserId] || getDefaultKpisForUser(userRole, userType);
     
     const resetKpis = JSON.parse(JSON.stringify(defaultKpisForUser));
     
@@ -548,12 +650,7 @@ export default function App() {
     };
     saveOkrsToCache(newOkrs);
 
-    const defaultKpis = [
-      { criterion: "1. Khối lượng & Tiến độ", weight: 30, desc: "Hoàn thành các đầu việc được giao đúng kế hoạch tuần.", value: 80 },
-      { criterion: "2. Chất lượng công việc", weight: 30, desc: "Báo cáo chính xác, nghiệp vụ chuyên môn đạt chuẩn thanh tra.", value: 85 },
-      { criterion: "3. Hồ sơ & Sổ sách sổ điểm", weight: 20, desc: "Sắp xếp, đồng bộ hóa hồ sơ điện tử ngăn nắp đúng hạn.", value: 75 },
-      { criterion: "4. Kỷ luật & Trách nhiệm", weight: 20, desc: "Đạo đức nhà giáo gương mẫu, tuân thủ giờ giấc hành chính.", value: 90 }
-    ];
+    const defaultKpis = getDefaultKpisForUser(newUser.role, newUser.type);
 
     const newKpis = {
       ...allKpis,
