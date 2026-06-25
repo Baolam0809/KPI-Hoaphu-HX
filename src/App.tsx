@@ -662,10 +662,11 @@ export default function App() {
       
       {/* 1. HEADER BANNER WITH SIMULATOR & LOGOUT */}
       <Header 
-        currentUser={currentUser} 
+        currentUser={currentUser === 'admin' ? (users.find(u => u.id === 'THCS-HP-012') || 'admin') : currentUser} 
         users={users} 
         onSwitchSimulatedUser={handleSwitchSimulatedUser} 
         onLogout={handleLogout} 
+        settings={settings}
       />
 
       {/* 2. STICKY HORIZONTAL NAVBAR */}
@@ -785,7 +786,7 @@ export default function App() {
         
         {/* LEFT COLUMN: SIDEBAR */}
         <Sidebar 
-          currentUser={currentUser} 
+          currentUser={currentUser === 'admin' ? (users.find(u => u.id === 'THCS-HP-012') || 'admin') : currentUser} 
           activeTab={activeTab} 
           onTabChange={setActiveTab}
           usersCount={users.length}
@@ -800,6 +801,31 @@ export default function App() {
           {/* ====== TAB 1: TỔNG QUAN HỆ THỐNG ====== */}
           {activeTab === 'tab-main' && (
             <div className="space-y-6 animate-fade-in">
+              {/* Dynamic Hero Banner */}
+              {settings.heroBannerUrl && (
+                <div 
+                  className="w-full h-40 sm:h-48 md:h-52 rounded-xl shadow-sm relative overflow-hidden flex items-end p-5 border border-slate-200"
+                  id="main-hero-banner"
+                  style={{
+                    backgroundImage: `linear-gradient(to top, rgba(15, 23, 42, 0.95) 15%, rgba(15, 23, 42, 0.25) 100%), url(${settings.heroBannerUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  }}
+                >
+                  <div className="z-10 text-white">
+                    <span className="bg-yellow-400 text-slate-950 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider select-none shadow">
+                      BANNER TRUYỀN THÔNG HOẠT ĐỘNG
+                    </span>
+                    <h2 className="text-base sm:text-xl md:text-2xl font-black mt-2 drop-shadow text-yellow-300">
+                      Trường THCS Hòa Phú Đổi Mới & Sáng Tạo
+                    </h2>
+                    <p className="text-[10px] sm:text-xs text-slate-200 mt-1 max-w-xl drop-shadow font-medium">
+                      Bứt phá chất lượng chuyên môn giáo dục, xây dựng nhà trường thông minh và chuẩn hóa cơ sở vật chất kỹ thuật số hàng đầu khu vực.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Welcome Banner */}
               <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 relative overflow-hidden">
                 <div className="z-10 relative">
@@ -868,7 +894,7 @@ export default function App() {
           {/* ====== TAB 2: QUẢN LÝ TÀI KHOẢN ====== */}
           {activeTab === 'tab-profile' && (
             <ProfileTab 
-              currentUser={currentUser}
+              currentUser={currentUser === 'admin' ? (users.find(u => u.id === 'THCS-HP-012') || 'admin') : currentUser}
               onUpdateProfile={handleUpdateProfile}
               onDeleteProfile={handleDeleteProfile}
             />

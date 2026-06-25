@@ -65,4 +65,7 @@ export interface SystemSettings {
     responsibility: number;
     ethics: number;
   };
+  heroBannerUrl?: string;
+  navbarBannerUrl?: string;
+  textLogoUrl?: string;
 }

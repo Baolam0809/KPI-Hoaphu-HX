@@ -1,21 +1,30 @@
 import React from 'react';
 import { UserCog, LogOut, ShieldAlert } from 'lucide-react';
-import { User } from '../types';
+import { User, SystemSettings } from '../types';
 
 interface HeaderProps {
   currentUser: User | 'admin';
   users: User[];
   onSwitchSimulatedUser: (userId: string | 'admin') => void;
   onLogout: () => void;
+  settings: SystemSettings;
 }
 
-export default function Header({ currentUser, users, onSwitchSimulatedUser, onLogout }: HeaderProps) {
+export default function Header({ currentUser, users, onSwitchSimulatedUser, onLogout, settings }: HeaderProps) {
   // Trích xuất tên hiển thị
   const displayName = currentUser === 'admin' ? 'Nghiêm Hồng Quân (Super Admin)' : currentUser.name;
   const displayRole = currentUser === 'admin' ? 'Chủ tài khoản hệ thống' : currentUser.role;
 
   return (
-    <header className="bg-gradient-to-r from-blue-900 via-slate-900 to-red-800 text-white relative shadow-md" id="app-header">
+    <header 
+      className="bg-gradient-to-r from-blue-900 via-slate-900 to-red-800 text-white relative shadow-md overflow-hidden" 
+      id="app-header"
+      style={settings.navbarBannerUrl ? {
+        backgroundImage: `linear-gradient(to right, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.75)), url(${settings.navbarBannerUrl})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      } : undefined}
+    >
       <div className="max-w-7xl mx-auto px-4 py-4 md:py-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4 text-center md:text-left">
           {/* Fallback-friendly SVG School Logo */}
@@ -26,8 +35,19 @@ export default function Header({ currentUser, users, onSwitchSimulatedUser, onLo
             </svg>
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-black tracking-wide drop-shadow-md text-yellow-400">TRƯỜNG THCS HÒA PHÚ</h1>
-            <p className="text-xs md:text-sm text-blue-200 uppercase tracking-widest font-bold">Hệ Thống Đánh Giá & Phát Triển OKR - KPI Giáo Dục</p>
+            {settings.textLogoUrl ? (
+              <img 
+                src={settings.textLogoUrl} 
+                alt={settings.schoolShortName} 
+                className="h-10 md:h-12 object-contain drop-shadow-md select-none rounded bg-white/10 p-1" 
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <h1 className="text-xl md:text-2xl font-black tracking-wide drop-shadow-md text-yellow-400">
+                {settings.schoolShortName.toUpperCase()}
+              </h1>
+            )}
+            <p className="text-xs md:text-sm text-blue-200 uppercase tracking-widest font-bold mt-1">Hệ Thống Đánh Giá & Phát Triển OKR - KPI Giáo Dục</p>
           </div>
         </div>
         

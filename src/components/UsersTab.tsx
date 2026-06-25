@@ -470,8 +470,12 @@ export default function UsersTab({
                 <tr key={user.id} className="hover:bg-slate-50/50 transition">
                   <td className="p-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600 border shrink-0">
-                        {user.avatar}
+                      <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600 border shrink-0 overflow-hidden">
+                        {user.avatar && (user.avatar.startsWith('http') || user.avatar.startsWith('data:') || user.avatar.startsWith('/')) ? (
+                          <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        ) : (
+                          user.avatar
+                        )}
                       </div>
                       <div className="overflow-hidden">
                         <p className="font-bold text-slate-800 leading-none truncate">{user.name}</p>

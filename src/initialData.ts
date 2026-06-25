@@ -284,7 +284,10 @@ export const DEFAULT_SETTINGS: SystemSettings = {
     method: 30,
     responsibility: 20,
     ethics: 10
-  }
+  },
+  heroBannerUrl: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?q=80&w=1200&auto=format&fit=crop",
+  navbarBannerUrl: "",
+  textLogoUrl: ""
 };
 
 export const DEFAULT_SCHEDULE_ITEMS: ScheduleItem[] = [

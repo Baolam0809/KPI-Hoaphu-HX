@@ -56,6 +56,23 @@ export default function SettingsTab({
   const [method, setMethod] = useState(settings.kpiWeights.method);
   const [responsibility, setResponsibility] = useState(settings.kpiWeights.responsibility);
   const [ethics, setEthics] = useState(settings.kpiWeights.ethics);
+  const [heroBannerUrl, setHeroBannerUrl] = useState(settings.heroBannerUrl || '');
+  const [navbarBannerUrl, setNavbarBannerUrl] = useState(settings.navbarBannerUrl || '');
+  const [textLogoUrl, setTextLogoUrl] = useState(settings.textLogoUrl || '');
+
+  // Sync settings when they change
+  useEffect(() => {
+    setMarqueeText(settings.marqueeText);
+    setSchoolShortName(settings.schoolShortName);
+    setLocation(settings.location);
+    setLearning(settings.kpiWeights.learning);
+    setMethod(settings.kpiWeights.method);
+    setResponsibility(settings.kpiWeights.responsibility);
+    setEthics(settings.kpiWeights.ethics);
+    setHeroBannerUrl(settings.heroBannerUrl || '');
+    setNavbarBannerUrl(settings.navbarBannerUrl || '');
+    setTextLogoUrl(settings.textLogoUrl || '');
+  }, [settings]);
 
   const handleGeneralSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,10 +95,25 @@ export default function SettingsTab({
         method,
         responsibility,
         ethics
-      }
+      },
+      heroBannerUrl: heroBannerUrl.trim(),
+      navbarBannerUrl: navbarBannerUrl.trim(),
+      textLogoUrl: textLogoUrl.trim()
     });
 
-    showToast('Đã lưu cấu hình hệ thống toàn trường thành công!');
+    showToast('Đã lưu cấu hình hệ thống và giao diện hình ảnh toàn trường thành công!');
+  };
+
+  const handleImageUpload = (file: File, target: 'hero' | 'navbar' | 'logo') => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target?.result as string;
+      if (target === 'hero') setHeroBannerUrl(base64);
+      else if (target === 'navbar') setNavbarBannerUrl(base64);
+      else if (target === 'logo') setTextLogoUrl(base64);
+      showToast(`Đã tải ảnh lên thành công cho ${target === 'hero' ? 'Hero Banner' : target === 'navbar' ? 'Navbar Banner' : 'Ảnh chữ'}!`);
+    };
+    reader.readAsDataURL(file);
   };
 
   // --- SUB-TAB 2: NOTIFICATIONS ADMIN ---
@@ -380,6 +412,195 @@ export default function SettingsTab({
               ) : (
                 <span className="text-red-600 font-bold">Vui lòng điều chỉnh lại cho đúng 100%!</span>
               )}
+            </div>
+          </div>
+
+          {/* QUẢN TRỊ BANNERS, HÌNH ẢNH & LOGO CHỮ */}
+          <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-4 shadow-sm" id="banners-logo-management">
+            <h4 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
+              <Sliders className="w-4 h-4 text-blue-900" /> Quản trị Giao diện hình ảnh, Banners & Logo Chữ
+            </h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+              {/* ITEM 1: HERO BANNER */}
+              <div className="flex flex-col gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div>
+                  <span className="block font-bold text-slate-700 uppercase">1. Hero Banner (Trang chủ)</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5 mb-1.5 leading-tight">Hiển thị ở đầu trang tổng quan với lớp phủ tối.</p>
+                </div>
+                
+                {/* Image Preview */}
+                <div className="relative group w-full h-24 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
+                  {heroBannerUrl ? (
+                    <>
+                      <img src={heroBannerUrl} alt="Hero Banner Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <button
+                        type="button"
+                        onClick={() => setHeroBannerUrl('')}
+                        className="absolute top-1.5 right-1.5 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full shadow transition cursor-pointer z-10"
+                        title="Xóa ảnh này"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-bold">Dùng mặc định học đường</span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5 mt-1">
+                  <label className="flex-1 text-center bg-blue-900 hover:bg-blue-950 text-white font-bold py-1.5 rounded-md cursor-pointer transition text-[10px]">
+                    Tải tệp ảnh
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      disabled={!isBghOrAdmin}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 'hero');
+                      }}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    disabled={!isBghOrAdmin}
+                    onClick={() => setHeroBannerUrl("https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?q=80&w=1200")}
+                    className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-2 py-1.5 rounded-md transition text-[10px] disabled:opacity-50"
+                  >
+                    Dùng mẫu
+                  </button>
+                </div>
+                
+                <input 
+                  type="text" 
+                  disabled={!isBghOrAdmin}
+                  placeholder="Hoặc nhập liên kết URL..." 
+                  value={heroBannerUrl.startsWith('data:') ? '' : heroBannerUrl}
+                  onChange={(e) => setHeroBannerUrl(e.target.value)}
+                  className="w-full border border-slate-300 rounded p-1.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-900 mt-1"
+                />
+              </div>
+
+              {/* ITEM 2: NAVBAR BANNER */}
+              <div className="flex flex-col gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div>
+                  <span className="block font-bold text-slate-700 uppercase">2. Navbar Banner (Tiêu đề)</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5 mb-1.5 leading-tight">Ảnh nền cho Header của hệ thống.</p>
+                </div>
+                
+                {/* Image Preview */}
+                <div className="relative group w-full h-24 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
+                  {navbarBannerUrl ? (
+                    <>
+                      <img src={navbarBannerUrl} alt="Navbar Banner Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <button
+                        type="button"
+                        onClick={() => setNavbarBannerUrl('')}
+                        className="absolute top-1.5 right-1.5 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full shadow transition cursor-pointer z-10"
+                        title="Xóa ảnh này"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-bold text-center">Dùng dải màu gradient mặc định</span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5 mt-1">
+                  <label className="flex-1 text-center bg-blue-900 hover:bg-blue-950 text-white font-bold py-1.5 rounded-md cursor-pointer transition text-[10px]">
+                    Tải tệp ảnh
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      disabled={!isBghOrAdmin}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 'navbar');
+                      }}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    disabled={!isBghOrAdmin}
+                    onClick={() => setNavbarBannerUrl("https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1000")}
+                    className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-2 py-1.5 rounded-md transition text-[10px] disabled:opacity-50"
+                  >
+                    Dùng mẫu
+                  </button>
+                </div>
+                
+                <input 
+                  type="text" 
+                  disabled={!isBghOrAdmin}
+                  placeholder="Hoặc nhập liên kết URL..." 
+                  value={navbarBannerUrl.startsWith('data:') ? '' : navbarBannerUrl}
+                  onChange={(e) => setNavbarBannerUrl(e.target.value)}
+                  className="w-full border border-slate-300 rounded p-1.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-900 mt-1"
+                />
+              </div>
+
+              {/* ITEM 3: ẢNH CHỮ (WORDART LOGO TEXT IMAGE) */}
+              <div className="flex flex-col gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div>
+                  <span className="block font-bold text-slate-700 uppercase">3. Ảnh chữ (Logo Chữ)</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5 mb-1.5 leading-tight">Dùng ảnh thay chữ "TRƯỜNG THCS HÒA PHÚ".</p>
+                </div>
+                
+                {/* Image Preview */}
+                <div className="relative group w-full h-24 rounded-lg overflow-hidden border border-slate-200 bg-slate-900 flex items-center justify-center p-2">
+                  {textLogoUrl ? (
+                    <>
+                      <img src={textLogoUrl} alt="Text Logo Preview" className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
+                      <button
+                        type="button"
+                        onClick={() => setTextLogoUrl('')}
+                        className="absolute top-1.5 right-1.5 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full shadow transition cursor-pointer z-10"
+                        title="Xóa ảnh này"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-bold text-center">Dùng chữ mặc định màu vàng</span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5 mt-1">
+                  <label className="flex-1 text-center bg-blue-900 hover:bg-blue-950 text-white font-bold py-1.5 rounded-md cursor-pointer transition text-[10px]">
+                    Tải tệp ảnh
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      disabled={!isBghOrAdmin}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 'logo');
+                      }}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    disabled={!isBghOrAdmin}
+                    onClick={() => setTextLogoUrl("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000")}
+                    className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-2 py-1.5 rounded-md transition text-[10px] disabled:opacity-50"
+                  >
+                    Dùng mẫu
+                  </button>
+                </div>
+                
+                <input 
+                  type="text" 
+                  disabled={!isBghOrAdmin}
+                  placeholder="Hoặc nhập liên kết URL..." 
+                  value={textLogoUrl.startsWith('data:') ? '' : textLogoUrl}
+                  onChange={(e) => setTextLogoUrl(e.target.value)}
+                  className="w-full border border-slate-300 rounded p-1.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-900 mt-1"
+                />
+              </div>
             </div>
           </div>
 

@@ -42,8 +42,12 @@ export default function Sidebar({
     <aside className="col-span-1 lg:col-span-3 flex flex-col gap-4" id="sidebar-aside">
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden p-4">
         <div className="flex items-center gap-3 pb-4 mb-4 border-b border-slate-100">
-          <div className="w-12 h-12 rounded-full bg-blue-100 border border-blue-300 flex items-center justify-center text-blue-800 font-bold text-lg shrink-0">
-            {avatar}
+          <div className="w-12 h-12 rounded-full bg-blue-100 border border-blue-300 flex items-center justify-center text-blue-800 font-bold text-lg shrink-0 overflow-hidden">
+            {avatar && (avatar.startsWith('http') || avatar.startsWith('data:') || avatar.startsWith('/')) ? (
+              <img src={avatar} alt={name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            ) : (
+              avatar
+            )}
           </div>
           <div className="overflow-hidden">
             <h3 className="font-bold text-slate-900 leading-tight truncate">{name}</h3>
