@@ -21,7 +21,7 @@ export default function Header({ currentUser, users, onSwitchSimulatedUser, onLo
       className="bg-gradient-to-r from-blue-900 via-slate-900 to-red-800 text-white relative shadow-md overflow-hidden" 
       id="app-header"
       style={settings.navbarBannerUrl ? {
-        backgroundImage: `linear-gradient(to right, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.75)), url(${settings.navbarBannerUrl})`,
+        backgroundImage: `linear-gradient(to right, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.75)), url("${settings.navbarBannerUrl}")`,
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       } : undefined}
