@@ -62,6 +62,13 @@ export default function SettingsTab({
   const [method, setMethod] = useState(settings.kpiWeights.method);
   const [responsibility, setResponsibility] = useState(settings.kpiWeights.responsibility);
   const [ethics, setEthics] = useState(settings.kpiWeights.ethics);
+  
+  // Staff weights
+  const [staffProfessional, setStaffProfessional] = useState(settings.kpiWeightsStaff?.professional ?? 40);
+  const [staffOperation, setStaffOperation] = useState(settings.kpiWeightsStaff?.operation ?? 30);
+  const [staffDocument, setStaffDocument] = useState(settings.kpiWeightsStaff?.document ?? 20);
+  const [staffDiscipline, setStaffDiscipline] = useState(settings.kpiWeightsStaff?.discipline ?? 10);
+
   const [heroBannerUrl, setHeroBannerUrl] = useState(settings.heroBannerUrl || '');
   const [navbarBannerUrl, setNavbarBannerUrl] = useState(settings.navbarBannerUrl || '');
   const [textLogoUrl, setTextLogoUrl] = useState(settings.textLogoUrl || '');
@@ -79,6 +86,13 @@ export default function SettingsTab({
     setMethod(settings.kpiWeights.method);
     setResponsibility(settings.kpiWeights.responsibility);
     setEthics(settings.kpiWeights.ethics);
+    
+    // Sync staff weights
+    setStaffProfessional(settings.kpiWeightsStaff?.professional ?? 40);
+    setStaffOperation(settings.kpiWeightsStaff?.operation ?? 30);
+    setStaffDocument(settings.kpiWeightsStaff?.document ?? 20);
+    setStaffDiscipline(settings.kpiWeightsStaff?.discipline ?? 10);
+
     setHeroBannerUrl(settings.heroBannerUrl || '');
     setNavbarBannerUrl(settings.navbarBannerUrl || '');
     setTextLogoUrl(settings.textLogoUrl || '');
@@ -100,7 +114,12 @@ export default function SettingsTab({
     }
     
     if (learning + method + responsibility + ethics !== 100) {
-      showToast('Tổng trọng số KPI của 4 nhóm tiêu chí bắt buộc phải bằng 100%!');
+      showToast('Tổng trọng số KPI của Giáo viên bắt buộc phải bằng 100%!');
+      return;
+    }
+
+    if (staffProfessional + staffOperation + staffDocument + staffDiscipline !== 100) {
+      showToast('Tổng trọng số KPI của Nhân viên bắt buộc phải bằng 100%!');
       return;
     }
 
@@ -113,6 +132,12 @@ export default function SettingsTab({
         method,
         responsibility,
         ethics
+      },
+      kpiWeightsStaff: {
+        professional: staffProfessional,
+        operation: staffOperation,
+        document: staffDocument,
+        discipline: staffDiscipline
       },
       heroBannerUrl: heroBannerUrl.trim(),
       navbarBannerUrl: navbarBannerUrl.trim(),
@@ -414,57 +439,145 @@ export default function SettingsTab({
             </div>
           </div>
 
-          <div>
-            <span className="block text-xs font-bold text-slate-600 uppercase mb-3">Cấu hình Trọng số KPI tổng thể Giáo Viên (Tổng phải bằng 100%)</span>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <span className="block text-slate-500 font-bold mb-1">KQ Học Tập (%)</span>
-                <input 
-                  type="number" 
-                  value={learning}
-                  disabled={!isBghOrAdmin}
-                  onChange={(e) => setLearning(parseInt(e.target.value) || 0)}
-                  className="w-full border border-slate-300 rounded p-1.5 font-black text-blue-900 text-sm disabled:bg-slate-100"
+          <div className="space-y-6">
+            {/* COU HINH TRONG SO KPI GIAO VIEN */}
+            <div className="space-y-3">
+              <span className="block text-xs font-bold text-slate-600 uppercase">Cấu hình Trọng số KPI tổng thể Giáo Viên (Tổng phải bằng 100%)</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                  <span className="block text-slate-500 font-bold mb-1">KQ Học Tập (%)</span>
+                  <input 
+                    type="number" 
+                    value={learning}
+                    disabled={!isBghOrAdmin}
+                    onChange={(e) => setLearning(parseInt(e.target.value) || 0)}
+                    className="w-full border border-slate-300 rounded p-1.5 font-black text-blue-900 text-sm disabled:bg-slate-100"
+                  />
+                </div>
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                  <span className="block text-slate-500 font-bold mb-1">PP Giảng Dạy (%)</span>
+                  <input 
+                    type="number" 
+                    value={method}
+                    disabled={!isBghOrAdmin}
+                    onChange={(e) => setMethod(parseInt(e.target.value) || 0)}
+                    className="w-full border border-slate-300 rounded p-1.5 font-black text-blue-900 text-sm disabled:bg-slate-100"
+                  />
+                </div>
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                  <span className="block text-slate-500 font-bold mb-1">Trách Nhiệm (%)</span>
+                  <input 
+                    type="number" 
+                    value={responsibility}
+                    disabled={!isBghOrAdmin}
+                    onChange={(e) => setResponsibility(parseInt(e.target.value) || 0)}
+                    className="w-full border border-slate-300 rounded p-1.5 font-black text-blue-900 text-sm disabled:bg-slate-100"
+                  />
+                </div>
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                  <span className="block text-slate-500 font-bold mb-1">Đạo Đức (%)</span>
+                  <input 
+                    type="number" 
+                    value={ethics}
+                    disabled={!isBghOrAdmin}
+                    onChange={(e) => setEthics(parseInt(e.target.value) || 0)}
+                    className="w-full border border-slate-300 rounded p-1.5 font-black text-blue-900 text-sm disabled:bg-slate-100"
+                  />
+                </div>
+              </div>
+
+              {/* Dynamic Visual Progress Bar */}
+              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden shadow-3xs border border-slate-250/30">
+                <div 
+                  className={`h-full transition-all duration-300 rounded-full ${
+                    learning + method + responsibility + ethics === 100 
+                      ? 'bg-emerald-500' 
+                      : learning + method + responsibility + ethics > 100 
+                      ? 'bg-red-500 animate-pulse' 
+                      : 'bg-amber-500'
+                  }`}
+                  style={{ width: `${Math.min(100, learning + method + responsibility + ethics)}%` }}
                 />
               </div>
-              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <span className="block text-slate-500 font-bold mb-1">PP Giảng Dạy (%)</span>
-                <input 
-                  type="number" 
-                  value={method}
-                  disabled={!isBghOrAdmin}
-                  onChange={(e) => setMethod(parseInt(e.target.value) || 0)}
-                  className="w-full border border-slate-300 rounded p-1.5 font-black text-blue-900 text-sm disabled:bg-slate-100"
-                />
-              </div>
-              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <span className="block text-slate-500 font-bold mb-1">Trách Nhiệm (%)</span>
-                <input 
-                  type="number" 
-                  value={responsibility}
-                  disabled={!isBghOrAdmin}
-                  onChange={(e) => setResponsibility(parseInt(e.target.value) || 0)}
-                  className="w-full border border-slate-300 rounded p-1.5 font-black text-blue-900 text-sm disabled:bg-slate-100"
-                />
-              </div>
-              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <span className="block text-slate-500 font-bold mb-1">Đạo Đức (%)</span>
-                <input 
-                  type="number" 
-                  value={ethics}
-                  disabled={!isBghOrAdmin}
-                  onChange={(e) => setEthics(parseInt(e.target.value) || 0)}
-                  className="w-full border border-slate-300 rounded p-1.5 font-black text-blue-900 text-sm disabled:bg-slate-100"
-                />
+
+              <div className="text-[11px] text-slate-500 flex items-center gap-1 font-semibold">
+                <span>Hiện tại: {learning + method + responsibility + ethics}% / 100%</span>
+                {learning + method + responsibility + ethics === 100 ? (
+                  <span className="text-emerald-600 font-bold flex items-center gap-0.5"><Check className="w-3.5 h-3.5" /> Trọng số hợp lệ</span>
+                ) : (
+                  <span className="text-red-600 font-bold">Vui lòng điều chỉnh lại cho đúng 100%!</span>
+                )}
               </div>
             </div>
-            <div className="mt-2 text-[11px] text-slate-500 flex items-center gap-1 font-semibold">
-              <span>Hiện tại: {learning + method + responsibility + ethics}% / 100%</span>
-              {learning + method + responsibility + ethics === 100 ? (
-                <span className="text-emerald-600 font-bold flex items-center gap-0.5"><Check className="w-3.5 h-3.5" /> Trọng số hợp lệ</span>
-              ) : (
-                <span className="text-red-600 font-bold">Vui lòng điều chỉnh lại cho đúng 100%!</span>
-              )}
+
+            {/* COU HINH TRONG SO KPI NHAN VIEN */}
+            <div className="space-y-3 pt-4 border-t border-slate-100">
+              <span className="block text-xs font-bold text-slate-600 uppercase">Cấu hình Trọng số KPI tổng thể Nhân Viên (Tổng phải bằng 100%)</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                  <span className="block text-slate-500 font-bold mb-1">NV Chuyên Môn (%)</span>
+                  <input 
+                    type="number" 
+                    value={staffProfessional}
+                    disabled={!isBghOrAdmin}
+                    onChange={(e) => setStaffProfessional(parseInt(e.target.value) || 0)}
+                    className="w-full border border-slate-300 rounded p-1.5 font-black text-blue-900 text-sm disabled:bg-slate-100"
+                  />
+                </div>
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                  <span className="block text-slate-500 font-bold mb-1">Quản Lý Vận Hành (%)</span>
+                  <input 
+                    type="number" 
+                    value={staffOperation}
+                    disabled={!isBghOrAdmin}
+                    onChange={(e) => setStaffOperation(parseInt(e.target.value) || 0)}
+                    className="w-full border border-slate-300 rounded p-1.5 font-black text-blue-900 text-sm disabled:bg-slate-100"
+                  />
+                </div>
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                  <span className="block text-slate-500 font-bold mb-1">Hồ Sơ Sổ Sách (%)</span>
+                  <input 
+                    type="number" 
+                    value={staffDocument}
+                    disabled={!isBghOrAdmin}
+                    onChange={(e) => setStaffDocument(parseInt(e.target.value) || 0)}
+                    className="w-full border border-slate-300 rounded p-1.5 font-black text-blue-900 text-sm disabled:bg-slate-100"
+                  />
+                </div>
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                  <span className="block text-slate-500 font-bold mb-1">Kỷ Luật Trách Nhiệm (%)</span>
+                  <input 
+                    type="number" 
+                    value={staffDiscipline}
+                    disabled={!isBghOrAdmin}
+                    onChange={(e) => setStaffDiscipline(parseInt(e.target.value) || 0)}
+                    className="w-full border border-slate-300 rounded p-1.5 font-black text-blue-900 text-sm disabled:bg-slate-100"
+                  />
+                </div>
+              </div>
+
+              {/* Dynamic Visual Progress Bar for Staff */}
+              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden shadow-3xs border border-slate-250/30">
+                <div 
+                  className={`h-full transition-all duration-300 rounded-full ${
+                    staffProfessional + staffOperation + staffDocument + staffDiscipline === 100 
+                      ? 'bg-emerald-500' 
+                      : staffProfessional + staffOperation + staffDocument + staffDiscipline > 100 
+                      ? 'bg-red-500 animate-pulse' 
+                      : 'bg-amber-500'
+                  }`}
+                  style={{ width: `${Math.min(100, staffProfessional + staffOperation + staffDocument + staffDiscipline)}%` }}
+                />
+              </div>
+
+              <div className="text-[11px] text-slate-500 flex items-center gap-1 font-semibold">
+                <span>Hiện tại: {staffProfessional + staffOperation + staffDocument + staffDiscipline}% / 100%</span>
+                {staffProfessional + staffOperation + staffDocument + staffDiscipline === 100 ? (
+                  <span className="text-emerald-600 font-bold flex items-center gap-0.5"><Check className="w-3.5 h-3.5" /> Trọng số hợp lệ</span>
+                ) : (
+                  <span className="text-red-600 font-bold">Vui lòng điều chỉnh lại cho đúng 100%!</span>
+                )}
+              </div>
             </div>
           </div>
 

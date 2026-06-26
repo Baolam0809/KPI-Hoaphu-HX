@@ -65,6 +65,12 @@ export interface SystemSettings {
     responsibility: number;
     ethics: number;
   };
+  kpiWeightsStaff?: {
+    professional: number;
+    operation: number;
+    document: number;
+    discipline: number;
+  };
   heroBannerUrl?: string;
   navbarBannerUrl?: string;
   textLogoUrl?: string;
