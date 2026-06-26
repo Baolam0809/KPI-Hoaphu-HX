@@ -140,6 +140,52 @@ Yêu cầu chi tiết:
   }
 });
 
+// Endpoint: Auto-generate specific KPI description and measurement using Gemini
+app.post("/api/generate-kpi-desc", async (req: express.Request, res: express.Response) => {
+  try {
+    const { criterionName, groupName, direction, currentDesc } = req.body;
+
+    if (!criterionName) {
+      res.status(400).json({ error: "Missing required field: criterionName" });
+      return;
+    }
+
+    if (!aiClient) {
+      res.status(503).json({ 
+        error: "Gemini API key is not configured in environment. Please add GEMINI_API_KEY to your secrets." 
+      });
+      return;
+    }
+
+    const prompt = `Bạn là một chuyên gia quản trị giáo dục hàng đầu tại Việt Nam, chuyên về kiểm định chất lượng giáo dục và xây dựng bộ chỉ số KPI đo lường hiệu suất công việc trong trường học phổ thông.
+Hãy viết một bản mô tả công việc và bộ tiêu chí thước đo cụ thể, có tính định lượng, rõ ràng cho tiêu chí KPI sau đây:
+- Tiêu chí KPI: "${criterionName}"
+- Áp dụng cho Tổ/Khối: "${groupName || "Tổ chuyên môn"}"
+- Định hướng hành động từ Ban Giám Hiệu: "${direction || "Chất lượng chuyên môn chuẩn, chủ động đổi mới sáng tạo, chuyển đổi số."}"
+${currentDesc ? `- Bản mô tả sơ lược hiện tại: "${currentDesc}"` : ""}
+
+Yêu cầu chi tiết cho nội dung tạo ra:
+1. Viết hoàn toàn bằng tiếng Việt, ngôn từ chuẩn sư phạm, trang trọng, chuyên nghiệp và có tính thực tế cao.
+2. Nêu rõ các hành động cụ thể cần làm (Ví dụ: Soạn bài chuẩn, lên lớp đúng giờ, ứng dụng tối thiểu bao nhiêu % công nghệ...).
+3. Nêu rõ THƯỚC ĐO CỤ THỂ định lượng (Ví dụ: Hoàn thành đúng hạn 100%, có ít nhất bao nhiêu bài giảng số hóa, tỉ lệ phản hồi hài lòng đạt từ bao nhiêu %, hoặc số lần kiểm tra nội bộ đạt loại tốt trở lên).
+4. Nội dung ngắn gọn, súc tích nhưng đầy đủ ý, thường viết dưới dạng một đoạn văn ngắn hoặc danh sách 2-4 gạch đầu dòng rõ ràng để dễ dàng đưa vào ô nhập liệu textarea. Không dùng markdown lồng ghép quá phức tạp (chỉ dùng các gạch đầu dòng và văn bản thuần túy).`;
+
+    const response = await aiClient.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: prompt,
+      config: {
+        systemInstruction: "Bạn là trợ lý đắc lực của Ban Giám Hiệu, giúp sinh thêm nội dung mô tả chi tiết và bộ thước đo cụ thể, định lượng cho từng tiêu chí KPI của giáo viên, nhân viên nhà trường.",
+      }
+    });
+
+    const text = response.text;
+    res.json({ description: text ? text.trim() : "" });
+  } catch (error: any) {
+    console.error("Error generating KPI description:", error);
+    res.status(500).json({ error: error.message || "Failed to generate KPI description" });
+  }
+});
+
 // Vite middleware for development or Static Assets for production
 const startServer = async () => {
   if (process.env.NODE_ENV !== "production") {

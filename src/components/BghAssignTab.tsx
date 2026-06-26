@@ -164,6 +164,8 @@ export default function BghAssignTab({
   const [previewKpi3Weight, setPreviewKpi3Weight] = useState(30);
   const [previewKpi3Desc, setPreviewKpi3Desc] = useState('');
 
+  const [generatingKpiNum, setGeneratingKpiNum] = useState<number | null>(null);
+
   const currentAssignment = groupAssignments.find(a => a.id === selectedGroup.id);
 
   const isBgh = currentUser === 'admin' || (currentUser && typeof currentUser === 'object' && currentUser.type === 'BGH');
@@ -392,6 +394,65 @@ export default function BghAssignTab({
     } finally {
       clearInterval(interval);
       setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateSingleKpiDesc = async (kpiNum: number) => {
+    let criterionName = '';
+    let currentDesc = '';
+    if (kpiNum === 1) {
+      criterionName = previewKpi1Name;
+      currentDesc = previewKpi1Desc;
+    } else if (kpiNum === 2) {
+      criterionName = previewKpi2Name;
+      currentDesc = previewKpi2Desc;
+    } else if (kpiNum === 3) {
+      criterionName = previewKpi3Name;
+      currentDesc = previewKpi3Desc;
+    }
+
+    if (!criterionName.trim()) {
+      showToast(`Vui lòng nhập tên Tiêu chí KPI ${kpiNum} trước khi sinh mô tả!`);
+      return;
+    }
+
+    setGeneratingKpiNum(kpiNum);
+    try {
+      const response = await fetch('/api/generate-kpi-desc', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          criterionName: criterionName.trim(),
+          groupName: selectedGroup.name,
+          direction: assignDirection,
+          currentDesc: currentDesc.trim()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Lỗi kết nối API");
+      }
+
+      const data = await response.json();
+      if (data && data.description) {
+        if (kpiNum === 1) {
+          setPreviewKpi1Desc(data.description);
+        } else if (kpiNum === 2) {
+          setPreviewKpi2Desc(data.description);
+        } else if (kpiNum === 3) {
+          setPreviewKpi3Desc(data.description);
+        }
+        showToast(`Đã sinh thành công mô tả chi tiết & thước đo định lượng cho KPI ${kpiNum}!`);
+      } else {
+        throw new Error("Không nhận được phản hồi phù hợp từ AI");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("Không thể kết nối với AI Gemini để sinh thêm mô tả. Vui lòng thử lại sau.");
+    } finally {
+      setGeneratingKpiNum(null);
     }
   };
 
@@ -713,10 +774,23 @@ export default function BghAssignTab({
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase">Mô tả và thước đo cụ thể</label>
+                        <div className="flex items-center justify-between">
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase">Mô tả và thước đo cụ thể</label>
+                          <button
+                            type="button"
+                            onClick={() => handleGenerateSingleKpiDesc(1)}
+                            disabled={generatingKpiNum === 1 || !previewKpi1Name}
+                            className="text-[10px] text-indigo-700 hover:text-indigo-950 font-bold flex items-center gap-1 transition cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed"
+                            title="Tự động sinh mô tả chi tiết và thước đo định lượng bằng AI"
+                          >
+                            <Sparkles className={`w-3 h-3 text-indigo-600 ${generatingKpiNum === 1 ? 'animate-spin' : ''}`} />
+                            {generatingKpiNum === 1 ? 'Đang sinh...' : 'Sinh thêm mô tả (AI)'}
+                          </button>
+                        </div>
                         <textarea
                           value={previewKpi1Desc}
                           onChange={(e) => setPreviewKpi1Desc(e.target.value)}
+                          placeholder="Mô tả cụ thể hành động cần làm và thước đo đo lường hiệu quả..."
                           className="w-full border border-slate-300 rounded-md p-1.5 text-[11px] font-medium text-slate-800 bg-slate-50 min-h-[40px]"
                         />
                       </div>
@@ -745,10 +819,23 @@ export default function BghAssignTab({
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase">Mô tả và thước đo cụ thể</label>
+                        <div className="flex items-center justify-between">
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase">Mô tả và thước đo cụ thể</label>
+                          <button
+                            type="button"
+                            onClick={() => handleGenerateSingleKpiDesc(2)}
+                            disabled={generatingKpiNum === 2 || !previewKpi2Name}
+                            className="text-[10px] text-indigo-700 hover:text-indigo-950 font-bold flex items-center gap-1 transition cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed"
+                            title="Tự động sinh mô tả chi tiết và thước đo định lượng bằng AI"
+                          >
+                            <Sparkles className={`w-3 h-3 text-indigo-600 ${generatingKpiNum === 2 ? 'animate-spin' : ''}`} />
+                            {generatingKpiNum === 2 ? 'Đang sinh...' : 'Sinh thêm mô tả (AI)'}
+                          </button>
+                        </div>
                         <textarea
                           value={previewKpi2Desc}
                           onChange={(e) => setPreviewKpi2Desc(e.target.value)}
+                          placeholder="Mô tả cụ thể hành động cần làm và thước đo đo lường hiệu quả..."
                           className="w-full border border-slate-300 rounded-md p-1.5 text-[11px] font-medium text-slate-800 bg-slate-50 min-h-[40px]"
                         />
                       </div>
@@ -777,10 +864,23 @@ export default function BghAssignTab({
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase">Mô tả và thước đo cụ thể</label>
+                        <div className="flex items-center justify-between">
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase">Mô tả và thước đo cụ thể</label>
+                          <button
+                            type="button"
+                            onClick={() => handleGenerateSingleKpiDesc(3)}
+                            disabled={generatingKpiNum === 3 || !previewKpi3Name}
+                            className="text-[10px] text-indigo-700 hover:text-indigo-950 font-bold flex items-center gap-1 transition cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed"
+                            title="Tự động sinh mô tả chi tiết và thước đo định lượng bằng AI"
+                          >
+                            <Sparkles className={`w-3 h-3 text-indigo-600 ${generatingKpiNum === 3 ? 'animate-spin' : ''}`} />
+                            {generatingKpiNum === 3 ? 'Đang sinh...' : 'Sinh thêm mô tả (AI)'}
+                          </button>
+                        </div>
                         <textarea
                           value={previewKpi3Desc}
                           onChange={(e) => setPreviewKpi3Desc(e.target.value)}
+                          placeholder="Mô tả cụ thể hành động cần làm và thước đo đo lường hiệu quả..."
                           className="w-full border border-slate-300 rounded-md p-1.5 text-[11px] font-medium text-slate-800 bg-slate-50 min-h-[40px]"
                         />
                       </div>
