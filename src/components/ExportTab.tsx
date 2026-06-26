@@ -290,11 +290,12 @@ export default function ExportTab({
         const uKpis = (allKpis && allKpis[usr.id]) || [];
         const kpiScore = uKpis.length === 0 ? 82 : Math.round(uKpis.reduce((acc, k) => acc + (k.value * k.weight / 100), 0));
         
-        let rank = 'Khá';
-        if (kpiScore >= 90) rank = 'Xuất sắc';
-        else if (kpiScore >= 80) rank = 'Tốt';
-        else if (kpiScore >= 65) rank = 'Khá';
-        else rank = 'Trung bình';
+        let rank = usr.bghRatingOverride || (() => {
+          if (kpiScore >= 90) return 'Xuất sắc';
+          if (kpiScore >= 80) return 'Hoàn thành tốt nhiệm vụ';
+          if (kpiScore >= 60) return 'Hoàn thành nhiệm vụ';
+          return 'Không hoàn thành nhiệm vụ';
+        })();
 
         return {
           "STT": idx + 1,
@@ -480,13 +481,13 @@ ${xrefOffset}
         ).join('\n')) +
         `\n=> ĐIỂM TRUNG BÌNH KPI TỔNG HỢP: ${userKpis.length === 0 ? 0 : Math.round(userKpis.reduce((acc, k) => acc + (k.value * k.weight / 100), 0))} / 100\n` +
         `Xếp loại thi đua đề xuất: ${
-          userKpis.length === 0 ? 'Khá' : 
+          userKpis.length === 0 ? 'Hoàn thành nhiệm vụ' : 
           (() => {
             const avg = Math.round(userKpis.reduce((acc, k) => acc + (k.value * k.weight / 100), 0));
             if (avg >= 90) return 'Xuất sắc';
-            if (avg >= 80) return 'Tốt';
-            if (avg >= 65) return 'Khá';
-            return 'Trung bình';
+            if (avg >= 80) return 'Hoàn thành tốt nhiệm vụ';
+            if (avg >= 60) return 'Hoàn thành nhiệm vụ';
+            return 'Không hoàn thành nhiệm vụ';
           })()
         }\n\n` +
         `----------------------------------------------------------\n` +

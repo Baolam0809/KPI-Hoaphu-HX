@@ -543,17 +543,15 @@ export default function UsersTab({
                               {(() => {
                                 const ratingText = user.bghRatingOverride || (() => {
                                   if (finalBghScore >= 90) return 'Xuất sắc';
-                                  if (finalBghScore >= 80) return 'Giỏi';
-                                  if (finalBghScore >= 70) return 'Khá';
-                                  if (finalBghScore >= 60) return 'Trung bình';
-                                  return 'Yếu kém';
+                                  if (finalBghScore >= 80) return 'Hoàn thành tốt nhiệm vụ';
+                                  if (finalBghScore >= 60) return 'Hoàn thành nhiệm vụ';
+                                  return 'Không hoàn thành nhiệm vụ';
                                 })();
                                 let ratingColor = 'bg-slate-50 border-slate-200 text-slate-700';
                                 if (ratingText === 'Xuất sắc') ratingColor = 'bg-emerald-50 border-emerald-200 text-emerald-800 font-extrabold';
-                                if (ratingText === 'Giỏi') ratingColor = 'bg-sky-50 border-sky-200 text-sky-800 font-extrabold';
-                                if (ratingText === 'Khá') ratingColor = 'bg-amber-50 border-amber-200 text-amber-800 font-extrabold';
-                                if (ratingText === 'Trung bình') ratingColor = 'bg-orange-50 border-orange-200 text-orange-800 font-extrabold';
-                                if (ratingText === 'Yếu kém') ratingColor = 'bg-red-50 border-red-200 text-red-800 font-extrabold';
+                                if (ratingText === 'Hoàn thành tốt nhiệm vụ') ratingColor = 'bg-sky-50 border-sky-200 text-sky-800 font-extrabold';
+                                if (ratingText === 'Hoàn thành nhiệm vụ') ratingColor = 'bg-amber-50 border-amber-200 text-amber-800 font-extrabold';
+                                if (ratingText === 'Không hoàn thành nhiệm vụ') ratingColor = 'bg-red-50 border-red-200 text-red-800 font-extrabold';
                                 return (
                                   <span className={`text-[9.5px] px-1.5 py-0.5 rounded border text-center ${ratingColor}`}>
                                     {ratingText}

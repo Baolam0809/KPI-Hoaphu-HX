@@ -198,21 +198,19 @@ export default function KpiSection({
   const finalScore = totals.bgh;
 
   const getRatingInfo = (score: number) => {
-    if (score >= 90) return { text: 'Xuất sắc', class: 'bg-emerald-600 text-white' };
-    if (score >= 80) return { text: 'Giỏi', class: 'bg-sky-600 text-white' };
-    if (score >= 70) return { text: 'Khá', class: 'bg-amber-500 text-white' };
-    if (score >= 60) return { text: 'Trung bình', class: 'bg-orange-400 text-white' };
-    return { text: 'Yếu kém', class: 'bg-red-600 text-white' };
+    if (score >= 90) return { text: 'Xuất sắc', class: 'bg-emerald-600 text-white font-bold' };
+    if (score >= 80) return { text: 'Hoàn thành tốt nhiệm vụ', class: 'bg-sky-600 text-white font-bold' };
+    if (score >= 60) return { text: 'Hoàn thành nhiệm vụ', class: 'bg-amber-500 text-white font-bold' };
+    return { text: 'Không hoàn thành nhiệm vụ', class: 'bg-red-600 text-white font-bold' };
   };
 
   const getAppliedRating = (score: number) => {
     if (activeUser?.bghRatingOverride) {
-      let rClass = 'bg-slate-600 text-white';
-      if (activeUser.bghRatingOverride === 'Xuất sắc') rClass = 'bg-emerald-600 text-white';
-      if (activeUser.bghRatingOverride === 'Giỏi') rClass = 'bg-sky-600 text-white';
-      if (activeUser.bghRatingOverride === 'Khá') rClass = 'bg-amber-500 text-white';
-      if (activeUser.bghRatingOverride === 'Trung bình') rClass = 'bg-orange-400 text-white';
-      if (activeUser.bghRatingOverride === 'Yếu kém') rClass = 'bg-red-600 text-white';
+      let rClass = 'bg-slate-600 text-white font-bold';
+      if (activeUser.bghRatingOverride === 'Xuất sắc') rClass = 'bg-emerald-600 text-white font-bold';
+      if (activeUser.bghRatingOverride === 'Hoàn thành tốt nhiệm vụ') rClass = 'bg-sky-600 text-white font-bold';
+      if (activeUser.bghRatingOverride === 'Hoàn thành nhiệm vụ') rClass = 'bg-amber-500 text-white font-bold';
+      if (activeUser.bghRatingOverride === 'Không hoàn thành nhiệm vụ') rClass = 'bg-red-600 text-white font-bold';
       return { text: activeUser.bghRatingOverride, class: rClass };
     }
     return getRatingInfo(score);
@@ -507,10 +505,9 @@ export default function KpiSection({
                 >
                   <option value="Tự động">-- Tự động (Theo điểm BGH) --</option>
                   <option value="Xuất sắc">Xuất sắc</option>
-                  <option value="Giỏi">Giỏi</option>
-                  <option value="Khá">Khá</option>
-                  <option value="Trung bình">Trung bình</option>
-                  <option value="Yếu kém">Yếu kém</option>
+                  <option value="Hoàn thành tốt nhiệm vụ">Hoàn thành tốt nhiệm vụ</option>
+                  <option value="Hoàn thành nhiệm vụ">Hoàn thành nhiệm vụ</option>
+                  <option value="Không hoàn thành nhiệm vụ">Không hoàn thành nhiệm vụ</option>
                 </select>
               </div>
             ) : (
