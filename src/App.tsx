@@ -740,14 +740,29 @@ export default function App() {
       } catch (e) {}
     }
 
-    const groupBlockTeacherId = loadedTargetGroups.find(g => g.type === 'khoi-giaovien')?.id || 'group-khoi-giaovien';
-    const groupBlockStaffId = loadedTargetGroups.find(g => g.type === 'khoi-nhanvien')?.id || 'group-khoi-nhanvien';
+    const isOfGroupType = (group: any, type: string) => {
+      if (!group) return false;
+      if (Array.isArray(group.type)) {
+        return group.type.includes(type);
+      }
+      return group.type === type;
+    };
+
+    const assignHasTargetType = (assign: GroupAssignment, type: string) => {
+      if (Array.isArray(assign.targetType)) {
+        return assign.targetType.includes(type as any);
+      }
+      return assign.targetType === type;
+    };
+
+    const groupBlockTeacherId = loadedTargetGroups.find(g => isOfGroupType(g, 'khoi-giaovien'))?.id || 'group-khoi-giaovien';
+    const groupBlockStaffId = loadedTargetGroups.find(g => isOfGroupType(g, 'khoi-nhanvien'))?.id || 'group-khoi-nhanvien';
 
     if (currentUser.type === 'GiaoVien') {
-      const blockAssign = groupAssignments.find(a => a.id === groupBlockTeacherId || a.targetType === 'khoi-giaovien');
+      const blockAssign = groupAssignments.find(a => a.id === groupBlockTeacherId || assignHasTargetType(a, 'khoi-giaovien'));
       if (blockAssign) assigned.push(blockAssign);
     } else if (currentUser.type === 'NhanVien') {
-      const blockAssign = groupAssignments.find(a => a.id === groupBlockStaffId || a.targetType === 'khoi-nhanvien');
+      const blockAssign = groupAssignments.find(a => a.id === groupBlockStaffId || assignHasTargetType(a, 'khoi-nhanvien'));
       if (blockAssign) assigned.push(blockAssign);
     }
     
@@ -759,7 +774,7 @@ export default function App() {
       const targetNameLower = assign.targetName.toLowerCase();
       
       // Match custom/dynamic specialized groups if the group's name is found in user's role/title/department
-      if (assign.targetType === 'to-chuyen-mon') {
+      if (assignHasTargetType(assign, 'to-chuyen-mon')) {
         // Direct matching: e.g. "Tổ Tiếng Anh" -> role "Giáo viên Tiếng Anh"
         // Strip "tổ" and "khối" prefixes to match core keyword
         const cleanName = targetNameLower.replace('tổ', '').replace('khối', '').trim();

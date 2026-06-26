@@ -12,7 +12,7 @@ interface BghAssignTabProps {
 export interface TargetGroup {
   id: string;
   name: string;
-  type: 'to-chuyen-mon' | 'khoi-giaovien' | 'khoi-nhanvien';
+  type: 'to-chuyen-mon' | 'khoi-giaovien' | 'khoi-nhanvien' | ('to-chuyen-mon' | 'khoi-giaovien' | 'khoi-nhanvien')[];
   desc: string;
 }
 
@@ -138,7 +138,7 @@ export default function BghAssignTab({
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<TargetGroup | null>(null);
   const [groupFormName, setGroupFormName] = useState('');
-  const [groupFormType, setGroupFormType] = useState<'to-chuyen-mon' | 'khoi-giaovien' | 'khoi-nhanvien'>('to-chuyen-mon');
+  const [groupFormTypes, setGroupFormTypes] = useState<('to-chuyen-mon' | 'khoi-giaovien' | 'khoi-nhanvien')[]>(['to-chuyen-mon']);
   const [groupFormDesc, setGroupFormDesc] = useState('');
 
   // States cho form chỉnh sửa
@@ -172,7 +172,7 @@ export default function BghAssignTab({
   const handleOpenAddGroup = () => {
     setEditingGroup(null);
     setGroupFormName('');
-    setGroupFormType('to-chuyen-mon');
+    setGroupFormTypes(['to-chuyen-mon']);
     setGroupFormDesc('');
     setIsGroupModalOpen(true);
   };
@@ -181,7 +181,13 @@ export default function BghAssignTab({
     e.stopPropagation(); // Prevent choosing the card when clicking edit
     setEditingGroup(group);
     setGroupFormName(group.name);
-    setGroupFormType(group.type);
+    
+    // Normalize to an array of types
+    const typesArray = Array.isArray(group.type) 
+      ? group.type 
+      : (group.type ? [group.type] : ['to-chuyen-mon']);
+    setGroupFormTypes(typesArray as any);
+    
     setGroupFormDesc(group.desc);
     setIsGroupModalOpen(true);
   };
@@ -192,13 +198,18 @@ export default function BghAssignTab({
       return;
     }
 
+    if (groupFormTypes.length === 0) {
+      showToast("Vui lòng tích chọn ít nhất một phân nhóm nhân sự!");
+      return;
+    }
+
     let updatedGroups: TargetGroup[];
     if (editingGroup) {
       // Edit
       updatedGroups = groups.map(g => g.id === editingGroup.id ? {
         ...g,
         name: groupFormName.trim(),
-        type: groupFormType,
+        type: groupFormTypes,
         desc: groupFormDesc.trim()
       } : g);
       showToast(`Đã cập nhật Tổ/Khối: ${groupFormName.trim()}`);
@@ -208,7 +219,7 @@ export default function BghAssignTab({
       const newGroup: TargetGroup = {
         id: newId,
         name: groupFormName.trim(),
-        type: groupFormType,
+        type: groupFormTypes,
         desc: groupFormDesc.trim()
       };
       updatedGroups = [...groups, newGroup];
@@ -331,7 +342,8 @@ export default function BghAssignTab({
     }, 1500);
 
     try {
-      const isTeacherType = selectedGroup.type === 'khoi-giaovien' || selectedGroup.id.includes('to-tu-nhien') || selectedGroup.id.includes('to-xa-hoi') || selectedGroup.id.includes('vanthemy');
+      const groupTypes = Array.isArray(selectedGroup.type) ? selectedGroup.type : [selectedGroup.type];
+      const isTeacherType = groupTypes.includes('khoi-giaovien') || groupTypes.includes('to-chuyen-mon') || selectedGroup.id.includes('to-tu-nhien') || selectedGroup.id.includes('to-xa-hoi') || selectedGroup.id.includes('vanthemy');
       
       const response = await fetch("/api/generate-okr-kpi", {
         method: "POST",
@@ -514,6 +526,15 @@ export default function BghAssignTab({
                   <p className="text-[10px] text-slate-500 font-medium leading-snug">
                     {group.desc}
                   </p>
+                  
+                  {/* Category Tag Badges */}
+                  <div className="flex flex-wrap gap-1 mt-1.5 pt-1.5 border-t border-slate-100">
+                    {(Array.isArray(group.type) ? group.type : [group.type]).map((t) => (
+                      <span key={t} className="text-[9px] bg-blue-50/70 text-blue-800 font-black px-1.5 py-0.5 rounded-md border border-blue-100/50">
+                        {t === 'to-chuyen-mon' ? 'Tổ Chuyên Môn' : t === 'khoi-giaovien' ? 'Khối Giáo viên' : 'Khối Nhân viên'}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               );
             })}
@@ -813,16 +834,43 @@ export default function BghAssignTab({
               </div>
 
               <div className="space-y-1">
-                <label className="block font-black text-slate-700 uppercase tracking-wide">Phân nhóm nhân sự</label>
-                <select
-                  value={groupFormType}
-                  onChange={(e) => setGroupFormType(e.target.value as any)}
-                  className="w-full border border-slate-300 rounded-xl p-3 text-xs focus:ring-1 focus:ring-blue-900 focus:outline-none font-medium text-slate-800 bg-white cursor-pointer"
-                >
-                  <option value="to-chuyen-mon">Tổ Chuyên Môn (Giáo viên thuộc tổ bộ môn)</option>
-                  <option value="khoi-giaovien">Khối Giáo viên (Áp dụng cho toàn bộ giáo viên)</option>
-                  <option value="khoi-nhanvien">Khối Nhân viên (Áp dụng cho toàn bộ nhân viên)</option>
-                </select>
+                <label className="block font-black text-slate-700 uppercase tracking-wide mb-1">Phân nhóm nhân sự áp dụng (Chọn một hoặc nhiều)</label>
+                <div className="space-y-2 border border-slate-200 rounded-xl p-3 bg-slate-50/50">
+                  {[
+                    { value: 'to-chuyen-mon' as const, label: 'Tổ Chuyên Môn', sub: 'Áp dụng cho giáo viên thuộc các tổ bộ môn tự chọn' },
+                    { value: 'khoi-giaovien' as const, label: 'Khối Giáo viên', sub: 'Áp dụng đồng loạt cho toàn bộ giáo viên' },
+                    { value: 'khoi-nhanvien' as const, label: 'Khối Nhân viên', sub: 'Áp dụng đồng loạt cho toàn bộ nhân viên' }
+                  ].map((option) => {
+                    const isChecked = groupFormTypes.includes(option.value);
+                    return (
+                      <label 
+                        key={option.value}
+                        className={`flex items-start gap-3 p-2.5 rounded-lg border transition cursor-pointer select-none ${
+                          isChecked 
+                            ? 'bg-blue-50/80 border-blue-400 text-blue-900' 
+                            : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {
+                            if (isChecked) {
+                              setGroupFormTypes(groupFormTypes.filter(t => t !== option.value));
+                            } else {
+                              setGroupFormTypes([...groupFormTypes, option.value]);
+                            }
+                          }}
+                          className="mt-0.5 rounded text-blue-900 focus:ring-blue-900 cursor-pointer w-4 h-4 accent-blue-900"
+                        />
+                        <div className="flex flex-col">
+                          <span className="font-extrabold text-[11px] leading-snug">{option.label}</span>
+                          <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{option.sub}</span>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="space-y-1">

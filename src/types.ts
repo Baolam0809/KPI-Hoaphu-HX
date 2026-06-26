@@ -72,7 +72,7 @@ export interface SystemSettings {
 
 export interface GroupAssignment {
   id: string;
-  targetType: 'to-chuyen-mon' | 'khoi-giaovien' | 'khoi-nhanvien';
+  targetType: 'to-chuyen-mon' | 'khoi-giaovien' | 'khoi-nhanvien' | ('to-chuyen-mon' | 'khoi-giaovien' | 'khoi-nhanvien')[];
   targetName: string;
   okr: {
     title: string;
