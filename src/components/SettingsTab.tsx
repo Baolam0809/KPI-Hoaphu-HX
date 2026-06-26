@@ -13,6 +13,9 @@ interface SettingsTabProps {
   showToast: (msg: string) => void;
   initialSubTab?: 'general' | 'notifications' | 'schedules';
   onSubTabChange?: (subTab: 'general' | 'notifications' | 'schedules') => void;
+  semester?: string;
+  schoolYear?: string;
+  onSaveSemester?: (semester: string, schoolYear: string) => void;
 }
 
 export default function SettingsTab({ 
@@ -25,7 +28,10 @@ export default function SettingsTab({
   currentUser, 
   showToast,
   initialSubTab = 'general',
-  onSubTabChange
+  onSubTabChange,
+  semester = 'Học kỳ I',
+  schoolYear = '2026-2027',
+  onSaveSemester
 }: SettingsTabProps) {
   // Authorization check
   const isBghOrAdmin = currentUser === 'admin' || (currentUser && typeof currentUser === 'object' && currentUser.type === 'BGH');
@@ -60,6 +66,10 @@ export default function SettingsTab({
   const [navbarBannerUrl, setNavbarBannerUrl] = useState(settings.navbarBannerUrl || '');
   const [textLogoUrl, setTextLogoUrl] = useState(settings.textLogoUrl || '');
 
+  // Local semester states
+  const [localSemester, setLocalSemester] = useState(semester);
+  const [localSchoolYear, setLocalSchoolYear] = useState(schoolYear);
+
   // Sync settings when they change
   useEffect(() => {
     setMarqueeText(settings.marqueeText);
@@ -73,6 +83,14 @@ export default function SettingsTab({
     setNavbarBannerUrl(settings.navbarBannerUrl || '');
     setTextLogoUrl(settings.textLogoUrl || '');
   }, [settings]);
+
+  useEffect(() => {
+    setLocalSemester(semester);
+  }, [semester]);
+
+  useEffect(() => {
+    setLocalSchoolYear(schoolYear);
+  }, [schoolYear]);
 
   const handleGeneralSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +119,11 @@ export default function SettingsTab({
       textLogoUrl: textLogoUrl.trim()
     });
 
-    showToast('Đã lưu cấu hình hệ thống và giao diện hình ảnh toàn trường thành công!');
+    if (onSaveSemester) {
+      onSaveSemester(localSemester, localSchoolYear);
+    }
+
+    showToast('Đã lưu cấu hình hệ thống, thông tin học kỳ và hình ảnh toàn trường thành công!');
   };
 
   const handleImageUpload = (file: File, target: 'hero' | 'navbar' | 'logo') => {
@@ -357,6 +379,37 @@ export default function SettingsTab({
                 disabled={!isBghOrAdmin}
                 onChange={(e) => setLocation(e.target.value)}
                 className="w-full border border-slate-300 rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-blue-900 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs bg-amber-50/45 p-4 rounded-xl border border-amber-200/80 shadow-3xs">
+            <div>
+              <label className="block text-xs font-black text-amber-950 uppercase mb-1.5 flex items-center gap-1.5 select-none">
+                <Tag className="w-4 h-4 text-amber-700 animate-pulse" /> Thiết lập Học kỳ hoạt động
+              </label>
+              <select
+                value={localSemester}
+                disabled={!isBghOrAdmin}
+                onChange={(e) => setLocalSemester(e.target.value)}
+                className="w-full border border-slate-300 bg-white rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-blue-900 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500 font-extrabold text-amber-950"
+              >
+                <option value="Học kỳ I">Học kỳ I</option>
+                <option value="Học kỳ II">Học kỳ II</option>
+                <option value="Học kỳ phụ">Học kỳ phụ (Học kỳ hè)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-black text-amber-950 uppercase mb-1.5 flex items-center gap-1.5 select-none">
+                <Calendar className="w-4 h-4 text-amber-700" /> Thiết lập Năm học hiện tại
+              </label>
+              <input 
+                type="text" 
+                value={localSchoolYear}
+                disabled={!isBghOrAdmin}
+                onChange={(e) => setLocalSchoolYear(e.target.value)}
+                placeholder="Ví dụ: 2026-2027"
+                className="w-full border border-slate-300 bg-white rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-blue-900 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500 font-extrabold text-amber-950"
               />
             </div>
           </div>
