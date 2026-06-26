@@ -69,3 +69,22 @@ export interface SystemSettings {
   navbarBannerUrl?: string;
   textLogoUrl?: string;
 }
+
+export interface GroupAssignment {
+  id: string;
+  targetType: 'to-chuyen-mon' | 'khoi-giaovien' | 'khoi-nhanvien';
+  targetName: string;
+  okr: {
+    title: string;
+    kr1: string;
+    kr2: string;
+    kr3: string;
+  };
+  kpis: {
+    criterion: string;
+    weight: number;
+    desc: string;
+  }[];
+  assignedBy: string;
+  assignedAt: string;
+}

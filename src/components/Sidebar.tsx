@@ -32,11 +32,13 @@ export default function Sidebar({
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const isBghOrToTruong = currentUser === 'admin' || (currentUser && typeof currentUser === 'object' && (currentUser.type === 'BGH' || currentUser.role?.includes('Tổ trưởng') || currentUser.role?.includes('Tổ phó') || currentUser.role?.includes('Trưởng bộ môn')));
+  const isBgh = currentUser === 'admin' || (currentUser && typeof currentUser === 'object' && currentUser.type === 'BGH');
 
   const menuItems = [
     { id: 'tab-main', label: 'Trang chủ: Tổng quan', icon: LayoutDashboard, badge: null },
     { id: 'tab-profile', label: 'Quản lý tài khoản', icon: User, badge: null },
     { id: 'tab-notifications', label: 'Bản tin & Thông báo', icon: Bell, badge: unreadCount > 0 ? unreadCount : null, isNotification: true },
+    ...(isBgh ? [{ id: 'tab-bgh-assign', label: 'BGH: Giao OKR-KPI Tổ/Khối', icon: Award, badge: null }] : []),
     ...(isBghOrToTruong ? [{ id: 'tab-users', label: 'BGH/Giáo viên/Nhân viên', icon: Users, badge: usersCount }] : []),
     { id: 'tab-export', label: 'In ấn & Xuất file Word/PDF', icon: Printer, badge: null },
     { id: 'tab-utilities', label: 'Liên hệ & Tiện ích', icon: HelpCircle, badge: null },

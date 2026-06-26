@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Calendar, MessageSquare, Info, ShieldAlert, Award, Star, BookOpen, Database, CloudUpload, RefreshCw, AlertCircle, Copy, Check, Settings, UserCog, Clock, Sparkles, Tag } from 'lucide-react';
-import { User, OKR, KPI, Notification, SystemSettings, ScheduleItem } from './types';
+import { User, OKR, KPI, Notification, SystemSettings, ScheduleItem, GroupAssignment } from './types';
 import { 
   INITIAL_USERS, 
   INITIAL_OKRS, 
@@ -21,6 +21,7 @@ import ExportTab from './components/ExportTab';
 import UtilitiesTab from './components/UtilitiesTab';
 import SettingsTab from './components/SettingsTab';
 import NotificationsTab from './components/NotificationsTab';
+import BghAssignTab from './components/BghAssignTab';
 
 import { 
   checkSupabaseConnection, 
@@ -66,6 +67,7 @@ export default function App() {
   const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
   const [notifications, setNotifications] = useState<Notification[]>(DEFAULT_NOTIFICATIONS);
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>(DEFAULT_SCHEDULE_ITEMS);
+  const [groupAssignments, setGroupAssignments] = useState<GroupAssignment[]>([]);
 
   // State điều hướng & giao diện
   const [activeTab, setActiveTab] = useState('tab-main');
@@ -264,6 +266,52 @@ export default function App() {
       else {
         setScheduleItems(DEFAULT_SCHEDULE_ITEMS);
         localStorage.setItem('thcs_hp_schedules', JSON.stringify(DEFAULT_SCHEDULE_ITEMS));
+      }
+
+      const cachedGroupAssignments = localStorage.getItem('thcs_hp_group_assignments');
+      if (cachedGroupAssignments) {
+        setGroupAssignments(JSON.parse(cachedGroupAssignments));
+      } else {
+        const initialGroups: GroupAssignment[] = [
+          {
+            id: 'group-khoi-giaovien',
+            targetType: 'khoi-giaovien',
+            targetName: 'Khối Giáo viên',
+            okr: {
+              title: "Nâng cao chất lượng ứng dụng phương pháp dạy học đổi mới kết hợp chuyển đổi số toàn trường",
+              kr1: "100% Giáo viên hoàn thiện học liệu giảng dạy tương tác chất lượng cao đưa lên hệ thống dùng chung.",
+              kr2: "Tổ chức tối thiểu 02 hội thảo chuyên đề ứng dụng Trí tuệ Nhân tạo hỗ trợ soạn bài và thiết kế bài tập.",
+              kr3: "Đạt tỷ lệ trên 85% giờ dạy thực tế xếp loại Giỏi thông qua thanh tra chuyên môn từ Tổ và BGH."
+            },
+            kpis: [
+              { criterion: "1. Chất lượng giảng dạy & Hồ sơ chuyên môn", weight: 40, desc: "Soạn bài chuẩn phân phối, chuẩn kiến thức kỹ năng. Chấm bài trả bài đầy đủ, lên lớp đúng giờ, nề nếp lớp học xuất sắc." },
+              { criterion: "2. Chuyển đổi số & Thiết kế E-learning", weight: 30, desc: "Sử dụng thành thạo thiết bị tương tác, số hóa tài liệu giảng dạy, tích cực ứng dụng học liệu số vào bài học thực tế." },
+              { criterion: "3. Công tác Chủ nhiệm & Hoạt động phong trào", weight: 30, desc: "Quản lý nề nếp lớp chủ nhiệm, gắn kết chặt chẽ với gia đình học sinh, tích cực đóng góp phong trào văn nghệ thể thao tổ." }
+            ],
+            assignedBy: "Hiệu trưởng Nghiêm Hồng Quân",
+            assignedAt: "15/09/2026"
+          },
+          {
+            id: 'group-khoi-nhanvien',
+            targetType: 'khoi-nhanvien',
+            targetName: 'Khối Nhân viên',
+            okr: {
+              title: "Chuẩn hóa và chuyên nghiệp hóa quy trình phục vụ nghiệp vụ hành chính và hỗ trợ kỹ thuật học đường",
+              kr1: "Số hóa, lưu trữ 100% hồ sơ học bạ điện tử, công văn đi đến và các thủ tục hành chính trực tuyến.",
+              kr2: "Rút ngắn 25% thời gian phản hồi và xử lý thủ tục yêu cầu từ phía giáo viên và phụ huynh.",
+              kr3: "Xây dựng 02 hướng dẫn tự động (Infographic/Video) giúp cán bộ và phụ huynh làm thủ tục nhanh."
+            },
+            kpis: [
+              { criterion: "1. Nghiệp vụ công tác chuyên môn hành chính", weight: 40, desc: "Sổ sách tài chính rõ ràng, lưu trữ hồ sơ văn thư khoa học, chuẩn bị chu đáo thiết bị thí nghiệm phòng học đầy đủ." },
+              { criterion: "2. Chấp hành kỷ luật tác phong & Thời gian biểu", weight: 30, desc: "Đảm bảo trực giờ hành chính đầy đủ, tác phong đón tiếp phụ huynh học sinh văn minh, lịch thiệp, hỗ trợ khẩn cấp tốt." },
+              { criterion: "3. Phối hợp công tác liên phòng ban hỗ trợ thi đua", weight: 30, desc: "Hỗ trợ kỹ thuật sự kiện hội trường, đại hội, phong trào xanh sạch đẹp và an toàn phòng chống cháy nổ." }
+            ],
+            assignedBy: "Hiệu trưởng Nghiêm Hồng Quân",
+            assignedAt: "15/09/2026"
+          }
+        ];
+        setGroupAssignments(initialGroups);
+        localStorage.setItem('thcs_hp_group_assignments', JSON.stringify(initialGroups));
       }
     }
 
@@ -649,6 +697,65 @@ export default function App() {
     localStorage.setItem('thcs_hp_notifications', JSON.stringify(updatedNotifs));
 
     showToast(`Đã giao OKR & KPI thành công cho: ${targetUser?.name || targetUserId}!`);
+  };
+
+  const handleSaveGroupAssignment = (assignment: GroupAssignment) => {
+    const updated = [...groupAssignments];
+    const index = updated.findIndex(a => a.id === assignment.id);
+    if (index !== -1) {
+      updated[index] = assignment;
+    } else {
+      updated.push(assignment);
+    }
+    setGroupAssignments(updated);
+    localStorage.setItem('thcs_hp_group_assignments', JSON.stringify(updated));
+
+    const assignerName = currentUser === 'admin' ? 'Ban Giám Hiệu' : (typeof currentUser === 'object' ? currentUser.name : 'Ban Giám Hiệu');
+    const newNotif: Notification = {
+      id: `notif-${Date.now()}`,
+      title: `📣 [Chỉ đạo BGH] ${assignerName} đã ban hành mục tiêu OKR & KPI mới định hướng cho ${assignment.targetName}. Hãy tham khảo để xây dựng mục tiêu cá nhân!`,
+      time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' — ' + new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }),
+      read: false,
+      type: 'urgent'
+    };
+
+    const updatedNotifs = [newNotif, ...notifications];
+    setNotifications(updatedNotifs);
+    localStorage.setItem('thcs_hp_notifications', JSON.stringify(updatedNotifs));
+  };
+
+  const getActiveUserGroupAssignments = (): GroupAssignment[] => {
+    if (currentUser === 'admin') return [];
+    if (!currentUser) return [];
+    
+    const assigned: GroupAssignment[] = [];
+    
+    if (currentUser.type === 'GiaoVien') {
+      const blockAssign = groupAssignments.find(a => a.id === 'group-khoi-giaovien');
+      if (blockAssign) assigned.push(blockAssign);
+    } else if (currentUser.type === 'NhanVien') {
+      const blockAssign = groupAssignments.find(a => a.id === 'group-khoi-nhanvien');
+      if (blockAssign) assigned.push(blockAssign);
+    }
+    
+    const roleLower = currentUser.role?.toLowerCase() || '';
+    if (currentUser.type === 'GiaoVien') {
+      if (roleLower.includes('tự nhiên') || roleLower.includes('vật lý') || roleLower.includes('toán') || roleLower.includes('hóa') || roleLower.includes('sinh') || roleLower.includes('tin học')) {
+        const dAssign = groupAssignments.find(a => a.id === 'group-to-tu-nhien');
+        if (dAssign) assigned.push(dAssign);
+      } else if (roleLower.includes('xã hội') || roleLower.includes('văn') || roleLower.includes('sử') || roleLower.includes('địa') || roleLower.includes('ngoại ngữ') || roleLower.includes('tiếng anh')) {
+        const dAssign = groupAssignments.find(a => a.id === 'group-to-xa-hoi');
+        if (dAssign) assigned.push(dAssign);
+      } else if (roleLower.includes('thể mỹ') || roleLower.includes('thể dục') || roleLower.includes('nhạc') || roleLower.includes('họa') || roleLower.includes('văn thể mỹ')) {
+        const dAssign = groupAssignments.find(a => a.id === 'group-to-vanthemy');
+        if (dAssign) assigned.push(dAssign);
+      }
+    } else if (currentUser.type === 'NhanVien') {
+      const dAssign = groupAssignments.find(a => a.id === 'group-to-vanphong');
+      if (dAssign) assigned.push(dAssign);
+    }
+    
+    return assigned;
   };
 
   const getDefaultKpisForUser = (role: string, type: string): KPI[] => {
@@ -1226,6 +1333,74 @@ export default function App() {
               </div>
             )}
 
+            {/* ====== PHÂN VÙNG CHỈ ĐẠO ĐỊNH HƯỚNG TỪ BGH ====== */}
+            {currentUser !== 'admin' && (typeof currentUser === 'object' && currentUser.type !== 'BGH') && getActiveUserGroupAssignments().length > 0 && (
+              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-150 rounded-xl p-5 space-y-4 shadow-3xs animate-fade-in" id="bgh-directives-panel">
+                <div className="flex items-start gap-3">
+                  <span className="p-2 bg-indigo-100 rounded-lg text-indigo-800 shrink-0 mt-0.5">
+                    <Award className="w-5 h-5 text-indigo-700" />
+                  </span>
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 text-xs md:text-sm leading-snug uppercase tracking-wider flex items-center gap-1.5">
+                      🎯 Định hướng Mục tiêu chiến lược giao từ Ban Giám Hiệu
+                    </h3>
+                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed font-medium">
+                      Dưới đây là mục tiêu OKR-KPI định hướng cấp Tổ chuyên môn hoặc Khối nhân sự mà bạn trực thuộc. Hãy dựa vào định hướng chung này để xây dựng bộ OKR và KPI cá nhân tương ứng của mình bên dưới.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {getActiveUserGroupAssignments().map((assign) => (
+                    <div key={assign.id} className="bg-white rounded-xl p-4 border border-indigo-100 shadow-3xs space-y-3">
+                      <div className="flex items-center justify-between border-b border-indigo-50 pb-2">
+                        <span className="text-[11px] font-extrabold text-indigo-900 bg-indigo-50/70 px-2.5 py-1 rounded-md">
+                          📍 {assign.targetName}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-bold">
+                          Giao ngày: {assign.assignedAt}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2.5">
+                        <div className="space-y-0.5">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Mục tiêu chung (Objective)</span>
+                          <p className="text-[11px] font-black text-slate-800 leading-snug">
+                            {assign.okr.title}
+                          </p>
+                        </div>
+
+                        <div className="space-y-1 bg-slate-50 rounded-lg p-2.5">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide block mb-1">Các kết quả then chốt (Key Results):</span>
+                          <ul className="space-y-1 list-disc list-inside text-[10px] text-slate-600 font-medium">
+                            <li className="leading-snug">{assign.okr.kr1}</li>
+                            <li className="leading-snug">{assign.okr.kr2}</li>
+                            <li className="leading-snug">{assign.okr.kr3}</li>
+                          </ul>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Chỉ số vận hành cốt lõi (KPIs)</span>
+                          <div className="space-y-1">
+                            {assign.kpis.map((k, idx) => (
+                              <div key={idx} className="flex items-start justify-between gap-2 text-[10px] border-b border-dashed border-slate-100 pb-1 last:border-0 last:pb-0">
+                                <div className="font-medium text-slate-700 leading-tight">
+                                  {k.criterion}
+                                </div>
+                                <span className="font-extrabold text-indigo-950 whitespace-nowrap bg-indigo-50 px-1.5 py-0.5 rounded text-[9px]">
+                                  {k.weight}%
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* OKR WORKSPACE SECTION */}
             <OkrSection 
               okrs={activeUserOkrs}
@@ -1318,6 +1493,18 @@ export default function App() {
               onSaveSemester={handleSaveSemester}
             />
           </div>
+
+          {/* ====== TAB BGH GIAO VIỆC TỔ/KHỐI ====== */}
+          {(currentUser === 'admin' || (currentUser && typeof currentUser === 'object' && currentUser.type === 'BGH')) && (
+            <div className={activeTab === 'tab-bgh-assign' ? 'animate-fade-in block' : 'hidden'}>
+              <BghAssignTab 
+                currentUser={currentUser}
+                groupAssignments={groupAssignments}
+                onSaveAssignment={handleSaveGroupAssignment}
+                showToast={showToast}
+              />
+            </div>
+          )}
         </section>
 
         {/* RIGHT COLUMN: SIDEBAR WIDGETS */}
