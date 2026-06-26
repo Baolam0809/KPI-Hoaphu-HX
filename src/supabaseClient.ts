@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { User, OKR, KPI, SystemSettings, GroupAssignment } from './types';
+import { User, OKR, KPI, SystemSettings, GroupAssignment, AuditLog } from './types';
 
 // Read from environment variables, or fallback to the provided credentials
 const metaEnv = (import.meta as any).env || {};
@@ -78,6 +78,22 @@ CREATE POLICY "Allow public kpis access" ON thcs_hp_kpis FOR ALL USING (true) WI
 -- Tạo chính sách cho thcs_hp_settings
 DROP POLICY IF EXISTS "Allow public settings access" ON thcs_hp_settings;
 CREATE POLICY "Allow public settings access" ON thcs_hp_settings FOR ALL USING (true) WITH CHECK (true);
+
+-- 5. Tạo bảng thcs_hp_audit_logs
+CREATE TABLE IF NOT EXISTS thcs_hp_audit_logs (
+  id TEXT PRIMARY KEY,
+  user_id TEXT,
+  user_name TEXT,
+  user_role TEXT,
+  action TEXT NOT NULL,
+  details TEXT NOT NULL,
+  timestamp TEXT NOT NULL,
+  ip_address TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+ALTER TABLE thcs_hp_audit_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public audit logs access" ON thcs_hp_audit_logs;
+CREATE POLICY "Allow public audit logs access" ON thcs_hp_audit_logs FOR ALL USING (true) WITH CHECK (true);
 `;
 
 /**
@@ -108,6 +124,7 @@ export async function loadAllDataFromSupabase(): Promise<{
   allKpis: Record<string, KPI[]>;
   settings: SystemSettings | null;
   groupAssignments?: GroupAssignment[] | null;
+  auditLogs?: AuditLog[] | null;
 }> {
   // 1. Fetch Users
   const { data: usersData, error: usersError } = await supabase
@@ -155,6 +172,39 @@ export async function loadAllDataFromSupabase(): Promise<{
   let groupAssignments: GroupAssignment[] | null = null;
   if (!groupAssignmentsError && groupAssignmentsData) {
     groupAssignments = groupAssignmentsData.value as GroupAssignment[];
+  }
+
+  // 6. Fetch Audit Logs
+  let auditLogs: AuditLog[] | null = null;
+  const { data: auditLogsData, error: auditLogsError } = await supabase
+    .from('thcs_hp_audit_logs')
+    .select('*');
+
+  if (!auditLogsError && auditLogsData) {
+    // Sort client-side or parse
+    const sortedLogs = [...auditLogsData].sort((a, b) => {
+      return (b.created_at || b.id).localeCompare(a.created_at || a.id);
+    });
+    auditLogs = sortedLogs.map((row: any) => ({
+      id: row.id,
+      userId: row.user_id,
+      userName: row.user_name,
+      userRole: row.user_role,
+      action: row.action,
+      details: row.details,
+      timestamp: row.timestamp,
+      ipAddress: row.ip_address
+    }));
+  } else {
+    // Fallback: load from thcs_hp_settings if table is missing or errors out
+    const { data: fallbackData } = await supabase
+      .from('thcs_hp_settings')
+      .select('*')
+      .eq('key', 'audit_logs')
+      .single();
+    if (fallbackData) {
+      auditLogs = fallbackData.value as AuditLog[];
+    }
   }
 
   // Parse arrays into dictionary records mapped by user_id
@@ -213,7 +263,8 @@ export async function loadAllDataFromSupabase(): Promise<{
     allOkrs,
     allKpis,
     settings,
-    groupAssignments
+    groupAssignments,
+    auditLogs
   };
 }
 
@@ -381,3 +432,55 @@ export async function seedSupabaseInitialData(
     await saveGroupAssignmentsToSupabase(groupAssignments);
   }
 }
+
+/**
+ * Save an audit log to Supabase
+ */
+export async function saveAuditLogToSupabase(log: AuditLog): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('thcs_hp_audit_logs')
+      .insert({
+        id: log.id,
+        user_id: log.userId,
+        user_name: log.userName,
+        user_role: log.userRole,
+        action: log.action,
+        details: log.details,
+        timestamp: log.timestamp,
+        ip_address: log.ipAddress || ''
+      });
+
+    if (error) {
+      console.warn("Table thcs_hp_audit_logs error, falling back to thcs_hp_settings:", error.message);
+      throw error;
+    }
+  } catch (err) {
+    // FALLBACK: Store in thcs_hp_settings under key 'audit_logs'
+    try {
+      const { data: currentData } = await supabase
+        .from('thcs_hp_settings')
+        .select('*')
+        .eq('key', 'audit_logs')
+        .single();
+      
+      let currentLogs: AuditLog[] = [];
+      if (currentData && Array.isArray(currentData.value)) {
+        currentLogs = currentData.value as AuditLog[];
+      }
+      
+      // Keep up to 1000 logs to prevent unbounded growth of a single row
+      currentLogs = [log, ...currentLogs].slice(0, 1000);
+      
+      await supabase
+        .from('thcs_hp_settings')
+        .upsert({
+          key: 'audit_logs',
+          value: currentLogs
+        });
+    } catch (e) {
+      console.error("Critical error saving audit log fallback to Supabase:", e);
+    }
+  }
+}
+

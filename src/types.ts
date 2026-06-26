@@ -100,3 +100,15 @@ export interface GroupAssignment {
   assignedBy: string;
   assignedAt: string;
 }
+
+export interface AuditLog {
+  id: string;
+  userId: string;
+  userName: string;
+  userRole: string;
+  action: string;
+  details: string;
+  timestamp: string;
+  ipAddress?: string;
+}
+

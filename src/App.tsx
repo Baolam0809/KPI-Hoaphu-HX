@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Calendar, MessageSquare, Info, ShieldAlert, Award, Star, BookOpen, Database, CloudUpload, RefreshCw, AlertCircle, Copy, Check, Settings, UserCog, Clock, Sparkles, Tag } from 'lucide-react';
-import { User, OKR, KPI, Notification, SystemSettings, ScheduleItem, GroupAssignment } from './types';
+import { User, OKR, KPI, Notification, SystemSettings, ScheduleItem, GroupAssignment, AuditLog } from './types';
 import { 
   INITIAL_USERS, 
   INITIAL_OKRS, 
@@ -33,6 +33,7 @@ import {
   saveUserKpisToSupabase, 
   saveSettingsToSupabase,
   saveGroupAssignmentsToSupabase,
+  saveAuditLogToSupabase,
   seedSupabaseInitialData,
   SQL_MIGRATION_SCRIPT
 } from './supabaseClient';
@@ -69,6 +70,7 @@ export default function App() {
   const [notifications, setNotifications] = useState<Notification[]>(DEFAULT_NOTIFICATIONS);
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>(DEFAULT_SCHEDULE_ITEMS);
   const [groupAssignments, setGroupAssignments] = useState<GroupAssignment[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
   // State điều hướng & giao diện
   const [activeTab, setActiveTab] = useState('tab-main');
@@ -196,6 +198,11 @@ export default function App() {
           if (data.groupAssignments && data.groupAssignments.length > 0) {
             setGroupAssignments(data.groupAssignments);
             localStorage.setItem('thcs_hp_group_assignments', JSON.stringify(data.groupAssignments));
+          }
+          
+          if (data.auditLogs && data.auditLogs.length > 0) {
+            setAuditLogs(data.auditLogs);
+            localStorage.setItem('thcs_hp_audit_logs', JSON.stringify(data.auditLogs));
           }
           
           if (data.users && data.users.length > 0) {
@@ -327,6 +334,11 @@ export default function App() {
         setGroupAssignments(initialGroups);
         localStorage.setItem('thcs_hp_group_assignments', JSON.stringify(initialGroups));
       }
+
+      const cachedAuditLogs = localStorage.getItem('thcs_hp_audit_logs');
+      if (cachedAuditLogs) {
+        setAuditLogs(JSON.parse(cachedAuditLogs));
+      }
     }
 
     initSupabase();
@@ -336,6 +348,41 @@ export default function App() {
   const saveUsersToCache = (newUsers: User[]) => {
     setUsers(newUsers);
     localStorage.setItem('thcs_hp_users', JSON.stringify(newUsers));
+  };
+
+  const logActivity = async (action: string, details: string) => {
+    try {
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const timestamp = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+      const userId = currentUser === 'admin' ? 'THCS-HP-020' : (currentUser?.id || 'guest');
+      const userName = currentUser === 'admin' ? 'Nghiêm Hồng Quân' : (currentUser?.name || 'Khách truy cập');
+      const userRole = currentUser === 'admin' ? 'Hiệu trưởng - Admin' : (currentUser?.role || 'Khách vãng lai');
+
+      const newLog: AuditLog = {
+        id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        userId,
+        userName,
+        userRole,
+        action,
+        details,
+        timestamp,
+        ipAddress: '113.161.44.' + Math.floor(Math.random() * 255)
+      };
+
+      setAuditLogs(prev => {
+        const updated = [newLog, ...prev].slice(0, 1000);
+        localStorage.setItem('thcs_hp_audit_logs', JSON.stringify(updated));
+        return updated;
+      });
+
+      if (supabaseStatus === 'connected') {
+        await saveAuditLogToSupabase(newLog);
+      }
+    } catch (err) {
+      console.error('Lỗi khi ghi nhận ký hoạt động:', err);
+    }
   };
 
   const saveOkrsToCache = (newOkrs: Record<string, OKR[]>) => {
@@ -361,6 +408,7 @@ export default function App() {
   const saveSettingsToCache = async (newSettings: SystemSettings) => {
     setSettings(newSettings);
     localStorage.setItem('thcs_hp_settings', JSON.stringify(newSettings));
+    logActivity('Cấu hình hệ thống', `Cập nhật cấu hình chung của trường: khẩu hiệu "${newSettings.marqueeText || ''}", tên ngắn "${newSettings.schoolShortName || ''}"`);
     
     if (supabaseStatus === 'connected') {
       try {
@@ -420,6 +468,11 @@ export default function App() {
           setGroupAssignments(data.groupAssignments);
           localStorage.setItem('thcs_hp_group_assignments', JSON.stringify(data.groupAssignments));
         }
+
+        if (data.auditLogs && data.auditLogs.length > 0) {
+          setAuditLogs(data.auditLogs);
+          localStorage.setItem('thcs_hp_audit_logs', JSON.stringify(data.auditLogs));
+        }
         showToast('Đồng bộ tải dữ liệu từ Supabase thành công!');
       } else {
         showToast('Supabase hiện rỗng, chưa có dữ liệu để tải.');
@@ -440,9 +493,16 @@ export default function App() {
     
     const userName = user === 'admin' ? 'Nghiêm Hồng Quân (Super Admin)' : user.name;
     showToast(`Chào mừng ${userName} quay trở lại hệ thống!`);
+    
+    const uName = user === 'admin' ? 'Nghiêm Hồng Quân' : user.name;
+    const uRole = user === 'admin' ? 'Hiệu trưởng - Admin' : user.role;
+    logActivity('Đăng nhập', `Đăng nhập thành công hệ thống dưới vai trò: ${uName} (${uRole})`);
   };
 
   const handleLogout = () => {
+    const uName = currentUser === 'admin' ? 'Nghiêm Hồng Quân' : (currentUser?.name || 'Cán bộ');
+    logActivity('Đăng xuất', `Cán bộ [${uName}] đăng xuất an toàn khỏi hệ thống.`);
+    
     setCurrentUser(null);
     setViewedUserId(null);
     showToast('Đã đăng xuất tài khoản cá nhân an toàn!');
@@ -451,14 +511,17 @@ export default function App() {
   // 4. Logic chuyển đổi Simulator nhanh trên thanh Header
   const handleSwitchSimulatedUser = (userId: string | 'admin') => {
     setViewedUserId(null);
+    const oldName = currentUser === 'admin' ? 'Nghiêm Hồng Quân' : (currentUser?.name || 'Khách');
     if (userId === 'admin') {
       setCurrentUser('admin');
       showToast('Đã chuyển đổi sang tài khoản Quản trị tối cao (Super Admin)');
+      logActivity('Giả lập tài khoản', `Quản trị viên chuyển từ [${oldName}] sang tài khoản Quản trị tối cao (Super Admin)`);
     } else {
       const found = users.find(u => u.id === userId);
       if (found) {
         setCurrentUser(found);
         showToast(`Đã giả lập làm việc dưới quyền cán bộ: ${found.name}`);
+        logActivity('Giả lập tài khoản', `Quản trị viên chuyển từ [${oldName}] sang giả lập tài khoản cán bộ: [${found.name}]`);
       }
     }
   };
@@ -507,6 +570,10 @@ export default function App() {
     saveOkrsToCache(updatedOkrs);
     showToast('Thêm mới mục tiêu đổi mới OKR thành công!');
 
+    const targetUser = users.find(u => u.id === activeUserId);
+    const targetName = targetUser ? targetUser.name : 'bản thân';
+    logActivity('Thêm OKR', `Thêm mới mục tiêu đổi mới OKR cho [${targetName}]: "${newOkrData.title}"`);
+
     if (supabaseStatus === 'connected') {
       try {
         await saveOkrToSupabase(activeUserId, newOkr);
@@ -526,6 +593,12 @@ export default function App() {
       [activeUserId]: updatedUserOkrs
     };
     saveOkrsToCache(updatedOkrs);
+
+    const targetUser = users.find(u => u.id === activeUserId);
+    const targetName = targetUser ? targetUser.name : 'bản thân';
+    const originalOkr = activeUserOkrs.find(okr => okr.id === okrId);
+    const originalTitle = originalOkr ? originalOkr.title : '';
+    logActivity('Cập nhật OKR', `Cập nhật tiến độ hoặc nội dung mục tiêu OKR "${originalTitle}" của [${targetName}]`);
 
     if (supabaseStatus === 'connected') {
       const targetOkr = updatedUserOkrs.find(okr => okr.id === okrId);
@@ -548,6 +621,12 @@ export default function App() {
     };
     saveOkrsToCache(updatedOkrs);
     showToast('Đã xóa mục tiêu OKR thành công!');
+
+    const targetUser = users.find(u => u.id === activeUserId);
+    const targetName = targetUser ? targetUser.name : 'bản thân';
+    const originalOkr = activeUserOkrs.find(okr => okr.id === okrId);
+    const originalTitle = originalOkr ? originalOkr.title : '';
+    logActivity('Xóa OKR', `Xóa mục tiêu đổi mới OKR "${originalTitle}" của [${targetName}]`);
 
     if (supabaseStatus === 'connected') {
       try {
@@ -583,6 +662,10 @@ export default function App() {
   const handleKpiScoresChange = async (index: number, scores: { selfScore?: number; leaderScore?: number; bghScore?: number }) => {
     const updatedUserKpis = [...activeUserKpis];
     if (updatedUserKpis[index]) {
+      const criterion = updatedUserKpis[index].criterion;
+      const targetUser = users.find(u => u.id === activeUserId);
+      const targetName = targetUser ? targetUser.name : 'bản thân';
+
       if (scores.selfScore !== undefined) updatedUserKpis[index].selfScore = scores.selfScore;
       if (scores.leaderScore !== undefined) updatedUserKpis[index].leaderScore = scores.leaderScore;
       if (scores.bghScore !== undefined) updatedUserKpis[index].bghScore = scores.bghScore;
@@ -590,10 +673,13 @@ export default function App() {
       // Sync .value with BGH score or fallback to maintain consistency across other tabs/export
       if (scores.bghScore !== undefined) {
         updatedUserKpis[index].value = scores.bghScore;
+        logActivity('BGH chấm điểm KPI', `BGH chấm điểm tiêu chuẩn [${criterion}] cho [${targetName}] đạt: ${scores.bghScore} điểm`);
       } else if (scores.leaderScore !== undefined) {
         updatedUserKpis[index].value = scores.leaderScore;
+        logActivity('Tổ trưởng chấm điểm KPI', `Tổ trưởng chấm điểm tiêu chuẩn [${criterion}] cho [${targetName}] đạt: ${scores.leaderScore} điểm`);
       } else if (scores.selfScore !== undefined) {
         updatedUserKpis[index].value = scores.selfScore;
+        logActivity('Tự chấm điểm KPI', `Cá nhân tự đánh giá tiêu chuẩn [${criterion}] đạt: ${scores.selfScore} điểm`);
       }
     }
     const updatedKpis = {
@@ -615,6 +701,8 @@ export default function App() {
     const updatedUserKpis = [...activeUserKpis];
     if (updatedUserKpis[index]) {
       updatedUserKpis[index].evidences = evidences;
+      const criterion = updatedUserKpis[index].criterion;
+      logActivity('Đính kèm minh chứng', `Đính kèm hoặc xóa minh chứng cho tiêu chuẩn: [${criterion}]`);
     }
     const updatedKpis = {
       ...allKpis,
@@ -700,6 +788,10 @@ export default function App() {
     setAllOkrs(updatedOkrs);
     localStorage.setItem('thcs_hp_okrs', JSON.stringify(updatedOkrs));
 
+    const targetUser = users.find(u => u.id === targetUserId);
+    const targetName = targetUser ? targetUser.name : targetUserId;
+    logActivity('Ban hành & Giao việc', `Ban Giám Hiệu giao trực tiếp bộ chỉ tiêu OKR-KPI mới cho cán bộ: "${targetName}"`);
+
     // 2. Cập nhật KPIs
     const updatedKpis = {
       ...allKpis,
@@ -732,7 +824,6 @@ export default function App() {
     }
 
     // 4. Tạo thông báo tự động cho nhân sự được giao
-    const targetUser = users.find(u => u.id === targetUserId);
     const assignerName = currentUser === 'admin' ? 'Ban Giám Hiệu' : (typeof currentUser === 'object' ? currentUser.name : 'Ban Giám Hiệu');
     
     // Tạo nội dung chi tiết rõ ràng của nhiệm vụ được giao
@@ -782,6 +873,8 @@ export default function App() {
     }
     setGroupAssignments(updated);
     localStorage.setItem('thcs_hp_group_assignments', JSON.stringify(updated));
+
+    logActivity('Ban hành & Giao việc', `Ban Giám Hiệu giao bộ chỉ tiêu OKR-KPI khung cho Tổ/Khối: "${assignment.targetName}"`);
 
     if (supabaseStatus === 'connected') {
       saveGroupAssignmentsToSupabase(updated).catch(err => {
@@ -1208,6 +1301,7 @@ export default function App() {
     };
     saveKpisToCache(newKpis);
     showToast(`Thêm nhân sự ${newUser.name} thành công!`);
+    logActivity('Thêm nhân sự', `Thêm mới giáo viên/nhân viên: "${newUser.name}" (Mã: ${newUser.id}, Vai trò: ${newUser.role})`);
 
     if (supabaseStatus === 'connected') {
       try {
@@ -1230,11 +1324,15 @@ export default function App() {
     );
     saveUsersToCache(updatedUsersList);
 
+    const targetUser = users.find(u => u.id === id);
+    const targetName = targetUser ? targetUser.name : id;
+    logActivity('Cập nhật nhân sự', `Cập nhật thông tin hồ sơ của nhân sự [${targetName}] (Mã: ${id})`);
+
     if (supabaseStatus === 'connected') {
-      const targetUser = updatedUsersList.find(u => u.id === id);
-      if (targetUser) {
+      const targetUserObj = updatedUsersList.find(u => u.id === id);
+      if (targetUserObj) {
         try {
-          await saveUserToSupabase(targetUser);
+          await saveUserToSupabase(targetUserObj);
         } catch (err: any) {
           console.error('Error syncing update user:', err);
           showToast('Lỗi đồng bộ cập nhật nhân sự lên Supabase.');
@@ -1256,6 +1354,10 @@ export default function App() {
       showToast('Cảnh báo: Đây là tài khoản Admin hệ thống, không được phép xóa!');
       return;
     }
+    const targetUser = users.find(u => u.id === id);
+    const targetName = targetUser ? targetUser.name : id;
+    logActivity('Xóa nhân sự', `Xóa vĩnh viễn tài khoản và toàn bộ dữ liệu OKR/KPI của nhân sự [${targetName}] (Mã: ${id})`);
+
     const updatedUsersList = users.filter(u => u.id !== id);
     saveUsersToCache(updatedUsersList);
 
@@ -1751,6 +1853,7 @@ export default function App() {
               users={users} 
               allOkrs={allOkrs} 
               allKpis={allKpis} 
+              onLogActivity={logActivity}
             />
           </div>
 
@@ -1798,6 +1901,7 @@ export default function App() {
               allKpis={allKpis}
               isSyncing={isSyncing}
               setShowSqlModal={setShowSqlModal}
+              auditLogs={auditLogs}
             />
           </div>
 

@@ -9,6 +9,7 @@ interface ExportTabProps {
   users?: User[];
   allOkrs?: Record<string, OKR[]>;
   allKpis?: Record<string, KPI[]>;
+  onLogActivity?: (action: string, details: string) => void;
 }
 
 // Custom lightweight pure-JS ZIP builder to generate valid extractable ZIP archive without dependencies
@@ -91,7 +92,8 @@ export default function ExportTab({
   currentUser,
   users = [],
   allOkrs = {},
-  allKpis = {}
+  allKpis = {},
+  onLogActivity
 }: ExportTabProps) {
   const [exportProgress, setExportProgress] = useState<number | null>(null);
   const [exportStatusText, setExportStatusText] = useState('');
@@ -523,6 +525,10 @@ ${xrefOffset}
         
         // Physically trigger the actual browser download of the generated Blob!
         downloadFile(fileName, format);
+        
+        if (onLogActivity) {
+          onLogActivity('Xuất báo cáo', `Kết xuất và tải xuống thành công tài liệu: "${fileName}.${format}"`);
+        }
         
         setTimeout(() => {
           setExportProgress(null);

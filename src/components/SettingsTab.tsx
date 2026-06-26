@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Sliders, Save, Check, Bell, Calendar, Plus, Trash2, Edit3, X, Info, Clock, MapPin, Tag, Database, RefreshCw, Copy, Server, AlertCircle } from 'lucide-react';
-import { SystemSettings, Notification, ScheduleItem, User, OKR, KPI } from '../types';
+import { Sliders, Save, Check, Bell, Calendar, Plus, Trash2, Edit3, X, Info, Clock, MapPin, Tag, Database, RefreshCw, Copy, Server, AlertCircle, FileSpreadsheet } from 'lucide-react';
+import { SystemSettings, Notification, ScheduleItem, User, OKR, KPI, AuditLog } from '../types';
 import { SQL_MIGRATION_SCRIPT } from '../supabaseClient';
+import * as XLSX from 'xlsx';
 
 interface SettingsTabProps {
   settings: SystemSettings;
@@ -12,8 +13,8 @@ interface SettingsTabProps {
   onSaveScheduleItems: (items: ScheduleItem[]) => void;
   currentUser: User | 'admin' | null;
   showToast: (msg: string) => void;
-  initialSubTab?: 'general' | 'notifications' | 'schedules' | 'database';
-  onSubTabChange?: (subTab: 'general' | 'notifications' | 'schedules' | 'database') => void;
+  initialSubTab?: 'general' | 'notifications' | 'schedules' | 'database' | 'audit';
+  onSubTabChange?: (subTab: 'general' | 'notifications' | 'schedules' | 'database' | 'audit') => void;
   semester?: string;
   schoolYear?: string;
   onSaveSemester?: (semester: string, schoolYear: string) => void;
@@ -29,6 +30,7 @@ interface SettingsTabProps {
   allKpis: Record<string, KPI[]>;
   isSyncing: boolean;
   setShowSqlModal: (show: boolean) => void;
+  auditLogs?: AuditLog[];
 }
 
 export default function SettingsTab({ 
@@ -56,7 +58,8 @@ export default function SettingsTab({
   allOkrs = {},
   allKpis = {},
   isSyncing,
-  setShowSqlModal
+  setShowSqlModal,
+  auditLogs = []
 }: SettingsTabProps) {
   // Authorization check
   const isBghOrAdmin = currentUser === 'admin' || (currentUser && typeof currentUser === 'object' && currentUser.type === 'BGH');
@@ -66,7 +69,22 @@ export default function SettingsTab({
   const [schedToDelete, setSchedToDelete] = useState<ScheduleItem | null>(null);
 
   // Active sub tab state
-  const [activeSubTab, setActiveSubTab] = useState<'general' | 'notifications' | 'schedules' | 'database'>(initialSubTab);
+  const [activeSubTab, setActiveSubTab] = useState<'general' | 'notifications' | 'schedules' | 'database' | 'audit'>(initialSubTab);
+
+  // Audit state variables
+  const [auditSearch, setAuditSearch] = useState('');
+  const [auditActionFilter, setAuditActionFilter] = useState('');
+
+  // Computed audit logs filter
+  const logsToDisplay = auditLogs || [];
+  const filteredLogs = logsToDisplay.filter(log => {
+    const matchesSearch = !auditSearch || 
+      (log.userName || '').toLowerCase().includes(auditSearch.toLowerCase()) ||
+      (log.details || '').toLowerCase().includes(auditSearch.toLowerCase()) ||
+      (log.action || '').toLowerCase().includes(auditSearch.toLowerCase());
+    const matchesFilter = !auditActionFilter || log.action === auditActionFilter;
+    return matchesSearch && matchesFilter;
+  });
 
   // SQL Copy state for embedded view
   const [isSqlCopied, setIsSqlCopied] = useState(false);
@@ -75,7 +93,7 @@ export default function SettingsTab({
     setActiveSubTab(initialSubTab);
   }, [initialSubTab]);
 
-  const handleSubTabClick = (subTab: 'general' | 'notifications' | 'schedules' | 'database') => {
+  const handleSubTabClick = (subTab: 'general' | 'notifications' | 'schedules' | 'database' | 'audit') => {
     setActiveSubTab(subTab);
     if (onSubTabChange) {
       onSubTabChange(subTab);
@@ -412,6 +430,23 @@ export default function SettingsTab({
             supabaseStatus === 'connected' ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'
           }`} />
         </button>
+        {isBghOrAdmin && (
+          <button
+            onClick={() => handleSubTabClick('audit')}
+            className={`px-4 py-2 rounded-t-lg border-b-2 transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              activeSubTab === 'audit'
+                ? 'border-blue-900 text-blue-900 bg-blue-50/50'
+                : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+            }`}
+            id="btn-subtab-audit"
+          >
+            <Clock className="w-3.5 h-3.5 animate-pulse" />
+            Nhật ký Hoạt động (Audit Logs)
+            <span className="bg-blue-100 text-blue-800 text-[9px] px-1.5 py-0.2 rounded-full font-black">
+              {logsToDisplay.length}
+            </span>
+          </button>
+        )}
       </div>
 
       {/* --- SUB-TAB CONTENT 1: GENERAL SETTINGS --- */}
@@ -1441,6 +1476,165 @@ export default function SettingsTab({
 
             <div className="p-3 bg-teal-950/40 border border-teal-900/50 rounded-lg text-[10px] leading-relaxed text-teal-300/90 font-medium">
               💡 <strong>Mẹo vận hành:</strong> Khi bạn đã chạy xong đoạn Script này trên Supabase, hãy ấn vào nút <strong>"Kiểm tra lại kết nối"</strong> ở phía trên để hệ thống tự động nhận diện bảng trực tuyến ngay lập tức mà không cần tải lại trang.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- SUB-TAB CONTENT 5: AUDIT LOGS SECURITY PANEL --- */}
+      {activeSubTab === 'audit' && (
+        <div className="space-y-4 animate-fade-in text-xs md:text-sm">
+          {/* Header search / filters / statistics */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-3xs space-y-3">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <h4 className="font-extrabold text-slate-800 text-sm md:text-base uppercase tracking-wider flex items-center gap-1.5">
+                  <Clock className="w-5 h-5 text-blue-900" /> Nhật ký Hoạt động bảo mật (Audit Logs)
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
+                  Ghi lại các thao tác nghiệp vụ cơ bản (đăng nhập, sửa dữ liệu, ban hành chỉ tiêu, xuất báo cáo) kèm mốc thời gian cụ thể.
+                </p>
+              </div>
+              
+              <button
+                onClick={() => {
+                  if (filteredLogs.length === 0) {
+                    showToast('Không có dữ liệu nhật ký phù hợp để xuất Excel!');
+                    return;
+                  }
+                  const ws = XLSX.utils.json_to_sheet(filteredLogs.map((log, i) => ({
+                    'STT': i + 1,
+                    'Thời gian': log.timestamp,
+                    'Tài khoản': log.userName,
+                    'Vai trò': log.userRole,
+                    'Hành động': log.action,
+                    'Chi tiết thao tác': log.details,
+                    'Địa chỉ IP': log.ipAddress || 'LAN Network'
+                  })));
+                  const wb = XLSX.utils.book_new();
+                  XLSX.utils.book_append_sheet(wb, ws, 'Audit_Logs');
+                  XLSX.writeFile(wb, `Nhat_ky_hoat_dong_THCS_HP_${new Date().toISOString().split('T')[0]}.xlsx`);
+                  showToast('Xuất tệp Excel nhật ký bảo mật thành công!');
+                }}
+                className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1.5 shadow-3xs transition cursor-pointer"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                Xuất Excel Nhật ký
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tìm kiếm nội dung / Tài khoản</label>
+                <input
+                  type="text"
+                  placeholder="Nhập tên cán bộ, hành động, từ khóa..."
+                  value={auditSearch}
+                  onChange={(e) => setAuditSearch(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-blue-900 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Lọc theo loại nghiệp vụ</label>
+                <select
+                  value={auditActionFilter}
+                  onChange={(e) => setAuditActionFilter(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none"
+                >
+                  <option value="">-- Tất cả nghiệp vụ --</option>
+                  <option value="Đăng nhập">Đăng nhập</option>
+                  <option value="Đăng xuất">Đăng xuất</option>
+                  <option value="Thêm OKR">Thêm OKR</option>
+                  <option value="Cập nhật OKR">Cập nhật OKR</option>
+                  <option value="Xóa OKR">Xóa OKR</option>
+                  <option value="Tự chấm điểm KPI">Tự chấm điểm KPI</option>
+                  <option value="Tổ trưởng chấm điểm KPI">Tổ trưởng chấm điểm KPI</option>
+                  <option value="BGH chấm điểm KPI">BGH chấm điểm KPI</option>
+                  <option value="Ban hành & Giao việc">Ban hành & Giao việc</option>
+                  <option value="Cấu hình hệ thống">Cấu hình hệ thống</option>
+                  <option value="Thêm nhân sự">Thêm nhân sự</option>
+                  <option value="Cập nhật nhân sự">Cập nhật nhân sự</option>
+                  <option value="Xóa nhân sự">Xóa nhân sự</option>
+                  <option value="Đính kèm minh chứng">Đính kèm minh chứng</option>
+                  <option value="Xuất báo cáo">Xuất báo cáo</option>
+                </select>
+              </div>
+
+              <div className="flex items-end gap-2">
+                <button
+                  onClick={() => {
+                    setAuditSearch('');
+                    setAuditActionFilter('');
+                  }}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold px-3 py-1.5 rounded-lg text-xs w-full transition cursor-pointer"
+                >
+                  Xóa bộ lọc
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Table of logs */}
+          <div className="bg-white border border-slate-200 rounded-xl shadow-3xs overflow-hidden">
+            <div className="overflow-x-auto max-h-[500px]">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-600 border-b border-slate-200 font-bold uppercase text-[9px] tracking-wider">
+                    <th className="p-3 w-10 text-center">STT</th>
+                    <th className="p-3 w-[160px]">Thời gian</th>
+                    <th className="p-3 w-[180px]">Cán bộ thực hiện</th>
+                    <th className="p-3 w-[140px]">Hành động</th>
+                    <th className="p-3">Chi tiết nghiệp vụ</th>
+                    <th className="p-3 w-[110px]">Địa chỉ IP</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-150 font-medium">
+                  {filteredLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-slate-400 italic">
+                        Chưa ghi nhận nhật ký hoạt động nào phù hợp với điều kiện tìm kiếm.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredLogs.map((log, index) => {
+                      let typeColor = 'bg-slate-100 text-slate-800';
+                      if (log.action === 'Đăng nhập') typeColor = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                      else if (log.action === 'Đăng xuất') typeColor = 'bg-slate-100 text-slate-600 border border-slate-200';
+                      else if (log.action.includes('Thêm')) typeColor = 'bg-blue-100 text-blue-800 border border-blue-200';
+                      else if (log.action.includes('Cập nhật')) typeColor = 'bg-amber-100 text-amber-800 border border-amber-200';
+                      else if (log.action.includes('Xóa')) typeColor = 'bg-red-100 text-red-800 border border-red-200';
+                      else if (log.action.includes('Giao việc') || log.action.includes('Ban hành')) typeColor = 'bg-purple-100 text-purple-800 border border-purple-200';
+                      else if (log.action.includes('chấm điểm')) typeColor = 'bg-teal-100 text-teal-800 border border-teal-200';
+                      else if (log.action === 'Xuất báo cáo') typeColor = 'bg-indigo-100 text-indigo-800 border border-indigo-200';
+
+                      return (
+                        <tr key={log.id || index} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="p-3 text-center text-slate-400 font-mono font-bold">{index + 1}</td>
+                          <td className="p-3 text-slate-500 font-mono font-bold whitespace-nowrap">{log.timestamp}</td>
+                          <td className="p-3">
+                            <div className="font-bold text-slate-800">{log.userName}</div>
+                            <div className="text-[10px] text-slate-400 font-bold">{log.userRole}</div>
+                          </td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase inline-block whitespace-nowrap ${typeColor}`}>
+                              {log.action}
+                            </span>
+                          </td>
+                          <td className="p-3 text-slate-700 font-medium leading-relaxed break-words">{log.details}</td>
+                          <td className="p-3 text-slate-400 font-mono text-[10px] whitespace-nowrap">
+                            {log.ipAddress || 'Mạng nội bộ'}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="bg-slate-50 p-3 border-t border-slate-200 text-[11px] text-slate-500 font-medium flex items-center justify-between">
+              <span>Hiển thị <strong>{filteredLogs.length}</strong> trên tổng số <strong>{logsToDisplay.length}</strong> bản ghi nhật ký.</span>
+              <span>Hệ thống Kiểm soát Bảo mật Trường THCS Hòa Phú</span>
             </div>
           </div>
         </div>
