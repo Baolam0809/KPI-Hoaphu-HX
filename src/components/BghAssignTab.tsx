@@ -696,7 +696,7 @@ export default function BghAssignTab({
                   </div>
 
                   <div className="space-y-3">
-                    <div className="space-y-1">
+                    <div className="space-y-1 relative group/tooltip">
                       <label className="block text-[10px] font-bold text-slate-500 uppercase">Mục tiêu (Objective)</label>
                       <input
                         type="text"
@@ -704,32 +704,56 @@ export default function BghAssignTab({
                         onChange={(e) => setPreviewOkrTitle(e.target.value)}
                         className="w-full border border-slate-300 rounded-lg p-2 text-xs font-bold text-slate-800 bg-white"
                       />
+                      {previewOkrTitle.trim() && (
+                        <div className="absolute z-50 bottom-full left-0 mb-2 w-full p-3 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-pre-wrap leading-relaxed font-semibold">
+                          <div className="text-yellow-300 font-extrabold uppercase mb-1 text-[9px]">🔍 Xem đầy đủ Mục tiêu (Objective):</div>
+                          {previewOkrTitle}
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="space-y-1">
+                      <div className="space-y-1 relative group/tooltip">
                         <label className="block text-[10px] font-bold text-slate-500 uppercase">Kết quả then chốt 1 (KR1)</label>
                         <textarea
                           value={previewKr1}
                           onChange={(e) => setPreviewKr1(e.target.value)}
                           className="w-full border border-slate-300 rounded-lg p-2 text-[11px] font-medium text-slate-800 bg-white min-h-[50px]"
                         />
+                        {previewKr1.trim() && (
+                          <div className="absolute z-50 bottom-full left-0 mb-2 w-full p-3 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-pre-wrap leading-relaxed font-semibold">
+                            <div className="text-yellow-300 font-extrabold uppercase mb-1 text-[9px]">🔍 Xem đầy đủ Kết quả then chốt 1 (KR1):</div>
+                            {previewKr1}
+                          </div>
+                        )}
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 relative group/tooltip">
                         <label className="block text-[10px] font-bold text-slate-500 uppercase">Kết quả then chốt 2 (KR2)</label>
                         <textarea
                           value={previewKr2}
                           onChange={(e) => setPreviewKr2(e.target.value)}
                           className="w-full border border-slate-300 rounded-lg p-2 text-[11px] font-medium text-slate-800 bg-white min-h-[50px]"
                         />
+                        {previewKr2.trim() && (
+                          <div className="absolute z-50 bottom-full left-0 mb-2 w-full p-3 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-pre-wrap leading-relaxed font-semibold">
+                            <div className="text-yellow-300 font-extrabold uppercase mb-1 text-[9px]">🔍 Xem đầy đủ Kết quả then chốt 2 (KR2):</div>
+                            {previewKr2}
+                          </div>
+                        )}
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 relative group/tooltip">
                         <label className="block text-[10px] font-bold text-slate-500 uppercase">Kết quả then chốt 3 (KR3)</label>
                         <textarea
                           value={previewKr3}
                           onChange={(e) => setPreviewKr3(e.target.value)}
                           className="w-full border border-slate-300 rounded-lg p-2 text-[11px] font-medium text-slate-800 bg-white min-h-[50px]"
                         />
+                        {previewKr3.trim() && (
+                          <div className="absolute z-50 bottom-full left-0 mb-2 w-full p-3 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-pre-wrap leading-relaxed font-semibold">
+                            <div className="text-yellow-300 font-extrabold uppercase mb-1 text-[9px]">🔍 Xem đầy đủ Kết quả then chốt 3 (KR3):</div>
+                            {previewKr3}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -754,7 +778,7 @@ export default function BghAssignTab({
                     {/* KPI 1 */}
                     <div className="bg-white border border-slate-200 rounded-lg p-3 space-y-2">
                       <div className="grid grid-cols-4 gap-3">
-                        <div className="col-span-3 space-y-1">
+                        <div className="col-span-3 space-y-1 relative group/tooltip">
                           <label className="block text-[10px] font-bold text-slate-400 uppercase">Tiêu chí KPI 1</label>
                           <input
                             type="text"
@@ -762,6 +786,12 @@ export default function BghAssignTab({
                             onChange={(e) => setPreviewKpi1Name(e.target.value)}
                             className="w-full border border-slate-300 rounded-md p-1.5 text-xs font-bold text-slate-800 bg-slate-50"
                           />
+                          {previewKpi1Name.trim() && (
+                            <div className="absolute z-50 bottom-full left-0 mb-2 w-full p-3 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-pre-wrap leading-relaxed font-semibold">
+                              <div className="text-yellow-300 font-extrabold uppercase mb-1 text-[9px]">🔍 Xem đầy đủ Tiêu chí KPI 1:</div>
+                              {previewKpi1Name}
+                            </div>
+                          )}
                         </div>
                         <div className="col-span-1 space-y-1">
                           <label className="block text-[10px] font-bold text-slate-400 uppercase">Trọng số (%)</label>
@@ -773,7 +803,7 @@ export default function BghAssignTab({
                           />
                         </div>
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 relative group/tooltip">
                         <div className="flex items-center justify-between">
                           <label className="block text-[10px] font-bold text-slate-400 uppercase">Mô tả và thước đo cụ thể</label>
                           <button
@@ -793,13 +823,19 @@ export default function BghAssignTab({
                           placeholder="Mô tả cụ thể hành động cần làm và thước đo đo lường hiệu quả..."
                           className="w-full border border-slate-300 rounded-md p-1.5 text-[11px] font-medium text-slate-800 bg-slate-50 min-h-[40px]"
                         />
+                        {previewKpi1Desc.trim() && (
+                          <div className="absolute z-50 bottom-full left-0 mb-2 w-full p-3 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-pre-wrap leading-relaxed font-semibold">
+                            <div className="text-yellow-300 font-extrabold uppercase mb-1 text-[9px]">🔍 Xem đầy đủ Mô tả &amp; Thước đo KPI 1:</div>
+                            {previewKpi1Desc}
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     {/* KPI 2 */}
                     <div className="bg-white border border-slate-200 rounded-lg p-3 space-y-2">
                       <div className="grid grid-cols-4 gap-3">
-                        <div className="col-span-3 space-y-1">
+                        <div className="col-span-3 space-y-1 relative group/tooltip">
                           <label className="block text-[10px] font-bold text-slate-400 uppercase">Tiêu chí KPI 2</label>
                           <input
                             type="text"
@@ -807,6 +843,12 @@ export default function BghAssignTab({
                             onChange={(e) => setPreviewKpi2Name(e.target.value)}
                             className="w-full border border-slate-300 rounded-md p-1.5 text-xs font-bold text-slate-800 bg-slate-50"
                           />
+                          {previewKpi2Name.trim() && (
+                            <div className="absolute z-50 bottom-full left-0 mb-2 w-full p-3 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-pre-wrap leading-relaxed font-semibold">
+                              <div className="text-yellow-300 font-extrabold uppercase mb-1 text-[9px]">🔍 Xem đầy đủ Tiêu chí KPI 2:</div>
+                              {previewKpi2Name}
+                            </div>
+                          )}
                         </div>
                         <div className="col-span-1 space-y-1">
                           <label className="block text-[10px] font-bold text-slate-400 uppercase">Trọng số (%)</label>
@@ -818,7 +860,7 @@ export default function BghAssignTab({
                           />
                         </div>
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 relative group/tooltip">
                         <div className="flex items-center justify-between">
                           <label className="block text-[10px] font-bold text-slate-400 uppercase">Mô tả và thước đo cụ thể</label>
                           <button
@@ -838,13 +880,19 @@ export default function BghAssignTab({
                           placeholder="Mô tả cụ thể hành động cần làm và thước đo đo lường hiệu quả..."
                           className="w-full border border-slate-300 rounded-md p-1.5 text-[11px] font-medium text-slate-800 bg-slate-50 min-h-[40px]"
                         />
+                        {previewKpi2Desc.trim() && (
+                          <div className="absolute z-50 bottom-full left-0 mb-2 w-full p-3 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-pre-wrap leading-relaxed font-semibold">
+                            <div className="text-yellow-300 font-extrabold uppercase mb-1 text-[9px]">🔍 Xem đầy đủ Mô tả &amp; Thước đo KPI 2:</div>
+                            {previewKpi2Desc}
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     {/* KPI 3 */}
                     <div className="bg-white border border-slate-200 rounded-lg p-3 space-y-2">
                       <div className="grid grid-cols-4 gap-3">
-                        <div className="col-span-3 space-y-1">
+                        <div className="col-span-3 space-y-1 relative group/tooltip">
                           <label className="block text-[10px] font-bold text-slate-400 uppercase">Tiêu chí KPI 3</label>
                           <input
                             type="text"
@@ -852,6 +900,12 @@ export default function BghAssignTab({
                             onChange={(e) => setPreviewKpi3Name(e.target.value)}
                             className="w-full border border-slate-300 rounded-md p-1.5 text-xs font-bold text-slate-800 bg-slate-50"
                           />
+                          {previewKpi3Name.trim() && (
+                            <div className="absolute z-50 bottom-full left-0 mb-2 w-full p-3 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-pre-wrap leading-relaxed font-semibold">
+                              <div className="text-yellow-300 font-extrabold uppercase mb-1 text-[9px]">🔍 Xem đầy đủ Tiêu chí KPI 3:</div>
+                              {previewKpi3Name}
+                            </div>
+                          )}
                         </div>
                         <div className="col-span-1 space-y-1">
                           <label className="block text-[10px] font-bold text-slate-400 uppercase">Trọng số (%)</label>
@@ -863,7 +917,7 @@ export default function BghAssignTab({
                           />
                         </div>
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 relative group/tooltip">
                         <div className="flex items-center justify-between">
                           <label className="block text-[10px] font-bold text-slate-400 uppercase">Mô tả và thước đo cụ thể</label>
                           <button
@@ -883,6 +937,12 @@ export default function BghAssignTab({
                           placeholder="Mô tả cụ thể hành động cần làm và thước đo đo lường hiệu quả..."
                           className="w-full border border-slate-300 rounded-md p-1.5 text-[11px] font-medium text-slate-800 bg-slate-50 min-h-[40px]"
                         />
+                        {previewKpi3Desc.trim() && (
+                          <div className="absolute z-50 bottom-full left-0 mb-2 w-full p-3 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-pre-wrap leading-relaxed font-semibold">
+                            <div className="text-yellow-300 font-extrabold uppercase mb-1 text-[9px]">🔍 Xem đầy đủ Mô tả &amp; Thước đo KPI 3:</div>
+                            {previewKpi3Desc}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
