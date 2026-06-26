@@ -1227,6 +1227,14 @@ export default function App() {
   };
 
   const handleDeleteUser = async (id: string) => {
+    if (currentUser !== 'admin') {
+      showToast('Cảnh báo: Chỉ có tài khoản Quản trị hệ thống (Admin) mới được phép xóa tài khoản!');
+      return;
+    }
+    if (currentUser && typeof currentUser === 'object' && id === currentUser.id) {
+      showToast('Không cho phép cá nhân tự xóa tài khoản của chính mình!');
+      return;
+    }
     if (id === 'THCS-HP-020' || id.toLowerCase() === 'admin') {
       showToast('Cảnh báo: Đây là tài khoản Admin hệ thống, không được phép xóa!');
       return;
@@ -1315,16 +1323,7 @@ export default function App() {
   };
 
   const handleDeleteProfile = async () => {
-    if (currentUser === 'admin') {
-      showToast('Không thể xóa tài khoản Quản trị hệ thống (Super Admin)!');
-      return;
-    }
-    if (currentUser) {
-      const targetId = currentUser.id;
-      await handleDeleteUser(targetId);
-      setCurrentUser(null);
-      showToast('Đã xóa vĩnh viễn tài khoản cá nhân ra khỏi cơ sở dữ liệu trường!');
-    }
+    showToast('Cảnh báo bảo mật: Không cho phép cá nhân tự xóa tài khoản của chính mình! Chỉ có Admin mới được phép xóa.');
   };
 
   const handleChangePasswordViaLogin = async (userId: string, newPwd: string) => {
@@ -1688,6 +1687,13 @@ export default function App() {
               onResetKpis={handleResetKpis}
               readOnly={!canEditActiveData}
               onKpiScoresChange={handleKpiScoresChange}
+              activeUser={activeUser}
+              onUpdateUserRatingOverride={(rating) => {
+                if (activeUser) {
+                  handleUpdateUser(activeUser.id, { bghRatingOverride: rating });
+                }
+              }}
+              isBghOrAdmin={isBghOrAdmin}
             />
           </div>
 
@@ -1715,6 +1721,7 @@ export default function App() {
                   setIsAssignModalOpen(true);
                 }}
                 allKpis={allKpis}
+                currentUser={currentUser}
               />
             </div>
           )}

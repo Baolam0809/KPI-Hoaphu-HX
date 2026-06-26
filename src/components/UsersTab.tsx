@@ -12,6 +12,7 @@ interface UsersTabProps {
   showToast: (msg: string) => void;
   onOpenAssignModal?: (user: User) => void;
   allKpis?: Record<string, any[]>;
+  currentUser?: User | 'admin';
 }
 
 export default function UsersTab({
@@ -22,7 +23,8 @@ export default function UsersTab({
   onViewEmployee,
   showToast,
   onOpenAssignModal,
-  allKpis
+  allKpis,
+  currentUser
 }: UsersTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleGroup, setRoleGroup] = useState<'all' | 'BGH' | 'GiaoVien' | 'NhanVien'>('all');
@@ -534,6 +536,31 @@ export default function UsersTab({
                             <span className="text-rose-600 whitespace-nowrap">
                               🏛️ BGH chấm: <strong className="text-rose-700 font-bold">{finalBghScore || 0}</strong>
                             </span>
+                            
+                            {/* Xếp loại dưới điểm đánh giá của nhà trường */}
+                            <div className="mt-1 pt-1 border-t border-dashed border-slate-200 flex flex-col gap-0.5">
+                              <span className="text-[9px] text-slate-400 font-bold">Xếp loại nhà trường:</span>
+                              {(() => {
+                                const ratingText = user.bghRatingOverride || (() => {
+                                  if (finalBghScore >= 90) return 'Xuất sắc';
+                                  if (finalBghScore >= 80) return 'Giỏi';
+                                  if (finalBghScore >= 70) return 'Khá';
+                                  if (finalBghScore >= 60) return 'Trung bình';
+                                  return 'Yếu kém';
+                                })();
+                                let ratingColor = 'bg-slate-50 border-slate-200 text-slate-700';
+                                if (ratingText === 'Xuất sắc') ratingColor = 'bg-emerald-50 border-emerald-200 text-emerald-800 font-extrabold';
+                                if (ratingText === 'Giỏi') ratingColor = 'bg-sky-50 border-sky-200 text-sky-800 font-extrabold';
+                                if (ratingText === 'Khá') ratingColor = 'bg-amber-50 border-amber-200 text-amber-800 font-extrabold';
+                                if (ratingText === 'Trung bình') ratingColor = 'bg-orange-50 border-orange-200 text-orange-800 font-extrabold';
+                                if (ratingText === 'Yếu kém') ratingColor = 'bg-red-50 border-red-200 text-red-800 font-extrabold';
+                                return (
+                                  <span className={`text-[9.5px] px-1.5 py-0.5 rounded border text-center ${ratingColor}`}>
+                                    {ratingText}
+                                  </span>
+                                );
+                              })()}
+                            </div>
                           </div>
                         </div>
                       );
@@ -562,13 +589,15 @@ export default function UsersTab({
                       >
                         <Edit className="w-3 h-3" /> Sửa
                       </button>
-                      <button 
-                        onClick={() => handleDelete(user)}
-                        className="text-[11px] bg-red-50 hover:bg-red-100 text-red-600 font-bold px-2 py-1 rounded transition border border-red-200 cursor-pointer flex items-center gap-0.5"
-                        title="Xóa nhân viên khỏi hệ thống"
-                      >
-                        <Trash2 className="w-3 h-3" /> Xóa
-                      </button>
+                      {currentUser === 'admin' && (
+                        <button 
+                          onClick={() => handleDelete(user)}
+                          className="text-[11px] bg-red-50 hover:bg-red-100 text-red-600 font-bold px-2 py-1 rounded transition border border-red-200 cursor-pointer flex items-center gap-0.5"
+                          title="Xóa nhân viên khỏi hệ thống"
+                        >
+                          <Trash2 className="w-3 h-3" /> Xóa
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

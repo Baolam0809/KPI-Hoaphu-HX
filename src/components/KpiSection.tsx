@@ -20,7 +20,7 @@ import {
   Edit3,
   Save
 } from 'lucide-react';
-import { KPI, Evidence } from '../types';
+import { KPI, Evidence, User } from '../types';
 
 interface KpiSectionProps {
   kpis: KPI[];
@@ -30,6 +30,9 @@ interface KpiSectionProps {
   onResetKpis?: () => void;
   readOnly?: boolean;
   onKpiScoresChange?: (index: number, scores: { selfScore?: number; leaderScore?: number; bghScore?: number }) => void;
+  activeUser?: User;
+  onUpdateUserRatingOverride?: (rating?: string) => void;
+  isBghOrAdmin?: boolean;
 }
 
 const getEvidenceIcon = (type: string, fileType?: string) => {
@@ -71,7 +74,10 @@ export default function KpiSection({
   onKpisChange,
   onResetKpis,
   readOnly = false,
-  onKpiScoresChange
+  onKpiScoresChange,
+  activeUser,
+  onUpdateUserRatingOverride,
+  isBghOrAdmin = false
 }: KpiSectionProps) {
   
   // Custom states for adding evidence modal
@@ -199,7 +205,20 @@ export default function KpiSection({
     return { text: 'Yếu kém', class: 'bg-red-600 text-white' };
   };
 
-  const rating = getRatingInfo(finalScore);
+  const getAppliedRating = (score: number) => {
+    if (activeUser?.bghRatingOverride) {
+      let rClass = 'bg-slate-600 text-white';
+      if (activeUser.bghRatingOverride === 'Xuất sắc') rClass = 'bg-emerald-600 text-white';
+      if (activeUser.bghRatingOverride === 'Giỏi') rClass = 'bg-sky-600 text-white';
+      if (activeUser.bghRatingOverride === 'Khá') rClass = 'bg-amber-500 text-white';
+      if (activeUser.bghRatingOverride === 'Trung bình') rClass = 'bg-orange-400 text-white';
+      if (activeUser.bghRatingOverride === 'Yếu kém') rClass = 'bg-red-600 text-white';
+      return { text: activeUser.bghRatingOverride, class: rClass };
+    }
+    return getRatingInfo(score);
+  };
+
+  const rating = getAppliedRating(finalScore);
 
   const handleScoreFieldChange = (index: number, field: 'selfScore' | 'leaderScore' | 'bghScore', val: number) => {
     if (onKpiScoresChange) {
@@ -454,10 +473,51 @@ export default function KpiSection({
             <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-lg px-2.5 py-1 text-center flex items-center gap-1.5 shadow-3xs">
               <span className="text-[10px] font-bold whitespace-nowrap">🏛️ BGH chấm:</span>
               <span className="text-sm font-black text-rose-700">{totals.bgh}/100</span>
-              <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold whitespace-nowrap ${getRatingInfo(totals.bgh).class}`}>
-                {getRatingInfo(totals.bgh).text}
+              <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold whitespace-nowrap ${getAppliedRating(totals.bgh).class}`}>
+                {getAppliedRating(totals.bgh).text}
               </span>
             </div>
+          </div>
+
+          {/* Rating override selector (Cập nhật kết quả xếp loại thi đua) */}
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-rose-50/20 p-2.5 rounded-lg border border-rose-100/30">
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-bold text-rose-950 uppercase tracking-wide block">🏛️ Kết quả Xếp loại của Nhà trường:</span>
+              <p className="text-[9.5px] text-slate-500 leading-tight">
+                {activeUser?.bghRatingOverride ? (
+                  <span>Đang áp dụng xếp loại: <strong className="text-rose-700 font-bold">{activeUser.bghRatingOverride}</strong> (Được cập nhật bởi Ban Giám Hiệu)</span>
+                ) : (
+                  <span>Tự động xếp loại theo điểm BGH: <strong className="text-slate-700 font-bold">{getRatingInfo(totals.bgh).text}</strong></span>
+                )}
+              </p>
+            </div>
+            
+            {isBghOrAdmin ? (
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="text-[10px] text-slate-500 font-bold">Cập nhật:</span>
+                <select
+                  value={activeUser?.bghRatingOverride || 'Tự động'}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (onUpdateUserRatingOverride) {
+                      onUpdateUserRatingOverride(val === 'Tự động' ? undefined : val);
+                    }
+                  }}
+                  className="bg-white border border-rose-200 hover:border-rose-400 rounded text-[11px] px-2 py-1 font-bold text-rose-900 focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer shadow-3xs"
+                >
+                  <option value="Tự động">-- Tự động (Theo điểm BGH) --</option>
+                  <option value="Xuất sắc">Xuất sắc</option>
+                  <option value="Giỏi">Giỏi</option>
+                  <option value="Khá">Khá</option>
+                  <option value="Trung bình">Trung bình</option>
+                  <option value="Yếu kém">Yếu kém</option>
+                </select>
+              </div>
+            ) : (
+              <div className="text-[10px] bg-white border border-slate-200 rounded px-2.5 py-1 font-extrabold text-slate-600 shadow-3xs shrink-0">
+                {activeUser?.bghRatingOverride || getRatingInfo(totals.bgh).text}
+              </div>
+            )}
           </div>
         </div>
       </div>

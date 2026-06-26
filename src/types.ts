@@ -39,6 +39,7 @@ export interface User {
   password?: string;
   isTeacher: boolean;
   type: 'BGH' | 'GiaoVien' | 'NhanVien';
+  bghRatingOverride?: string;
 }
 
 export interface Notification {
