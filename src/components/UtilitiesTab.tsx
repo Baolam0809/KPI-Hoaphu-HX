@@ -10,21 +10,18 @@ export default function UtilitiesTab() {
     if (passCount > totalCount) return { pct: 0, text: 'Số đạt không thể lớn hơn tổng số', class: 'text-red-600' };
 
     const pct = Math.round((passCount / totalCount) * 100);
-    let rating = 'Yếu kém';
-    let colorClass = 'text-red-600';
+    let rating = 'Không hoàn thành nhiệm vụ';
+    let colorClass = 'text-red-600 font-bold';
 
     if (pct >= 90) {
       rating = 'Xuất sắc';
-      colorClass = 'text-emerald-600';
+      colorClass = 'text-emerald-600 font-bold';
     } else if (pct >= 80) {
-      rating = 'Giỏi';
-      colorClass = 'text-sky-600';
-    } else if (pct >= 70) {
-      rating = 'Khá';
-      colorClass = 'text-amber-500';
+      rating = 'Hoàn thành tốt nhiệm vụ';
+      colorClass = 'text-sky-600 font-bold';
     } else if (pct >= 60) {
-      rating = 'Trung bình';
-      colorClass = 'text-orange-400';
+      rating = 'Hoàn thành nhiệm vụ';
+      colorClass = 'text-amber-500 font-bold';
     }
 
     return { pct, text: `${pct}% (Xếp loại thi đua: ${rating})`, class: colorClass };
