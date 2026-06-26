@@ -1068,6 +1068,7 @@ export default function App() {
               onUpdateOkr={handleUpdateOkr}
               onDeleteOkr={handleDeleteOkr}
               readOnly={!canEditActiveData}
+              isAdmin={isBghOrAdmin}
             />
 
             {/* KPI WORKSPACE SECTION */}
