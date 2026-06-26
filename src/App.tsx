@@ -1813,6 +1813,7 @@ export default function App() {
                 }
               }}
               isBghOrAdmin={isBghOrAdmin}
+              isBghOrToTruong={isBghOrToTruong}
             />
           </div>
 

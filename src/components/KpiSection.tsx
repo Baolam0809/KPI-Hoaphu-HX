@@ -33,6 +33,7 @@ interface KpiSectionProps {
   activeUser?: User;
   onUpdateUserRatingOverride?: (rating?: string) => void;
   isBghOrAdmin?: boolean;
+  isBghOrToTruong?: boolean;
 }
 
 const getEvidenceIcon = (type: string, fileType?: string) => {
@@ -77,7 +78,8 @@ export default function KpiSection({
   onKpiScoresChange,
   activeUser,
   onUpdateUserRatingOverride,
-  isBghOrAdmin = false
+  isBghOrAdmin = false,
+  isBghOrToTruong = false
 }: KpiSectionProps) {
   
   // Custom states for adding evidence modal
@@ -535,12 +537,21 @@ export default function KpiSection({
         </div>
       ) : (
         !isEditing && (
-          <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex gap-1.5 items-start">
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
-            <span>
-              <strong>Mẹo giả lập:</strong> Bạn có thể sử dụng thanh trượt hoặc trường nhập liệu trực tiếp dưới đây để thay đổi điểm số thực đạt. Điểm tổng và xếp loại thi đua cuối kỳ sẽ được tự động tính toán lại ngay tức thì!
-            </span>
-          </div>
+          isBghOrToTruong ? (
+            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex gap-1.5 items-start">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+              <span>
+                <strong>Mẹo giả lập:</strong> Bạn có thể sử dụng thanh trượt hoặc trường nhập liệu trực tiếp dưới đây để thay đổi điểm số thực đạt. Điểm tổng và xếp loại thi đua cuối kỳ sẽ được tự động tính toán lại ngay tức thì!
+              </span>
+            </div>
+          ) : (
+            <div className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-4 flex gap-1.5 items-start">
+              <Info className="w-4 h-4 shrink-0 mt-0.5 text-indigo-600 animate-pulse" />
+              <span>
+                <strong>Tài khoản cá nhân:</strong> Bạn chỉ được quyền đính kèm/xóa hồ sơ minh chứng của mình. Quyền hạn chấm điểm và đánh giá KPI thuộc về <strong>Tổ trưởng chuyên môn</strong> và <strong>Ban Giám Hiệu (BGH)</strong>.
+              </span>
+            </div>
+          )
         )
       )}
 
@@ -612,110 +623,138 @@ export default function KpiSection({
                 </td>
                 <td className="p-3 align-top">
                   <div className="flex flex-col gap-2 min-w-[130px]">
-                    {/* 1. Self Score */}
-                    <div className="space-y-0.5 border-b border-slate-100 pb-1.5">
-                      <div className="flex items-center justify-between gap-1 text-[10px] font-bold text-slate-500">
-                        <span>🙋‍♂️ Tự chấm:</span>
-                        <input 
-                          type="number" 
-                          min="0" 
-                          max="100" 
-                          value={kpi.selfScore !== undefined ? kpi.selfScore : kpi.value} 
-                          onChange={(e) => {
-                            const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-                            handleScoreFieldChange(index, 'selfScore', val);
-                          }}
-                          disabled={readOnly || isEditing}
-                          className={`w-10 border text-center py-0.5 font-bold text-[10px] focus:outline-none ${
-                            (readOnly || isEditing) 
-                              ? 'border-slate-100 bg-slate-50 text-slate-400' 
-                              : 'border-slate-300 text-slate-700 focus:ring-1 focus:ring-emerald-500'
-                          }`}
-                        />
-                      </div>
-                      <input 
-                        type="range" 
-                        min="0" 
-                        max="100" 
-                        value={kpi.selfScore !== undefined ? kpi.selfScore : kpi.value} 
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value) || 0;
-                          handleScoreFieldChange(index, 'selfScore', val);
-                        }}
-                        disabled={readOnly || isEditing}
-                        className="w-full h-1 accent-emerald-600 cursor-pointer disabled:opacity-50"
-                      />
-                    </div>
+                    {isBghOrToTruong ? (
+                      <>
+                        {/* 1. Self Score */}
+                        <div className="space-y-0.5 border-b border-slate-100 pb-1.5">
+                          <div className="flex items-center justify-between gap-1 text-[10px] font-bold text-slate-500">
+                            <span>🙋‍♂️ Tự chấm:</span>
+                            <input 
+                              type="number" 
+                              min="0" 
+                              max="100" 
+                              value={kpi.selfScore !== undefined ? kpi.selfScore : kpi.value} 
+                              onChange={(e) => {
+                                const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                handleScoreFieldChange(index, 'selfScore', val);
+                              }}
+                              disabled={readOnly || isEditing}
+                              className={`w-10 border text-center py-0.5 font-bold text-[10px] focus:outline-none ${
+                                (readOnly || isEditing) 
+                                  ? 'border-slate-100 bg-slate-50 text-slate-400' 
+                                  : 'border-slate-300 text-slate-700 focus:ring-1 focus:ring-emerald-500'
+                              }`}
+                            />
+                          </div>
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="100" 
+                            value={kpi.selfScore !== undefined ? kpi.selfScore : kpi.value} 
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value) || 0;
+                              handleScoreFieldChange(index, 'selfScore', val);
+                            }}
+                            disabled={readOnly || isEditing}
+                            className="w-full h-1 accent-emerald-600 cursor-pointer disabled:opacity-50"
+                          />
+                        </div>
 
-                    {/* 2. Leader Score */}
-                    <div className="space-y-0.5 border-b border-slate-100 pb-1.5">
-                      <div className="flex items-center justify-between gap-1 text-[10px] font-bold text-indigo-600">
-                        <span>👥 Tổ trưởng:</span>
-                        <input 
-                          type="number" 
-                          min="0" 
-                          max="100" 
-                          value={kpi.leaderScore !== undefined ? kpi.leaderScore : Math.max(0, kpi.value - (kpi.value % 5 || 2))} 
-                          onChange={(e) => {
-                            const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-                            handleScoreFieldChange(index, 'leaderScore', val);
-                          }}
-                          disabled={readOnly || isEditing}
-                          className={`w-10 border text-center py-0.5 font-bold text-[10px] focus:outline-none ${
-                            (readOnly || isEditing) 
-                              ? 'border-slate-100 bg-slate-50 text-slate-400' 
-                              : 'border-slate-300 text-indigo-700 focus:ring-1 focus:ring-indigo-500'
-                          }`}
-                        />
-                      </div>
-                      <input 
-                        type="range" 
-                        min="0" 
-                        max="100" 
-                        value={kpi.leaderScore !== undefined ? kpi.leaderScore : Math.max(0, kpi.value - (kpi.value % 5 || 2))} 
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value) || 0;
-                          handleScoreFieldChange(index, 'leaderScore', val);
-                        }}
-                        disabled={readOnly || isEditing}
-                        className="w-full h-1 accent-indigo-600 cursor-pointer disabled:opacity-50"
-                      />
-                    </div>
+                        {/* 2. Leader Score */}
+                        <div className="space-y-0.5 border-b border-slate-100 pb-1.5">
+                          <div className="flex items-center justify-between gap-1 text-[10px] font-bold text-indigo-600">
+                            <span>👥 Tổ trưởng:</span>
+                            <input 
+                              type="number" 
+                              min="0" 
+                              max="100" 
+                              value={kpi.leaderScore !== undefined ? kpi.leaderScore : Math.max(0, kpi.value - (kpi.value % 5 || 2))} 
+                              onChange={(e) => {
+                                const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                handleScoreFieldChange(index, 'leaderScore', val);
+                              }}
+                              disabled={readOnly || isEditing}
+                              className={`w-10 border text-center py-0.5 font-bold text-[10px] focus:outline-none ${
+                                (readOnly || isEditing) 
+                                  ? 'border-slate-100 bg-slate-50 text-slate-400' 
+                                  : 'border-slate-300 text-indigo-700 focus:ring-1 focus:ring-indigo-500'
+                              }`}
+                            />
+                          </div>
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="100" 
+                            value={kpi.leaderScore !== undefined ? kpi.leaderScore : Math.max(0, kpi.value - (kpi.value % 5 || 2))} 
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value) || 0;
+                              handleScoreFieldChange(index, 'leaderScore', val);
+                            }}
+                            disabled={readOnly || isEditing}
+                            className="w-full h-1 accent-indigo-600 cursor-pointer disabled:opacity-50"
+                          />
+                        </div>
 
-                    {/* 3. BGH Score */}
-                    <div className="space-y-0.5">
-                      <div className="flex items-center justify-between gap-1 text-[10px] font-bold text-rose-600">
-                        <span>🏛️ BGH chấm:</span>
-                        <input 
-                          type="number" 
-                          min="0" 
-                          max="100" 
-                          value={kpi.bghScore !== undefined ? kpi.bghScore : Math.max(0, kpi.value - (kpi.value % 7 || 3))} 
-                          onChange={(e) => {
-                            const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-                            handleScoreFieldChange(index, 'bghScore', val);
-                          }}
-                          disabled={readOnly || isEditing}
-                          className={`w-10 border text-center py-0.5 font-bold text-[10px] focus:outline-none ${
-                            (readOnly || isEditing) 
-                              ? 'border-slate-100 bg-slate-50 text-slate-400' 
-                              : 'border-slate-300 text-rose-700 focus:ring-1 focus:ring-rose-500'
-                          }`}
-                        />
+                        {/* 3. BGH Score */}
+                        <div className="space-y-0.5">
+                          <div className="flex items-center justify-between gap-1 text-[10px] font-bold text-rose-600">
+                            <span>🏛️ BGH chấm:</span>
+                            <input 
+                              type="number" 
+                              min="0" 
+                              max="100" 
+                              value={kpi.bghScore !== undefined ? kpi.bghScore : Math.max(0, kpi.value - (kpi.value % 7 || 3))} 
+                              onChange={(e) => {
+                                const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                handleScoreFieldChange(index, 'bghScore', val);
+                              }}
+                              disabled={readOnly || isEditing}
+                              className={`w-10 border text-center py-0.5 font-bold text-[10px] focus:outline-none ${
+                                (readOnly || isEditing) 
+                                  ? 'border-slate-100 bg-slate-50 text-slate-400' 
+                                  : 'border-slate-300 text-rose-700 focus:ring-1 focus:ring-rose-500'
+                              }`}
+                            />
+                          </div>
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="100" 
+                            value={kpi.bghScore !== undefined ? kpi.bghScore : Math.max(0, kpi.value - (kpi.value % 7 || 3))} 
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value) || 0;
+                              handleScoreFieldChange(index, 'bghScore', val);
+                            }}
+                            disabled={readOnly || isEditing}
+                            className="w-full h-1 accent-rose-600 cursor-pointer disabled:opacity-50"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="space-y-2 bg-slate-50 p-2 rounded-lg border border-slate-100 font-bold shadow-3xs">
+                        {/* 1. Self Score - Static */}
+                        <div className="flex items-center justify-between text-[11px] text-slate-600 border-b border-slate-200 pb-1.5">
+                          <span className="flex items-center gap-1">🙋‍♂️ Tự chấm:</span>
+                          <span className="text-slate-900 bg-white border border-slate-200 px-1.5 py-0.5 rounded text-[10px] font-black min-w-[32px] text-center shadow-3xs">
+                            {kpi.selfScore !== undefined ? kpi.selfScore : kpi.value}
+                          </span>
+                        </div>
+                        {/* 2. Leader Score - Static */}
+                        <div className="flex items-center justify-between text-[11px] text-indigo-700 border-b border-slate-200 pb-1.5">
+                          <span className="flex items-center gap-1">👥 Tổ trưởng:</span>
+                          <span className="text-indigo-900 bg-white border border-indigo-200 px-1.5 py-0.5 rounded text-[10px] font-black min-w-[32px] text-center shadow-3xs">
+                            {kpi.leaderScore !== undefined ? kpi.leaderScore : Math.max(0, kpi.value - (kpi.value % 5 || 2))}
+                          </span>
+                        </div>
+                        {/* 3. BGH Score - Static */}
+                        <div className="flex items-center justify-between text-[11px] text-rose-700">
+                          <span className="flex items-center gap-1">🏛️ BGH chấm:</span>
+                          <span className="text-rose-900 bg-white border border-rose-200 px-1.5 py-0.5 rounded text-[10px] font-black min-w-[32px] text-center shadow-3xs">
+                            {kpi.bghScore !== undefined ? kpi.bghScore : Math.max(0, kpi.value - (kpi.value % 7 || 3))}
+                          </span>
+                        </div>
                       </div>
-                      <input 
-                        type="range" 
-                        min="0" 
-                        max="100" 
-                        value={kpi.bghScore !== undefined ? kpi.bghScore : Math.max(0, kpi.value - (kpi.value % 7 || 3))} 
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value) || 0;
-                          handleScoreFieldChange(index, 'bghScore', val);
-                        }}
-                        disabled={readOnly || isEditing}
-                        className="w-full h-1 accent-rose-600 cursor-pointer disabled:opacity-50"
-                      />
-                    </div>
+                    )}
                   </div>
                 </td>
                 <td className="p-3 align-top">
