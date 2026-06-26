@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Target, Plus, Edit3, Trash2, X, AlertTriangle, FolderOpen, Lock } from 'lucide-react';
+import { Target, Plus, Edit3, Trash2, X, AlertTriangle, FolderOpen, Lock, Sparkles } from 'lucide-react';
 import { OKR } from '../types';
 
 interface OKRTemplate {
@@ -138,6 +138,80 @@ const DEFAULT_OKR_TEMPLATES: OKRTemplate[] = [
   }
 ];
 
+const SUGGESTIONS_BY_CATEGORY = [
+  {
+    category: '📖 Giảng dạy & Chuyên môn',
+    objectives: [
+      'Nâng cao chất lượng giảng dạy môn học chính khóa đạt tỷ lệ học lực khá, giỏi trên 90%',
+      'Đổi mới phương pháp dạy học theo định hướng phát triển năng lực và phẩm chất học sinh',
+      'Nâng cao hiệu quả ôn luyện đội tuyển học sinh giỏi, đạt giải cao trong các kỳ thi cấp Huyện',
+      'Cải tiến chất lượng bài giảng chính khóa, giảm tỷ lệ học sinh trung bình và yếu kém'
+    ],
+    keyResults: [
+      '95% học sinh đạt học lực Khá/Giỏi môn chuyên trách trở lên',
+      'Đảm bảo 100% học sinh đội tuyển hoàn thành toàn bộ các chuyên đề ôn luyện nâng cao',
+      'Thực hiện thành công ít nhất 2 bài dạy mẫu đổi mới phương pháp giảng dạy cấp trường',
+      '100% giáo án, tài liệu được chuẩn bị chu đáo, đạt chất lượng Tốt trở lên'
+    ]
+  },
+  {
+    category: '💻 Chuyển đổi số & CNTT',
+    objectives: [
+      'Đẩy mạnh ứng dụng CNTT và công nghệ số trong công tác giảng dạy, soạn giáo án',
+      'Thiết kế và số hóa hệ thống tài liệu, bài giảng tương tác đa phương tiện E-Learning',
+      'Ứng dụng thành công các công cụ kiểm tra đánh giá trực tuyến tương tác cao cho học sinh'
+    ],
+    keyResults: [
+      'Thiết kế thành công ít nhất 3 bài giảng tương tác E-Learning chuẩn hóa đưa lên kho học liệu',
+      'Sử dụng các công cụ số (Quizizz, Kahoot, Google Forms) trong 100% các tiết ôn tập',
+      'Số hóa 100% tài liệu ôn tập, bài tập tự luyện và chia sẻ công khai cho học sinh trên Drive',
+      'Tham gia đầy đủ 100% các buổi tập huấn chuyên sâu về phần mềm dạy học hiện đại'
+    ]
+  },
+  {
+    category: '📝 Nghiên cứu & Sáng kiến',
+    objectives: [
+      'Nghiên cứu ứng dụng sáng kiến sư phạm cải tiến chất lượng quản lý lớp học và giảng dạy',
+      'Đóng góp các chuyên đề chuyên môn sâu sắc giúp nâng cao năng lực dạy học của tổ bộ môn',
+      'Cải tiến các biện pháp giáo dục đạo đức và rèn luyện kỹ năng sống cho học sinh'
+    ],
+    keyResults: [
+      'Hoàn thành 1 bài viết sáng kiến kinh nghiệm (SKKN) nộp Hội đồng khoa học nhà trường đúng hạn',
+      'Đạt giải Sáng kiến kinh nghiệm cấp trường loại Khá trở lên hoặc cấp Huyện',
+      'Chủ trì ít nhất 1 chuyên đề trao đổi kinh nghiệm sư phạm và giảng dạy cấp tổ',
+      'Ứng dụng sáng kiến mới giúp tăng 15% mức độ tương tác và chủ động của học sinh trong giờ học'
+    ]
+  },
+  {
+    category: '🏫 Công tác Chủ nhiệm & Học sinh',
+    objectives: [
+      'Xây dựng tập thể lớp học tự quản, kỷ luật, nề nếp, nâng cao chất lượng giáo dục toàn diện',
+      'Phát triển phong trào tự học, tự quản và xây dựng lớp học hạnh phúc, thân thiện',
+      'Tăng cường sự phối hợp, gắn kết chặt chẽ giữa nhà trường, giáo viên và phụ huynh học sinh'
+    ],
+    keyResults: [
+      'Duy trì tỷ lệ chuyên cần của lớp chủ nhiệm đạt trên 99% trong suốt năm học',
+      '98% học sinh đạt kết quả rèn luyện hạnh kiểm xếp loại Tốt, không có học sinh vi phạm kỷ luật',
+      'Tổ chức thành công ít nhất 3 buổi sinh hoạt lớp theo chuyên đề kỹ năng sống ý nghĩa',
+      'Giữ liên lạc 100% với phụ huynh học sinh định kỳ để phối hợp giáo dục, hỗ trợ kịp thời'
+    ]
+  },
+  {
+    category: '🛠️ Phát triển Bản thân & Đồng nghiệp',
+    objectives: [
+      'Tích cực học tập, bồi dưỡng nâng cao trình độ chuyên môn và nghiệp vụ sư phạm',
+      'Rèn luyện đạo đức tác phong sư phạm mẫu mực, giữ vững khối đoàn kết nội bộ',
+      'Chia sẻ, hỗ trợ và đồng hành giúp đỡ các đồng nghiệp trẻ cùng tiến bộ'
+    ],
+    keyResults: [
+      'Đạt danh hiệu Giáo viên dạy giỏi cấp trường hoặc cấp Huyện trở lên',
+      'Tham gia dự giờ học tập đồng nghiệp ít nhất 18 tiết trong suốt năm học',
+      'Hỗ trợ, hướng dẫn thành công ít nhất 1 đồng nghiệp trẻ cải tiến bài giảng số hóa',
+      'Tham gia đầy đủ 100% các lớp bồi dưỡng chính trị và đạt kết quả đánh giá xếp loại Tốt'
+    ]
+  }
+];
+
 interface OkrSectionProps {
   okrs: OKR[];
   onAddOkr: (okr: Omit<OKR, 'id'>) => void;
@@ -234,6 +308,65 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [validationError, setValidationError] = useState('');
+
+  // Active suggestion popup states
+  const [activeSuggestionField, setActiveSuggestionField] = useState<'title' | 'kr1' | 'kr2' | 'kr3' | null>(null);
+
+  const renderSuggestionBox = (field: 'title' | 'kr1' | 'kr2' | 'kr3') => {
+    if (activeSuggestionField !== field) return null;
+
+    const isObjective = field === 'title';
+
+    return (
+      <div className="mt-1.5 border border-amber-200 bg-amber-50/95 rounded-xl p-3.5 space-y-2.5 shadow-md animate-fade-in relative z-20">
+        <div className="flex items-center justify-between border-b border-amber-200/60 pb-1.5 select-none">
+          <span className="font-extrabold text-amber-900 text-[10px] uppercase tracking-wider flex items-center gap-1">
+            <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-pulse" /> Sổ tay gợi ý {isObjective ? 'Mục tiêu (O)' : 'Kết quả then chốt (KR)'}
+          </span>
+          <button
+            type="button"
+            onClick={() => setActiveSuggestionField(null)}
+            className="text-amber-600 hover:text-amber-800 text-[10px] font-bold cursor-pointer"
+          >
+            Đóng gợi ý ✕
+          </button>
+        </div>
+
+        <div className="max-h-48 overflow-y-auto pr-1 space-y-3.5 scrollbar-thin">
+          {SUGGESTIONS_BY_CATEGORY.map((cat, idx) => {
+            const list = isObjective ? cat.objectives : cat.keyResults;
+            if (list.length === 0) return null;
+
+            return (
+              <div key={idx} className="space-y-1">
+                <div className="text-[10px] font-extrabold text-amber-800/80 px-1 select-none">
+                  {cat.category}
+                </div>
+                <div className="space-y-1">
+                  {list.map((item, itemIdx) => (
+                    <button
+                      key={itemIdx}
+                      type="button"
+                      onClick={() => {
+                        if (field === 'title') setTitle(item);
+                        else if (field === 'kr1') setKr1(item);
+                        else if (field === 'kr2') setKr2(item);
+                        else if (field === 'kr3') setKr3(item);
+                        setActiveSuggestionField(null);
+                      }}
+                      className="w-full text-left text-slate-700 bg-white hover:bg-amber-100/40 hover:text-red-900 p-2 rounded-lg border border-slate-200 hover:border-amber-300 transition text-[11px] font-bold leading-relaxed shadow-3xs cursor-pointer block"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   const saveTemplates = (updatedTemplates: OKRTemplate[]) => {
     setTemplates(updatedTemplates);
@@ -348,6 +481,7 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
       kr3Progress
     });
     setIsAddModalOpen(false);
+    setActiveSuggestionField(null);
   };
 
   const handleAddSubmit = (e: React.FormEvent) => {
@@ -410,6 +544,7 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
     }
     setIsEditModalOpen(false);
     setSelectedOkr(null);
+    setActiveSuggestionField(null);
   };
 
   const handleEditSubmit = (e: React.FormEvent) => {
@@ -856,22 +991,41 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
               )}
               
               <div>
-                <label className="block font-bold text-slate-600 uppercase mb-1">Mục Tiêu Lớn (Objective)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-bold text-slate-600 uppercase">Mục Tiêu Lớn (Objective)</label>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSuggestionField(activeSuggestionField === 'title' ? null : 'title')}
+                    className="text-[10px] text-red-700 font-extrabold hover:underline flex items-center gap-0.5 cursor-pointer select-none"
+                  >
+                    <Sparkles className="w-3 h-3 text-red-600 animate-pulse" /> Sổ gợi ý
+                  </button>
+                </div>
                 <textarea 
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none" 
+                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none font-bold" 
                   rows={2} 
                   placeholder="Ví dụ: Trở thành giáo viên dạy xuất sắc môn Ngữ văn cấp Trường..."
                 />
+                {renderSuggestionBox('title')}
               </div>
               <div>
-                <label className="block font-bold text-slate-600 uppercase mb-1">Kết quả then chốt 1 (Key Result 1)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-bold text-slate-600 uppercase">Kết quả then chốt 1 (Key Result 1)</label>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSuggestionField(activeSuggestionField === 'kr1' ? null : 'kr1')}
+                    className="text-[10px] text-red-700 font-extrabold hover:underline flex items-center gap-0.5 cursor-pointer select-none"
+                  >
+                    <Sparkles className="w-3 h-3 text-red-600 animate-pulse" /> Sổ gợi ý
+                  </button>
+                </div>
                 <input 
                   type="text" 
                   value={kr1}
                   onChange={(e) => setKr1(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none" 
+                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none font-medium text-slate-800" 
                   placeholder="Ví dụ: 100% học sinh đội tuyển vượt qua vòng loại trường"
                 />
                 <div className="flex items-center gap-2 mt-1">
@@ -881,14 +1035,24 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
                   />
                   <span className="font-bold text-slate-600 w-8 text-right">{kr1Progress}%</span>
                 </div>
+                {renderSuggestionBox('kr1')}
               </div>
               <div>
-                <label className="block font-bold text-slate-600 uppercase mb-1">Kết quả then chốt 2 (Key Result 2) - Không bắt buộc</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-bold text-slate-600 uppercase">Kết quả then chốt 2 (Key Result 2) - Không bắt buộc</label>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSuggestionField(activeSuggestionField === 'kr2' ? null : 'kr2')}
+                    className="text-[10px] text-red-700 font-extrabold hover:underline flex items-center gap-0.5 cursor-pointer select-none"
+                  >
+                    <Sparkles className="w-3 h-3 text-red-600 animate-pulse" /> Sổ gợi ý
+                  </button>
+                </div>
                 <input 
                   type="text" 
                   value={kr2}
                   onChange={(e) => setKr2(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none" 
+                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none font-medium text-slate-800" 
                   placeholder="Ví dụ: Đạt ít nhất 2 giải khuyến khích cấp xã"
                 />
                 <div className="flex items-center gap-2 mt-1">
@@ -898,14 +1062,24 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
                   />
                   <span className="font-bold text-slate-600 w-8 text-right">{kr2Progress}%</span>
                 </div>
+                {renderSuggestionBox('kr2')}
               </div>
               <div>
-                <label className="block font-bold text-slate-600 uppercase mb-1">Kết quả then chốt 3 (Key Result 3) - Không bắt buộc</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-bold text-slate-600 uppercase">Kết quả then chốt 3 (Key Result 3) - Không bắt buộc</label>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSuggestionField(activeSuggestionField === 'kr3' ? null : 'kr3')}
+                    className="text-[10px] text-red-700 font-extrabold hover:underline flex items-center gap-0.5 cursor-pointer select-none"
+                  >
+                    <Sparkles className="w-3 h-3 text-red-600 animate-pulse" /> Sổ gợi ý
+                  </button>
+                </div>
                 <input 
                   type="text" 
                   value={kr3}
                   onChange={(e) => setKr3(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none" 
+                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none font-medium text-slate-800" 
                   placeholder="Ví dụ: Đạt danh hiệu GV dạy giỏi cấp Huyện"
                 />
                 <div className="flex items-center gap-2 mt-1">
@@ -915,6 +1089,7 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
                   />
                   <span className="font-bold text-slate-600 w-8 text-right">{kr3Progress}%</span>
                 </div>
+                {renderSuggestionBox('kr3')}
               </div>
 
               <div className="mt-6 flex justify-end gap-2 text-xs pt-3 border-t border-slate-100">
@@ -1070,21 +1245,40 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
               )}
               
               <div>
-                <label className="block font-bold text-slate-600 uppercase mb-1">Mục Tiêu Lớn (Objective)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-bold text-slate-600 uppercase">Mục Tiêu Lớn (Objective)</label>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSuggestionField(activeSuggestionField === 'title' ? null : 'title')}
+                    className="text-[10px] text-red-700 font-extrabold hover:underline flex items-center gap-0.5 cursor-pointer select-none"
+                  >
+                    <Sparkles className="w-3 h-3 text-red-600 animate-pulse" /> Sổ gợi ý
+                  </button>
+                </div>
                 <textarea 
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none font-bold" 
                   rows={2}
                 />
+                {renderSuggestionBox('title')}
               </div>
               <div>
-                <label className="block font-bold text-slate-600 uppercase mb-1">Kết quả then chốt 1 (Key Result 1)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-bold text-slate-600 uppercase">Kết quả then chốt 1 (Key Result 1)</label>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSuggestionField(activeSuggestionField === 'kr1' ? null : 'kr1')}
+                    className="text-[10px] text-red-700 font-extrabold hover:underline flex items-center gap-0.5 cursor-pointer select-none"
+                  >
+                    <Sparkles className="w-3 h-3 text-red-600 animate-pulse" /> Sổ gợi ý
+                  </button>
+                </div>
                 <input 
                   type="text" 
                   value={kr1}
                   onChange={(e) => setKr1(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none"
+                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none font-medium text-slate-800"
                 />
                 <div className="flex items-center gap-2 mt-1">
                   <input 
@@ -1093,14 +1287,24 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
                   />
                   <span className="font-bold text-slate-600 w-8 text-right">{kr1Progress}%</span>
                 </div>
+                {renderSuggestionBox('kr1')}
               </div>
               <div>
-                <label className="block font-bold text-slate-600 uppercase mb-1">Kết quả then chốt 2 (Key Result 2)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-bold text-slate-600 uppercase">Kết quả then chốt 2 (Key Result 2)</label>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSuggestionField(activeSuggestionField === 'kr2' ? null : 'kr2')}
+                    className="text-[10px] text-red-700 font-extrabold hover:underline flex items-center gap-0.5 cursor-pointer select-none"
+                  >
+                    <Sparkles className="w-3 h-3 text-red-600 animate-pulse" /> Sổ gợi ý
+                  </button>
+                </div>
                 <input 
                   type="text" 
                   value={kr2}
                   onChange={(e) => setKr2(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none"
+                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none font-medium text-slate-800"
                 />
                 <div className="flex items-center gap-2 mt-1">
                   <input 
@@ -1109,14 +1313,24 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
                   />
                   <span className="font-bold text-slate-600 w-8 text-right">{kr2Progress}%</span>
                 </div>
+                {renderSuggestionBox('kr2')}
               </div>
               <div>
-                <label className="block font-bold text-slate-600 uppercase mb-1">Kết quả then chốt 3 (Key Result 3)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-bold text-slate-600 uppercase">Kết quả then chốt 3 (Key Result 3)</label>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSuggestionField(activeSuggestionField === 'kr3' ? null : 'kr3')}
+                    className="text-[10px] text-red-700 font-extrabold hover:underline flex items-center gap-0.5 cursor-pointer select-none"
+                  >
+                    <Sparkles className="w-3 h-3 text-red-600 animate-pulse" /> Sổ gợi ý
+                  </button>
+                </div>
                 <input 
                   type="text" 
                   value={kr3}
                   onChange={(e) => setKr3(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none"
+                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-red-700 outline-none font-medium text-slate-800"
                 />
                 <div className="flex items-center gap-2 mt-1">
                   <input 
@@ -1125,6 +1339,7 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
                   />
                   <span className="font-bold text-slate-600 w-8 text-right">{kr3Progress}%</span>
                 </div>
+                {renderSuggestionBox('kr3')}
               </div>
 
               <div className="mt-6 flex justify-end gap-2 text-xs pt-3 border-t border-slate-100">
