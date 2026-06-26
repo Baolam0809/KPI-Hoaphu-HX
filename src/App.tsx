@@ -729,31 +729,57 @@ export default function App() {
     if (!currentUser) return [];
     
     const assigned: GroupAssignment[] = [];
-    
-    if (currentUser.type === 'GiaoVien') {
-      const blockAssign = groupAssignments.find(a => a.id === 'group-khoi-giaovien');
-      if (blockAssign) assigned.push(blockAssign);
-    } else if (currentUser.type === 'NhanVien') {
-      const blockAssign = groupAssignments.find(a => a.id === 'group-khoi-nhanvien');
-      if (blockAssign) assigned.push(blockAssign);
-    }
-    
     const roleLower = currentUser.role?.toLowerCase() || '';
-    if (currentUser.type === 'GiaoVien') {
-      if (roleLower.includes('tự nhiên') || roleLower.includes('vật lý') || roleLower.includes('toán') || roleLower.includes('hóa') || roleLower.includes('sinh') || roleLower.includes('tin học')) {
-        const dAssign = groupAssignments.find(a => a.id === 'group-to-tu-nhien');
-        if (dAssign) assigned.push(dAssign);
-      } else if (roleLower.includes('xã hội') || roleLower.includes('văn') || roleLower.includes('sử') || roleLower.includes('địa') || roleLower.includes('ngoại ngữ') || roleLower.includes('tiếng anh')) {
-        const dAssign = groupAssignments.find(a => a.id === 'group-to-xa-hoi');
-        if (dAssign) assigned.push(dAssign);
-      } else if (roleLower.includes('thể mỹ') || roleLower.includes('thể dục') || roleLower.includes('nhạc') || roleLower.includes('họa') || roleLower.includes('văn thể mỹ')) {
-        const dAssign = groupAssignments.find(a => a.id === 'group-to-vanthemy');
-        if (dAssign) assigned.push(dAssign);
-      }
-    } else if (currentUser.type === 'NhanVien') {
-      const dAssign = groupAssignments.find(a => a.id === 'group-to-vanphong');
-      if (dAssign) assigned.push(dAssign);
+
+    // Load the dynamic target groups from localStorage if they exist
+    const cachedGroups = localStorage.getItem('thcs_hp_target_groups');
+    let loadedTargetGroups: any[] = [];
+    if (cachedGroups) {
+      try {
+        loadedTargetGroups = JSON.parse(cachedGroups);
+      } catch (e) {}
     }
+
+    const groupBlockTeacherId = loadedTargetGroups.find(g => g.type === 'khoi-giaovien')?.id || 'group-khoi-giaovien';
+    const groupBlockStaffId = loadedTargetGroups.find(g => g.type === 'khoi-nhanvien')?.id || 'group-khoi-nhanvien';
+
+    if (currentUser.type === 'GiaoVien') {
+      const blockAssign = groupAssignments.find(a => a.id === groupBlockTeacherId || a.targetType === 'khoi-giaovien');
+      if (blockAssign) assigned.push(blockAssign);
+    } else if (currentUser.type === 'NhanVien') {
+      const blockAssign = groupAssignments.find(a => a.id === groupBlockStaffId || a.targetType === 'khoi-nhanvien');
+      if (blockAssign) assigned.push(blockAssign);
+    }
+    
+    // Check match for specific departments or custom ones
+    groupAssignments.forEach(assign => {
+      // Don't duplicate if already added
+      if (assigned.some(a => a.id === assign.id)) return;
+
+      const targetNameLower = assign.targetName.toLowerCase();
+      
+      // Match custom/dynamic specialized groups if the group's name is found in user's role/title/department
+      if (assign.targetType === 'to-chuyen-mon') {
+        // Direct matching: e.g. "Tổ Tiếng Anh" -> role "Giáo viên Tiếng Anh"
+        // Strip "tổ" and "khối" prefixes to match core keyword
+        const cleanName = targetNameLower.replace('tổ', '').replace('khối', '').trim();
+        if (cleanName && roleLower.includes(cleanName)) {
+          assigned.push(assign);
+          return;
+        }
+
+        // Hardcoded legacy fallbacks for original default groups
+        if (assign.id === 'group-to-tu-nhien' && (roleLower.includes('tự nhiên') || roleLower.includes('vật lý') || roleLower.includes('toán') || roleLower.includes('hóa') || roleLower.includes('sinh') || roleLower.includes('tin học'))) {
+          assigned.push(assign);
+        } else if (assign.id === 'group-to-xa-hoi' && (roleLower.includes('xã hội') || roleLower.includes('văn') || roleLower.includes('sử') || roleLower.includes('địa') || roleLower.includes('ngoại ngữ') || roleLower.includes('tiếng anh'))) {
+          assigned.push(assign);
+        } else if (assign.id === 'group-to-vanthemy' && (roleLower.includes('thể mỹ') || roleLower.includes('thể dục') || roleLower.includes('nhạc') || roleLower.includes('họa') || roleLower.includes('văn thể mỹ'))) {
+          assigned.push(assign);
+        } else if (assign.id === 'group-to-vanphong' && (roleLower.includes('văn phòng') || roleLower.includes('kế toán') || roleLower.includes('thủ quỹ') || roleLower.includes('văn thư') || roleLower.includes('y tế') || roleLower.includes('thư viện') || roleLower.includes('thiết bị') || roleLower.includes('nhân viên'))) {
+          assigned.push(assign);
+        }
+      }
+    });
     
     return assigned;
   };

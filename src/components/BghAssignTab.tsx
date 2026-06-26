@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Check, HelpCircle, FileText, Send, Info, Award, Database, ListChecks, ArrowRight, UserCheck } from 'lucide-react';
+import { Sparkles, Check, HelpCircle, FileText, Send, Info, Award, Database, ListChecks, ArrowRight, UserCheck, Plus, Pencil, Trash2, X, Save } from 'lucide-react';
 import { GroupAssignment, User } from '../types';
 
 interface BghAssignTabProps {
@@ -9,13 +9,20 @@ interface BghAssignTabProps {
   showToast: (msg: string) => void;
 }
 
-const TARGET_GROUPS = [
-  { id: 'group-khoi-giaovien', name: 'Khối Giáo viên', type: 'khoi-giaovien' as const, desc: 'Áp dụng cho tất cả giáo viên giảng dạy trong trường' },
-  { id: 'group-khoi-nhanvien', name: 'Khối Nhân viên', type: 'khoi-nhanvien' as const, desc: 'Áp dụng cho tất cả nhân viên hành chính, phục vụ, bảo vệ, y tế' },
-  { id: 'group-to-tu-nhien', name: 'Tổ Tự nhiên', type: 'to-chuyen-mon' as const, desc: 'Áp dụng cho giáo viên các môn Toán, Lý, Hóa, Sinh, Công nghệ, Tin học' },
-  { id: 'group-to-xa-hoi', name: 'Tổ Xã hội', type: 'to-chuyen-mon' as const, desc: 'Áp dụng cho giáo viên các môn Văn, Sử, Địa, GDCD, Tiếng Anh' },
-  { id: 'group-to-vanthemy', name: 'Tổ Văn thể mỹ', type: 'to-chuyen-mon' as const, desc: 'Áp dụng cho giáo viên các môn Thể dục, Âm nhạc, Mỹ thuật, Trải nghiệm hướng nghiệp' },
-  { id: 'group-to-vanphong', name: 'Tổ Văn phòng (Hành chính)', type: 'to-chuyen-mon' as const, desc: 'Áp dụng cho nhân viên Kế toán, Thủ quỹ, Văn thư, Y tế, Thư viện, Thiết bị' }
+export interface TargetGroup {
+  id: string;
+  name: string;
+  type: 'to-chuyen-mon' | 'khoi-giaovien' | 'khoi-nhanvien';
+  desc: string;
+}
+
+const DEFAULT_TARGET_GROUPS: TargetGroup[] = [
+  { id: 'group-khoi-giaovien', name: 'Khối Giáo viên', type: 'khoi-giaovien', desc: 'Áp dụng cho tất cả giáo viên giảng dạy trong trường' },
+  { id: 'group-khoi-nhanvien', name: 'Khối Nhân viên', type: 'khoi-nhanvien', desc: 'Áp dụng cho tất cả nhân viên hành chính, phục vụ, bảo vệ, y tế' },
+  { id: 'group-to-tu-nhien', name: 'Tổ Tự nhiên', type: 'to-chuyen-mon', desc: 'Áp dụng cho giáo viên các môn Toán, Lý, Hóa, Sinh, Công nghệ, Tin học' },
+  { id: 'group-to-xa-hoi', name: 'Tổ Xã hội', type: 'to-chuyen-mon', desc: 'Áp dụng cho giáo viên các môn Văn, Sử, Địa, GDCD, Tiếng Anh' },
+  { id: 'group-to-vanthemy', name: 'Tổ Văn thể mỹ', type: 'to-chuyen-mon', desc: 'Áp dụng cho giáo viên các môn Thể dục, Âm nhạc, Mỹ thuật, Trải nghiệm hướng nghiệp' },
+  { id: 'group-to-vanphong', name: 'Tổ Văn phòng (Hành chính)', type: 'to-chuyen-mon', desc: 'Áp dụng cho nhân viên Kế toán, Thủ quỹ, Văn thư, Y tế, Thư viện, Thiết bị' }
 ];
 
 const EXPERT_TEMPLATES: Record<string, { okr: { title: string, kr1: string, kr2: string, kr3: string }, kpis: { criterion: string, weight: number, desc: string }[] }> = {
@@ -105,8 +112,35 @@ export default function BghAssignTab({
   onSaveAssignment, 
   showToast 
 }: BghAssignTabProps) {
-  const [selectedGroup, setSelectedGroup] = useState(TARGET_GROUPS[0]);
+  // Dynamic Target Groups loaded from localStorage with defaults
+  const [groups, setGroups] = useState<TargetGroup[]>(() => {
+    const cached = localStorage.getItem('thcs_hp_target_groups');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        console.error("Failed to parse cached target groups", e);
+      }
+    }
+    return DEFAULT_TARGET_GROUPS;
+  });
+
+  const [selectedGroup, setSelectedGroup] = useState<TargetGroup>(() => {
+    const cached = localStorage.getItem('thcs_hp_target_groups');
+    let loadedGroups = DEFAULT_TARGET_GROUPS;
+    if (cached) {
+      try { loadedGroups = JSON.parse(cached); } catch(e){}
+    }
+    return loadedGroups[0] || { id: '', name: '', type: 'to-chuyen-mon', desc: '' };
+  });
   
+  // Group CRUD States
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<TargetGroup | null>(null);
+  const [groupFormName, setGroupFormName] = useState('');
+  const [groupFormType, setGroupFormType] = useState<'to-chuyen-mon' | 'khoi-giaovien' | 'khoi-nhanvien'>('to-chuyen-mon');
+  const [groupFormDesc, setGroupFormDesc] = useState('');
+
   // States cho form chỉnh sửa
   const [assignDirection, setAssignDirection] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -134,7 +168,86 @@ export default function BghAssignTab({
 
   const isBgh = currentUser === 'admin' || (currentUser && typeof currentUser === 'object' && currentUser.type === 'BGH');
 
-  const handleSelectGroupChange = (group: typeof TARGET_GROUPS[0]) => {
+  // Group CRUD functions
+  const handleOpenAddGroup = () => {
+    setEditingGroup(null);
+    setGroupFormName('');
+    setGroupFormType('to-chuyen-mon');
+    setGroupFormDesc('');
+    setIsGroupModalOpen(true);
+  };
+
+  const handleOpenEditGroup = (group: TargetGroup, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent choosing the card when clicking edit
+    setEditingGroup(group);
+    setGroupFormName(group.name);
+    setGroupFormType(group.type);
+    setGroupFormDesc(group.desc);
+    setIsGroupModalOpen(true);
+  };
+
+  const handleSaveGroup = () => {
+    if (!groupFormName.trim()) {
+      showToast("Vui lòng nhập tên Tổ / Khối!");
+      return;
+    }
+
+    let updatedGroups: TargetGroup[];
+    if (editingGroup) {
+      // Edit
+      updatedGroups = groups.map(g => g.id === editingGroup.id ? {
+        ...g,
+        name: groupFormName.trim(),
+        type: groupFormType,
+        desc: groupFormDesc.trim()
+      } : g);
+      showToast(`Đã cập nhật Tổ/Khối: ${groupFormName.trim()}`);
+    } else {
+      // Add
+      const newId = `group-${Date.now()}`;
+      const newGroup: TargetGroup = {
+        id: newId,
+        name: groupFormName.trim(),
+        type: groupFormType,
+        desc: groupFormDesc.trim()
+      };
+      updatedGroups = [...groups, newGroup];
+      showToast(`Đã thêm Tổ/Khối mới: ${groupFormName.trim()}`);
+    }
+
+    setGroups(updatedGroups);
+    localStorage.setItem('thcs_hp_target_groups', JSON.stringify(updatedGroups));
+    setIsGroupModalOpen(false);
+
+    // Update selection
+    if (editingGroup && selectedGroup.id === editingGroup.id) {
+      setSelectedGroup(updatedGroups.find(g => g.id === editingGroup.id) || updatedGroups[0]);
+    } else if (!editingGroup) {
+      setSelectedGroup(updatedGroups[updatedGroups.length - 1]);
+    }
+  };
+
+  const handleDeleteGroup = (groupId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent choosing the card when clicking delete
+    if (window.confirm("Bạn có chắc chắn muốn xóa Tổ/Khối này không? Các thiết lập OKR-KPI tương ứng cũng sẽ bị gỡ bỏ.")) {
+      const updatedGroups = groups.filter(g => g.id !== groupId);
+      setGroups(updatedGroups);
+      localStorage.setItem('thcs_hp_target_groups', JSON.stringify(updatedGroups));
+      
+      showToast("Đã xóa Tổ/Khối thành công.");
+      
+      // Select another remaining group if we deleted the selected one
+      if (selectedGroup.id === groupId) {
+        if (updatedGroups.length > 0) {
+          handleSelectGroupChange(updatedGroups[0]);
+        } else {
+          setSelectedGroup({ id: '', name: '', type: 'to-chuyen-mon', desc: '' });
+        }
+      }
+    }
+  };
+
+  const handleSelectGroupChange = (group: TargetGroup) => {
     setSelectedGroup(group);
     
     // Clear form & previews
@@ -336,42 +449,72 @@ export default function BghAssignTab({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left column: List of groups/departments */}
         <div className="lg:col-span-4 space-y-3">
-          <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider pl-1 flex items-center gap-1.5">
-            <ListChecks className="w-4 h-4 text-slate-600" /> Chọn Tổ / Khối Giao Việc
-          </h3>
+          <div className="flex items-center justify-between pl-1">
+            <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+              <ListChecks className="w-4 h-4 text-slate-600" /> Chọn Tổ / Khối Giao Việc
+            </h3>
+            <button
+              onClick={handleOpenAddGroup}
+              className="text-[10px] bg-blue-900 hover:bg-blue-950 text-white font-extrabold px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition cursor-pointer select-none shadow-3xs hover:scale-[1.01]"
+              id="btn-add-group"
+            >
+              <Plus className="w-3 h-3" /> Thêm Tổ/Khối
+            </button>
+          </div>
           <div className="space-y-2">
-            {TARGET_GROUPS.map(group => {
+            {groups.map(group => {
               const isActive = selectedGroup.id === group.id;
               const hasAssigned = groupAssignments.some(a => a.id === group.id);
               
               return (
-                <button
+                <div
                   key={group.id}
                   onClick={() => handleSelectGroupChange(group)}
-                  className={`w-full text-left p-3.5 rounded-xl border transition flex flex-col gap-1 cursor-pointer hover:scale-[1.01] ${
+                  className={`group/card w-full text-left p-3.5 rounded-xl border transition flex flex-col gap-1 cursor-pointer hover:scale-[1.01] relative ${
                     isActive 
                       ? 'bg-blue-50/70 border-blue-600 shadow-xs' 
                       : 'bg-white border-slate-200 hover:border-slate-300'
                   }`}
+                  id={`group-card-${group.id}`}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span className={`font-black text-xs md:text-sm ${isActive ? 'text-blue-900' : 'text-slate-800'}`}>
+                  <div className="flex items-center justify-between w-full gap-2">
+                    <span className={`font-black text-xs md:text-sm leading-tight ${isActive ? 'text-blue-900' : 'text-slate-800'}`}>
                       {group.name}
                     </span>
-                    {hasAssigned ? (
-                      <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
-                        <Check className="w-3 h-3 text-emerald-600" /> Đang áp dụng
-                      </span>
-                    ) : (
-                      <span className="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-md">
-                        Chưa thiết lập
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {hasAssigned ? (
+                        <span className="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                          <Check className="w-2.5 h-2.5 text-emerald-600" /> Đang áp dụng
+                        </span>
+                      ) : (
+                        <span className="text-[9px] bg-slate-100 text-slate-500 font-bold px-1.5 py-0.5 rounded">
+                          Chưa thiết lập
+                        </span>
+                      )}
+                      
+                      {/* Edit and Delete Buttons */}
+                      <button
+                        onClick={(e) => handleOpenEditGroup(group, e)}
+                        title="Chỉnh sửa Tổ/Khối"
+                        className="p-1 text-slate-400 hover:text-blue-900 rounded hover:bg-slate-100 transition cursor-pointer"
+                        id={`btn-edit-group-${group.id}`}
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteGroup(group.id, e)}
+                        title="Xóa Tổ/Khối"
+                        className="p-1 text-slate-400 hover:text-red-600 rounded hover:bg-slate-100 transition cursor-pointer"
+                        id={`btn-delete-group-${group.id}`}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
                   <p className="text-[10px] text-slate-500 font-medium leading-snug">
                     {group.desc}
                   </p>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -639,6 +782,79 @@ export default function BghAssignTab({
           </div>
         </div>
       </div>
+
+      {/* GROUP ADD/EDIT MODAL */}
+      {isGroupModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in" id="group-form-modal">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="font-extrabold text-slate-950 text-sm md:text-base flex items-center gap-2">
+                <Award className="w-5 h-5 text-blue-900" />
+                {editingGroup ? "Chỉnh sửa Tổ / Khối" : "Thêm Tổ / Khối Giao Việc Mới"}
+              </h3>
+              <button 
+                onClick={() => setIsGroupModalOpen(false)}
+                className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="space-y-1">
+                <label className="block font-black text-slate-700 uppercase tracking-wide">Tên Tổ / Khối</label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Tổ Tiếng Anh, Khối Bán trú..."
+                  value={groupFormName}
+                  onChange={(e) => setGroupFormName(e.target.value)}
+                  className="w-full border border-slate-300 rounded-xl p-3 text-xs focus:ring-1 focus:ring-blue-900 focus:outline-none font-medium text-slate-800"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-black text-slate-700 uppercase tracking-wide">Phân nhóm nhân sự</label>
+                <select
+                  value={groupFormType}
+                  onChange={(e) => setGroupFormType(e.target.value as any)}
+                  className="w-full border border-slate-300 rounded-xl p-3 text-xs focus:ring-1 focus:ring-blue-900 focus:outline-none font-medium text-slate-800 bg-white cursor-pointer"
+                >
+                  <option value="to-chuyen-mon">Tổ Chuyên Môn (Giáo viên thuộc tổ bộ môn)</option>
+                  <option value="khoi-giaovien">Khối Giáo viên (Áp dụng cho toàn bộ giáo viên)</option>
+                  <option value="khoi-nhanvien">Khối Nhân viên (Áp dụng cho toàn bộ nhân viên)</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-black text-slate-700 uppercase tracking-wide">Mô tả nhiệm vụ / Đối tượng</label>
+                <textarea
+                  placeholder="Mô tả tóm tắt đối tượng áp dụng..."
+                  value={groupFormDesc}
+                  onChange={(e) => setGroupFormDesc(e.target.value)}
+                  className="w-full border border-slate-300 rounded-xl p-3 text-xs focus:ring-1 focus:ring-blue-900 focus:outline-none font-medium text-slate-800 min-h-[80px]"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsGroupModalOpen(false)}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-4 rounded-xl text-xs transition cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveGroup}
+                className="bg-blue-900 hover:bg-blue-950 text-white font-black py-2 px-5 rounded-xl text-xs transition flex items-center gap-1.5 cursor-pointer shadow-md"
+              >
+                <Save className="w-3.5 h-3.5" /> Lưu lại
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
