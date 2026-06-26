@@ -684,9 +684,32 @@ export default function App() {
     // 4. Tạo thông báo tự động cho nhân sự được giao
     const targetUser = users.find(u => u.id === targetUserId);
     const assignerName = currentUser === 'admin' ? 'Ban Giám Hiệu' : (typeof currentUser === 'object' ? currentUser.name : 'Ban Giám Hiệu');
+    
+    // Tạo nội dung chi tiết rõ ràng của nhiệm vụ được giao
+    let detailedContent = '';
+    if (newOkrs && newOkrs.length > 0) {
+      detailedContent += `🎯 BỘ CHỈ TIÊU OKR ĐƯỢC GIAO CHÍNH THỨC:\n`;
+      newOkrs.forEach((okr, idx) => {
+        detailedContent += `👉 Mục tiêu ${idx + 1}: ${okr.title}\n`;
+        if (okr.kr1) detailedContent += `   - Kết quả then chốt 1: ${okr.kr1}\n`;
+        if (okr.kr2) detailedContent += `   - Kết quả then chốt 2: ${okr.kr2}\n`;
+        if (okr.kr3) detailedContent += `   - Kết quả then chốt 3: ${okr.kr3}\n`;
+      });
+      detailedContent += `\n`;
+    }
+    if (newKpis && newKpis.length > 0) {
+      detailedContent += `📊 3 CHỈ SỐ KPI VẬN HÀNH (Tổng trọng số 100%):\n`;
+      newKpis.forEach((kpi, idx) => {
+        detailedContent += `📌 KPI ${idx + 1}: ${kpi.criterion} (Trọng số: ${kpi.weight}%)\n`;
+        if (kpi.desc) detailedContent += `   - Mô tả và Thước đo cụ thể: ${kpi.desc}\n`;
+      });
+    }
+
     const newNotif: Notification = {
       id: `notif-${Date.now()}`,
-      title: `🎯 [Giao việc] ${assignerName} đã giao bộ mục tiêu OKR mới kèm 3 chỉ số KPI vận hành chuẩn cho học kỳ này. Hãy bắt tay thực hiện ngay!`,
+      title: `🎯 [Giao việc cá nhân] ${assignerName} đã giao trực tiếp bộ mục tiêu OKR mới kèm chỉ số KPI cho bạn.`,
+      content: detailedContent.trim(),
+      targetUserId: targetUserId,
       time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' — ' + new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }),
       read: false,
       type: 'urgent'
@@ -710,18 +733,172 @@ export default function App() {
     setGroupAssignments(updated);
     localStorage.setItem('thcs_hp_group_assignments', JSON.stringify(updated));
 
+    // Tìm các cán bộ/giáo viên/nhân viên thuộc Tổ/Khối này để tạo thông báo riêng chi tiết
+    const getGroupMembers = (groupId: string, userList: User[]): User[] => {
+      return userList.filter(u => {
+        if (u.type === 'BGH' || u.id === 'THCS-HP-020') {
+          return false;
+        }
+        const roleLower = (u.role || '').toLowerCase();
+        
+        if (groupId === 'group-khoi-giaovien') {
+          return u.isTeacher || u.type === 'GiaoVien';
+        }
+        if (groupId === 'group-khoi-nhanvien') {
+          return !u.isTeacher || u.type === 'NhanVien';
+        }
+        
+        if (groupId === 'group-to-tu-nhien') {
+          if (!u.isTeacher && u.type !== 'GiaoVien') return false;
+          return roleLower.includes('toán') || 
+                 roleLower.includes('lý') || 
+                 roleLower.includes('hóa') || 
+                 roleLower.includes('sinh') || 
+                 roleLower.includes('công nghệ') || 
+                 roleLower.includes('tin') || 
+                 roleLower.includes('tự nhiên');
+        }
+        if (groupId === 'group-to-xa-hoi') {
+          if (!u.isTeacher && u.type !== 'GiaoVien') return false;
+          return roleLower.includes('văn') || 
+                 roleLower.includes('sử') || 
+                 roleLower.includes('địa') || 
+                 roleLower.includes('gdcd') || 
+                 roleLower.includes('anh') || 
+                 roleLower.includes('xã hội');
+        }
+        if (groupId === 'group-to-vanthemy') {
+          if (!u.isTeacher && u.type !== 'GiaoVien') return false;
+          return roleLower.includes('thể dục') || 
+                 roleLower.includes('nhạc') || 
+                 roleLower.includes('mỹ thuật') || 
+                 roleLower.includes('trải nghiệm') || 
+                 roleLower.includes('văn thể mỹ') || 
+                 roleLower.includes('thể') || 
+                 roleLower.includes('mỹ');
+        }
+        if (groupId === 'group-to-vanphong') {
+          if (u.isTeacher || u.type === 'GiaoVien') return false;
+          return roleLower.includes('kế toán') || 
+                 roleLower.includes('thủ quỹ') || 
+                 roleLower.includes('văn thư') || 
+                 roleLower.includes('y tế') || 
+                 roleLower.includes('thư viện') || 
+                 roleLower.includes('thiết bị') || 
+                 roleLower.includes('bảo vệ') || 
+                 roleLower.includes('hành chính') || 
+                 roleLower.includes('văn phòng');
+        }
+        return false;
+      });
+    };
+
+    const members = getGroupMembers(assignment.id, users);
+
+    // Tạo nội dung chi tiết rõ ràng của nhiệm vụ giao cho Tổ/Khối
+    let detailedContent = '';
+    detailedContent += `📣 CHỈ TIÊU OKR-KPI CHÍNH THỨC BAN HÀNH CHO TỔ/KHỐI: ${assignment.targetName.toUpperCase()}\n\n`;
+    
+    detailedContent += `🎯 MỤC TIÊU OKR ĐỊNH HƯỚNG CHUNG:\n`;
+    detailedContent += `👉 Mục tiêu: ${assignment.okr.title}\n`;
+    if (assignment.okr.kr1) detailedContent += `   - Kết quả then chốt 1: ${assignment.okr.kr1}\n`;
+    if (assignment.okr.kr2) detailedContent += `   - Kết quả then chốt 2: ${assignment.okr.kr2}\n`;
+    if (assignment.okr.kr3) detailedContent += `   - Kết quả then chốt 3: ${assignment.okr.kr3}\n\n`;
+
+    detailedContent += `📊 3 CHỈ SỐ KPI VẬN HÀNH CẤP TỔ/KHỐI:\n`;
+    assignment.kpis.forEach((kpi, idx) => {
+      detailedContent += `📌 KPI ${idx + 1}: ${kpi.criterion} (Trọng số: ${kpi.weight}%)\n`;
+      if (kpi.desc) detailedContent += `   - Mô tả/Thước đo hành động: ${kpi.desc}\n`;
+    });
+    detailedContent += `\n💡 Bạn có thể đồng bộ nhanh bộ chỉ tiêu này vào tài khoản cá nhân từ mục "Định hướng BGH" ở Trang chủ!`;
+
     const assignerName = currentUser === 'admin' ? 'Ban Giám Hiệu' : (typeof currentUser === 'object' ? currentUser.name : 'Ban Giám Hiệu');
-    const newNotif: Notification = {
-      id: `notif-${Date.now()}`,
+    const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' — ' + new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+
+    // 1. Thông báo chung cho bảng tin toàn trường
+    const generalNotif: Notification = {
+      id: `notif-${Date.now()}-general`,
       title: `📣 [Chỉ đạo BGH] ${assignerName} đã ban hành mục tiêu OKR & KPI mới định hướng cho ${assignment.targetName}. Hãy tham khảo để xây dựng mục tiêu cá nhân!`,
-      time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' — ' + new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }),
+      time: timeStr,
       read: false,
       type: 'urgent'
     };
 
-    const updatedNotifs = [newNotif, ...notifications];
+    // 2. Thông báo riêng kèm nội dung chi tiết tới từng cá nhân trong tổ/khối
+    const memberNotifs: Notification[] = members.map(m => ({
+      id: `notif-${Date.now()}-${m.id}`,
+      title: `🎯 [Giao việc Tổ/Khối] ${assignerName} đã giao bộ chỉ tiêu OKR & KPI định hướng mới cho ${assignment.targetName} trực thuộc của bạn.`,
+      content: detailedContent.trim(),
+      targetUserId: m.id,
+      time: timeStr,
+      read: false,
+      type: 'urgent'
+    }));
+
+    const updatedNotifs = [generalNotif, ...memberNotifs, ...notifications];
     setNotifications(updatedNotifs);
     localStorage.setItem('thcs_hp_notifications', JSON.stringify(updatedNotifs));
+  };
+  
+  const handleSyncGroupToPersonal = (assign: GroupAssignment) => {
+    if (currentUser === 'admin' || !currentUser) return;
+    const targetUserId = currentUser.id;
+
+    const confirmMsg = `Bạn có chắc chắn muốn đồng bộ bộ OKR-KPI của "${assign.targetName}" vào tài khoản cá nhân không?\n` +
+      `- Mục tiêu OKR cá nhân sẽ cập nhật thành: "${assign.okr.title}"\n` +
+      `- 3 chỉ số KPI cá nhân sẽ được cập nhật đồng bộ tương ứng.\n\n` +
+      `Thao tác này sẽ ghi đè thiết lập OKR & KPI hiện tại của bạn.`;
+
+    if (window.confirm(confirmMsg)) {
+      // Tạo bộ OKR mới cho cá nhân từ OKR của Tổ/Khối
+      const newOkr: OKR = {
+        id: `okr-${Date.now()}`,
+        title: assign.okr.title,
+        kr1: assign.okr.kr1,
+        kr1Progress: 0,
+        kr2: assign.okr.kr2,
+        kr2Progress: 0,
+        kr3: assign.okr.kr3,
+        kr3Progress: 0
+      };
+
+      // Tạo bộ KPI mới cho cá nhân từ KPI của Tổ/Khối
+      const newKpis: KPI[] = assign.kpis.map(k => ({
+        criterion: k.criterion,
+        weight: k.weight,
+        desc: k.desc,
+        value: 0,
+        evidences: []
+      }));
+
+      // Cập nhật bộ nhớ cục bộ OKRs
+      const updatedOkrs = {
+        ...allOkrs,
+        [targetUserId]: [newOkr]
+      };
+      setAllOkrs(updatedOkrs);
+      localStorage.setItem('thcs_hp_okrs', JSON.stringify(updatedOkrs));
+
+      // Cập nhật bộ nhớ cục bộ KPIs
+      const updatedKpis = {
+        ...allKpis,
+        [targetUserId]: newKpis
+      };
+      setAllKpis(updatedKpis);
+      localStorage.setItem('thcs_hp_kpis', JSON.stringify(updatedKpis));
+
+      // Đồng bộ lên Supabase nếu có kết nối
+      if (supabaseStatus === 'connected') {
+        try {
+          saveOkrToSupabase(targetUserId, newOkr);
+          saveUserKpisToSupabase(targetUserId, newKpis);
+        } catch (e) {
+          console.error("Lỗi đồng bộ Supabase:", e);
+        }
+      }
+
+      showToast(`Đồng bộ thành công OKR-KPI từ ${assign.targetName} vào tài khoản cá nhân của bạn!`);
+    }
   };
 
   const getActiveUserGroupAssignments = (): GroupAssignment[] => {
@@ -1435,6 +1612,17 @@ export default function App() {
                             ))}
                           </div>
                         </div>
+
+                        {/* Nút đồng bộ nhanh vào tài khoản */}
+                        <div className="pt-2 border-t border-indigo-50">
+                          <button
+                            onClick={() => handleSyncGroupToPersonal(assign)}
+                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black py-2 rounded-lg transition shadow-3xs flex items-center justify-center gap-1 cursor-pointer uppercase tracking-wider"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                            Đồng bộ mục tiêu vào tài khoản cá nhân
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1513,6 +1701,7 @@ export default function App() {
               onSaveNotifications={saveNotificationsToCache}
               currentUser={currentUser}
               showToast={showToast}
+              users={users}
             />
           </div>
 

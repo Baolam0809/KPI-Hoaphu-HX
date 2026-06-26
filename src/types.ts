@@ -41,6 +41,8 @@ export interface User {
 export interface Notification {
   id: string;
   title: string;
+  content?: string;
+  targetUserId?: string;
   time: string;
   type: 'urgent' | 'info' | 'normal';
   read?: boolean;

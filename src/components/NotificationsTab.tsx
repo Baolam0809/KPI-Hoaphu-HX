@@ -7,13 +7,15 @@ interface NotificationsTabProps {
   onSaveNotifications: (newNotifs: Notification[]) => void;
   currentUser: User | 'admin' | null;
   showToast?: (msg: string) => void;
+  users?: User[];
 }
 
 export default function NotificationsTab({
   notifications = [],
   onSaveNotifications,
   currentUser,
-  showToast
+  showToast,
+  users = []
 }: NotificationsTabProps) {
   const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'read' | 'urgent'>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -93,11 +95,22 @@ export default function NotificationsTab({
     if (showToast) showToast('Đăng thông báo mới thành công!');
   };
 
+  const currentUserId = currentUser === 'admin' ? 'THCS-HP-020' : (currentUser ? currentUser.id : null);
+  const isBgh = currentUser === 'admin' || (currentUser && currentUser.type === 'BGH');
+
   // Filtered list
   const filteredNotifications = notifications.filter(n => {
+    // 0. User specific targeting filter
+    if (n.targetUserId) {
+      if (!isBgh && n.targetUserId !== currentUserId) {
+        return false;
+      }
+    }
+
     // 1. Text filter
     const matchesSearch = n.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          n.time.toLowerCase().includes(searchTerm.toLowerCase());
+                          n.time.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (n.content && n.content.toLowerCase().includes(searchTerm.toLowerCase()));
     if (!matchesSearch) return false;
 
     // 2. Category filter
@@ -312,6 +325,12 @@ export default function NotificationsTab({
                         {notif.type === 'urgent' ? 'Khẩn cấp' : notif.type === 'info' ? 'Chỉ dẫn' : 'Thường'}
                       </span>
                       
+                      {notif.targetUserId && isBgh && (
+                        <span className="bg-indigo-100 text-indigo-800 border border-indigo-200 text-[8px] sm:text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-wide">
+                          👤 Nhận: {users.find(u => u.id === notif.targetUserId)?.name || notif.targetUserId}
+                        </span>
+                      )}
+                      
                       {isUnread && (
                         <span className="bg-red-500 text-white font-black text-[8px] uppercase px-1.5 py-0.5 rounded animate-pulse">
                           Mới
@@ -328,6 +347,11 @@ export default function NotificationsTab({
                     }`}>
                       {notif.title}
                     </p>
+                    {notif.content && (
+                      <div className="mt-2 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg p-3 whitespace-pre-wrap leading-relaxed font-medium">
+                        {notif.content}
+                      </div>
+                    )}
                   </div>
 
                   {/* Individual Action Buttons */}
