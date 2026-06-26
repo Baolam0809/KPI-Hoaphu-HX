@@ -23,6 +23,9 @@ export interface KPI {
   weight: number;
   desc: string;
   value: number;
+  selfScore?: number; // Cá nhân tự chấm
+  leaderScore?: number; // Tổ trưởng chấm
+  bghScore?: number; // BGH chấm
   evidences?: Evidence[];
 }
 

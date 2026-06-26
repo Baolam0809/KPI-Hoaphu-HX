@@ -29,6 +29,7 @@ interface KpiSectionProps {
   onKpisChange?: (kpis: KPI[]) => void;
   onResetKpis?: () => void;
   readOnly?: boolean;
+  onKpiScoresChange?: (index: number, scores: { selfScore?: number; leaderScore?: number; bghScore?: number }) => void;
 }
 
 const getEvidenceIcon = (type: string, fileType?: string) => {
@@ -69,7 +70,8 @@ export default function KpiSection({
   onKpiEvidencesChange,
   onKpisChange,
   onResetKpis,
-  readOnly = false 
+  readOnly = false,
+  onKpiScoresChange
 }: KpiSectionProps) {
   
   // Custom states for adding evidence modal
@@ -157,23 +159,37 @@ export default function KpiSection({
   // Preview full size image state
   const [previewImage, setPreviewImage] = useState<{name: string, url: string} | null>(null);
 
-  // Tính tổng điểm KPI có trọng số
-  const calculateTotal = () => {
-    let weightedSum = 0;
+  // Tính tổng điểm KPI có trọng số (BGH, Tổ trưởng, Cá nhân tự chấm)
+  const calculateTotals = () => {
+    let selfSum = 0;
+    let leaderSum = 0;
+    let bghSum = 0;
     let totalWeight = 0;
 
     const sourceList = isEditing ? editKpis : displayedKpis;
 
     sourceList.forEach(kpi => {
-      weightedSum += kpi.value * kpi.weight;
       totalWeight += kpi.weight;
+      
+      const selfVal = kpi.selfScore !== undefined ? kpi.selfScore : kpi.value;
+      const leaderVal = kpi.leaderScore !== undefined ? kpi.leaderScore : Math.max(0, kpi.value - (kpi.value % 5 || 2));
+      const bghVal = kpi.bghScore !== undefined ? kpi.bghScore : Math.max(0, kpi.value - (kpi.value % 7 || 3));
+
+      selfSum += selfVal * kpi.weight;
+      leaderSum += leaderVal * kpi.weight;
+      bghSum += bghVal * kpi.weight;
     });
 
-    if (totalWeight === 0) return 0;
-    return Math.round(weightedSum / totalWeight);
+    if (totalWeight === 0) return { self: 0, leader: 0, bgh: 0 };
+    return {
+      self: Math.round(selfSum / totalWeight),
+      leader: Math.round(leaderSum / totalWeight),
+      bgh: Math.round(bghSum / totalWeight)
+    };
   };
 
-  const finalScore = calculateTotal();
+  const totals = calculateTotals();
+  const finalScore = totals.bgh;
 
   const getRatingInfo = (score: number) => {
     if (score >= 90) return { text: 'Xuất sắc', class: 'bg-emerald-600 text-white' };
@@ -184,6 +200,14 @@ export default function KpiSection({
   };
 
   const rating = getRatingInfo(finalScore);
+
+  const handleScoreFieldChange = (index: number, field: 'selfScore' | 'leaderScore' | 'bghScore', val: number) => {
+    if (onKpiScoresChange) {
+      onKpiScoresChange(index, { [field]: val });
+    } else {
+      onKpiValueChange(index, val);
+    }
+  };
 
   const handleInputChange = (index: number, val: string) => {
     let num = parseInt(val) || 0;
@@ -406,13 +430,34 @@ export default function KpiSection({
             )
           )}
 
-          {/* Score badge */}
-          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg px-3 py-1.5 text-center flex items-center justify-between gap-2">
-            <span className="text-xs font-bold whitespace-nowrap">Tổng Điểm KPI:</span>
-            <span className="text-lg font-black text-emerald-600">{finalScore}/100</span>
-            <span className={`text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap ${rating.class}`}>
-              {rating.text}
-            </span>
+          {/* Score badges */}
+          <div className="flex flex-wrap gap-1.5">
+            {/* Tự chấm */}
+            <div className="bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-2.5 py-1 text-center flex items-center gap-1.5 shadow-3xs">
+              <span className="text-[10px] font-bold whitespace-nowrap">🙋‍♂️ Tự chấm:</span>
+              <span className="text-sm font-black text-slate-800">{totals.self}/100</span>
+              <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold whitespace-nowrap ${getRatingInfo(totals.self).class}`}>
+                {getRatingInfo(totals.self).text}
+              </span>
+            </div>
+            
+            {/* Tổ trưởng chấm */}
+            <div className="bg-indigo-50/50 border border-indigo-200 text-indigo-800 rounded-lg px-2.5 py-1 text-center flex items-center gap-1.5 shadow-3xs">
+              <span className="text-[10px] font-bold whitespace-nowrap">👥 Tổ trưởng:</span>
+              <span className="text-sm font-black text-indigo-700">{totals.leader}/100</span>
+              <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold whitespace-nowrap ${getRatingInfo(totals.leader).class}`}>
+                {getRatingInfo(totals.leader).text}
+              </span>
+            </div>
+
+            {/* BGH chấm */}
+            <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-lg px-2.5 py-1 text-center flex items-center gap-1.5 shadow-3xs">
+              <span className="text-[10px] font-bold whitespace-nowrap">🏛️ BGH chấm:</span>
+              <span className="text-sm font-black text-rose-700">{totals.bgh}/100</span>
+              <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold whitespace-nowrap ${getRatingInfo(totals.bgh).class}`}>
+                {getRatingInfo(totals.bgh).text}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -509,33 +554,111 @@ export default function KpiSection({
                   )}
                 </td>
                 <td className="p-3 align-top">
-                  <div className="flex flex-col gap-1.5 items-center justify-center">
-                    <input 
-                      type="number" 
-                      min="0" 
-                      max="100" 
-                      value={kpi.value} 
-                      onChange={(e) => !readOnly && !isEditing && handleInputChange(index, e.target.value)}
-                      disabled={readOnly || isEditing}
-                      className={`w-16 border rounded text-center font-bold p-1 text-xs focus:outline-none ${
-                        (readOnly || isEditing) 
-                          ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed' 
-                          : 'border-slate-300 text-slate-800 focus:ring-1 focus:ring-emerald-500'
-                      }`}
-                    />
-                    <input 
-                      type="range" 
-                      min="0" 
-                      max="100" 
-                      value={kpi.value} 
-                      onChange={(e) => !readOnly && !isEditing && onKpiValueChange(index, parseInt(e.target.value) || 0)}
-                      disabled={readOnly || isEditing}
-                      className={`w-24 h-1.5 ${
-                        (readOnly || isEditing) 
-                          ? 'accent-slate-300 cursor-not-allowed opacity-60' 
-                          : 'accent-emerald-600 cursor-pointer'
-                      }`}
-                    />
+                  <div className="flex flex-col gap-2 min-w-[130px]">
+                    {/* 1. Self Score */}
+                    <div className="space-y-0.5 border-b border-slate-100 pb-1.5">
+                      <div className="flex items-center justify-between gap-1 text-[10px] font-bold text-slate-500">
+                        <span>🙋‍♂️ Tự chấm:</span>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          max="100" 
+                          value={kpi.selfScore !== undefined ? kpi.selfScore : kpi.value} 
+                          onChange={(e) => {
+                            const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                            handleScoreFieldChange(index, 'selfScore', val);
+                          }}
+                          disabled={readOnly || isEditing}
+                          className={`w-10 border text-center py-0.5 font-bold text-[10px] focus:outline-none ${
+                            (readOnly || isEditing) 
+                              ? 'border-slate-100 bg-slate-50 text-slate-400' 
+                              : 'border-slate-300 text-slate-700 focus:ring-1 focus:ring-emerald-500'
+                          }`}
+                        />
+                      </div>
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="100" 
+                        value={kpi.selfScore !== undefined ? kpi.selfScore : kpi.value} 
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 0;
+                          handleScoreFieldChange(index, 'selfScore', val);
+                        }}
+                        disabled={readOnly || isEditing}
+                        className="w-full h-1 accent-emerald-600 cursor-pointer disabled:opacity-50"
+                      />
+                    </div>
+
+                    {/* 2. Leader Score */}
+                    <div className="space-y-0.5 border-b border-slate-100 pb-1.5">
+                      <div className="flex items-center justify-between gap-1 text-[10px] font-bold text-indigo-600">
+                        <span>👥 Tổ trưởng:</span>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          max="100" 
+                          value={kpi.leaderScore !== undefined ? kpi.leaderScore : Math.max(0, kpi.value - (kpi.value % 5 || 2))} 
+                          onChange={(e) => {
+                            const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                            handleScoreFieldChange(index, 'leaderScore', val);
+                          }}
+                          disabled={readOnly || isEditing}
+                          className={`w-10 border text-center py-0.5 font-bold text-[10px] focus:outline-none ${
+                            (readOnly || isEditing) 
+                              ? 'border-slate-100 bg-slate-50 text-slate-400' 
+                              : 'border-slate-300 text-indigo-700 focus:ring-1 focus:ring-indigo-500'
+                          }`}
+                        />
+                      </div>
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="100" 
+                        value={kpi.leaderScore !== undefined ? kpi.leaderScore : Math.max(0, kpi.value - (kpi.value % 5 || 2))} 
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 0;
+                          handleScoreFieldChange(index, 'leaderScore', val);
+                        }}
+                        disabled={readOnly || isEditing}
+                        className="w-full h-1 accent-indigo-600 cursor-pointer disabled:opacity-50"
+                      />
+                    </div>
+
+                    {/* 3. BGH Score */}
+                    <div className="space-y-0.5">
+                      <div className="flex items-center justify-between gap-1 text-[10px] font-bold text-rose-600">
+                        <span>🏛️ BGH chấm:</span>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          max="100" 
+                          value={kpi.bghScore !== undefined ? kpi.bghScore : Math.max(0, kpi.value - (kpi.value % 7 || 3))} 
+                          onChange={(e) => {
+                            const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                            handleScoreFieldChange(index, 'bghScore', val);
+                          }}
+                          disabled={readOnly || isEditing}
+                          className={`w-10 border text-center py-0.5 font-bold text-[10px] focus:outline-none ${
+                            (readOnly || isEditing) 
+                              ? 'border-slate-100 bg-slate-50 text-slate-400' 
+                              : 'border-slate-300 text-rose-700 focus:ring-1 focus:ring-rose-500'
+                          }`}
+                        />
+                      </div>
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="100" 
+                        value={kpi.bghScore !== undefined ? kpi.bghScore : Math.max(0, kpi.value - (kpi.value % 7 || 3))} 
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 0;
+                          handleScoreFieldChange(index, 'bghScore', val);
+                        }}
+                        disabled={readOnly || isEditing}
+                        className="w-full h-1 accent-rose-600 cursor-pointer disabled:opacity-50"
+                      />
+                    </div>
                   </div>
                 </td>
                 <td className="p-3 align-top">

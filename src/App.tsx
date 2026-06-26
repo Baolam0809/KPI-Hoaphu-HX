@@ -569,6 +569,37 @@ export default function App() {
     }
   };
 
+  const handleKpiScoresChange = async (index: number, scores: { selfScore?: number; leaderScore?: number; bghScore?: number }) => {
+    const updatedUserKpis = [...activeUserKpis];
+    if (updatedUserKpis[index]) {
+      if (scores.selfScore !== undefined) updatedUserKpis[index].selfScore = scores.selfScore;
+      if (scores.leaderScore !== undefined) updatedUserKpis[index].leaderScore = scores.leaderScore;
+      if (scores.bghScore !== undefined) updatedUserKpis[index].bghScore = scores.bghScore;
+      
+      // Sync .value with BGH score or fallback to maintain consistency across other tabs/export
+      if (scores.bghScore !== undefined) {
+        updatedUserKpis[index].value = scores.bghScore;
+      } else if (scores.leaderScore !== undefined) {
+        updatedUserKpis[index].value = scores.leaderScore;
+      } else if (scores.selfScore !== undefined) {
+        updatedUserKpis[index].value = scores.selfScore;
+      }
+    }
+    const updatedKpis = {
+      ...allKpis,
+      [activeUserId]: updatedUserKpis
+    };
+    saveKpisToCache(updatedKpis);
+
+    if (supabaseStatus === 'connected') {
+      try {
+        await saveUserKpisToSupabase(activeUserId, updatedUserKpis);
+      } catch (err: any) {
+        console.error('Error syncing KPIs scores:', err);
+      }
+    }
+  };
+
   const handleKpiEvidencesChange = async (index: number, evidences: any[]) => {
     const updatedUserKpis = [...activeUserKpis];
     if (updatedUserKpis[index]) {
@@ -1656,6 +1687,7 @@ export default function App() {
               onKpisChange={handleKpisChange}
               onResetKpis={handleResetKpis}
               readOnly={!canEditActiveData}
+              onKpiScoresChange={handleKpiScoresChange}
             />
           </div>
 
@@ -1682,6 +1714,7 @@ export default function App() {
                   setSelectedUserForAssign(user);
                   setIsAssignModalOpen(true);
                 }}
+                allKpis={allKpis}
               />
             </div>
           )}

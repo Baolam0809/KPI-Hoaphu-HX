@@ -11,6 +11,7 @@ interface UsersTabProps {
   onViewEmployee: (userId: string) => void;
   showToast: (msg: string) => void;
   onOpenAssignModal?: (user: User) => void;
+  allKpis?: Record<string, any[]>;
 }
 
 export default function UsersTab({
@@ -20,7 +21,8 @@ export default function UsersTab({
   onDeleteUser,
   onViewEmployee,
   showToast,
-  onOpenAssignModal
+  onOpenAssignModal,
+  allKpis
 }: UsersTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleGroup, setRoleGroup] = useState<'all' | 'BGH' | 'GiaoVien' | 'NhanVien'>('all');
@@ -494,10 +496,48 @@ export default function UsersTab({
                       <span className="font-bold text-slate-700">100%</span>
                     </div>
                   </td>
-                  <td className="p-3 text-center">
-                    <span className="font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded">
-                      Đã nộp
-                    </span>
+                  <td className="p-3">
+                    {(() => {
+                      const kpisForUser = allKpis?.[user.id] || [];
+                      let totalWeight = 0;
+                      let selfScoreSum = 0;
+                      let leaderScoreSum = 0;
+                      let bghScoreSum = 0;
+
+                      kpisForUser.forEach(kpi => {
+                        totalWeight += kpi.weight || 0;
+                        const selfVal = kpi.selfScore !== undefined ? kpi.selfScore : kpi.value;
+                        const leaderVal = kpi.leaderScore !== undefined ? kpi.leaderScore : Math.max(0, kpi.value - (kpi.value % 5 || 2));
+                        const bghVal = kpi.bghScore !== undefined ? kpi.bghScore : Math.max(0, kpi.value - (kpi.value % 7 || 3));
+
+                        selfScoreSum += selfVal * (kpi.weight || 0);
+                        leaderScoreSum += leaderVal * (kpi.weight || 0);
+                        bghScoreSum += bghVal * (kpi.weight || 0);
+                      });
+
+                      const finalSelfScore = totalWeight > 0 ? Math.round(selfScoreSum / totalWeight) : 0;
+                      const finalLeaderScore = totalWeight > 0 ? Math.round(leaderScoreSum / totalWeight) : 0;
+                      const finalBghScore = totalWeight > 0 ? Math.round(bghScoreSum / totalWeight) : 0;
+
+                      return (
+                        <div className="flex flex-col gap-1 items-center">
+                          <span className="font-extrabold text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded shadow-3xs">
+                            Đã nộp
+                          </span>
+                          <div className="flex flex-col gap-0.5 text-[10px] text-left font-semibold">
+                            <span className="text-slate-500 whitespace-nowrap">
+                              🙋‍♂️ Tự chấm: <strong className="text-slate-800 font-bold">{finalSelfScore || 0}</strong>
+                            </span>
+                            <span className="text-indigo-600 whitespace-nowrap">
+                              👥 Tổ trưởng: <strong className="text-indigo-700 font-bold">{finalLeaderScore || 0}</strong>
+                            </span>
+                            <span className="text-rose-600 whitespace-nowrap">
+                              🏛️ BGH chấm: <strong className="text-rose-700 font-bold">{finalBghScore || 0}</strong>
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="p-3">
                     <div className="flex items-center justify-center flex-wrap gap-1">
@@ -508,7 +548,7 @@ export default function UsersTab({
                       >
                         <Eye className="w-3 h-3" /> Xem
                       </button>
-                      {onOpenAssignModal && (
+                      {onOpenAssignModal && user.type !== 'BGH' && user.id !== 'admin' && (
                         <button 
                           onClick={() => onOpenAssignModal(user)}
                           className="text-[11px] bg-rose-700 hover:bg-rose-800 text-white font-bold px-2 py-1 rounded transition border border-rose-700 cursor-pointer flex items-center gap-0.5 shadow-sm"
