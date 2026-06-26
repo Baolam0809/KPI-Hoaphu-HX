@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Sliders, Save, Check, Bell, Calendar, Plus, Trash2, Edit3, X, Info, Clock, MapPin, Tag } from 'lucide-react';
-import { SystemSettings, Notification, ScheduleItem, User } from '../types';
+import { Sliders, Save, Check, Bell, Calendar, Plus, Trash2, Edit3, X, Info, Clock, MapPin, Tag, Database, RefreshCw, Copy, Server, AlertCircle } from 'lucide-react';
+import { SystemSettings, Notification, ScheduleItem, User, OKR, KPI } from '../types';
+import { SQL_MIGRATION_SCRIPT } from '../supabaseClient';
 
 interface SettingsTabProps {
   settings: SystemSettings;
@@ -11,11 +12,23 @@ interface SettingsTabProps {
   onSaveScheduleItems: (items: ScheduleItem[]) => void;
   currentUser: User | 'admin' | null;
   showToast: (msg: string) => void;
-  initialSubTab?: 'general' | 'notifications' | 'schedules';
-  onSubTabChange?: (subTab: 'general' | 'notifications' | 'schedules') => void;
+  initialSubTab?: 'general' | 'notifications' | 'schedules' | 'database';
+  onSubTabChange?: (subTab: 'general' | 'notifications' | 'schedules' | 'database') => void;
   semester?: string;
   schoolYear?: string;
   onSaveSemester?: (semester: string, schoolYear: string) => void;
+
+  // Supabase Database Sync props
+  supabaseStatus: 'connecting' | 'connected' | 'error' | 'no-tables';
+  supabaseErrorMsg: string | null;
+  onForcePush: () => Promise<void>;
+  onForcePull: () => Promise<void>;
+  onCheckConnection: () => Promise<void>;
+  users: User[];
+  allOkrs: Record<string, OKR[]>;
+  allKpis: Record<string, KPI[]>;
+  isSyncing: boolean;
+  setShowSqlModal: (show: boolean) => void;
 }
 
 export default function SettingsTab({ 
@@ -31,7 +44,19 @@ export default function SettingsTab({
   onSubTabChange,
   semester = 'Học kỳ I',
   schoolYear = '2026-2027',
-  onSaveSemester
+  onSaveSemester,
+
+  // Supabase props
+  supabaseStatus,
+  supabaseErrorMsg,
+  onForcePush,
+  onForcePull,
+  onCheckConnection,
+  users = [],
+  allOkrs = {},
+  allKpis = {},
+  isSyncing,
+  setShowSqlModal
 }: SettingsTabProps) {
   // Authorization check
   const isBghOrAdmin = currentUser === 'admin' || (currentUser && typeof currentUser === 'object' && currentUser.type === 'BGH');
@@ -41,13 +66,16 @@ export default function SettingsTab({
   const [schedToDelete, setSchedToDelete] = useState<ScheduleItem | null>(null);
 
   // Active sub tab state
-  const [activeSubTab, setActiveSubTab] = useState<'general' | 'notifications' | 'schedules'>(initialSubTab);
+  const [activeSubTab, setActiveSubTab] = useState<'general' | 'notifications' | 'schedules' | 'database'>(initialSubTab);
+
+  // SQL Copy state for embedded view
+  const [isSqlCopied, setIsSqlCopied] = useState(false);
 
   useEffect(() => {
     setActiveSubTab(initialSubTab);
   }, [initialSubTab]);
 
-  const handleSubTabClick = (subTab: 'general' | 'notifications' | 'schedules') => {
+  const handleSubTabClick = (subTab: 'general' | 'notifications' | 'schedules' | 'database') => {
     setActiveSubTab(subTab);
     if (onSubTabChange) {
       onSubTabChange(subTab);
@@ -368,6 +396,21 @@ export default function SettingsTab({
           <span className="bg-slate-100 text-slate-800 text-[9px] px-1.5 py-0.2 rounded-full font-black">
             {scheduleItems.length}
           </span>
+        </button>
+        <button
+          onClick={() => handleSubTabClick('database')}
+          className={`px-4 py-2 rounded-t-lg border-b-2 transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+            activeSubTab === 'database'
+              ? 'border-blue-900 text-blue-900 bg-blue-50/50'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+          }`}
+          id="btn-subtab-database"
+        >
+          <Database className="w-3.5 h-3.5" />
+          Đồng bộ Cơ sở dữ liệu
+          <span className={`w-2 h-2 rounded-full shrink-0 ${
+            supabaseStatus === 'connected' ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'
+          }`} />
         </button>
       </div>
 
@@ -1132,6 +1175,272 @@ export default function SettingsTab({
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- SUB-TAB CONTENT 4: DATABASE & SYNC SYSTEM --- */}
+      {activeSubTab === 'database' && (
+        <div className="space-y-6 text-xs md:text-sm animate-fade-in" id="database-sync-panel">
+          {/* 1. Connection Status Banner */}
+          <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-3xs transition-colors ${
+            supabaseStatus === 'connected' 
+              ? 'bg-emerald-50/50 border-emerald-200 text-emerald-950' 
+              : supabaseStatus === 'connecting'
+              ? 'bg-amber-50/50 border-amber-200 text-amber-950'
+              : supabaseStatus === 'no-tables'
+              ? 'bg-orange-50/50 border-orange-200 text-orange-950'
+              : 'bg-red-50/50 border-red-200 text-red-950'
+          }`}>
+            <div className="flex items-start gap-3">
+              <div className={`p-2.5 rounded-lg shrink-0 ${
+                supabaseStatus === 'connected' 
+                  ? 'bg-emerald-100 text-emerald-700' 
+                  : supabaseStatus === 'connecting'
+                  ? 'bg-amber-100 text-amber-700 animate-pulse'
+                  : supabaseStatus === 'no-tables'
+                  ? 'bg-orange-100 text-orange-700'
+                  : 'bg-red-100 text-red-700'
+              }`}>
+                <Server className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-extrabold text-slate-900 text-sm md:text-base">Máy chủ cơ sở dữ liệu Supabase</h4>
+                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                    supabaseStatus === 'connected' 
+                      ? 'bg-emerald-200 text-emerald-800' 
+                      : supabaseStatus === 'connecting'
+                      ? 'bg-amber-200 text-amber-800'
+                      : supabaseStatus === 'no-tables'
+                      ? 'bg-orange-200 text-orange-800'
+                      : 'bg-red-200 text-red-800'
+                  }`}>
+                    {supabaseStatus === 'connected' 
+                      ? 'Trực tuyến (Online)' 
+                      : supabaseStatus === 'connecting'
+                      ? 'Đang kết nối...'
+                      : supabaseStatus === 'no-tables'
+                      ? 'Thiếu cấu trúc bảng'
+                      : 'Ngoại tuyến (Offline)'
+                    }
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-normal font-medium">
+                  {supabaseStatus === 'connected' 
+                    ? 'Hệ thống đã liên kết và đồng bộ trực tiếp hai chiều an toàn với máy chủ đám mây Supabase Cloud.' 
+                    : supabaseStatus === 'connecting'
+                    ? 'Đang kiểm tra tín hiệu kết nối và quyền truy cập API của cơ sở dữ liệu...'
+                    : supabaseStatus === 'no-tables'
+                    ? 'Kết nối Supabase thành công nhưng chưa tìm thấy các bảng dữ liệu. Vui lòng chạy mã khởi tạo SQL bên dưới.'
+                    : `Không thể kết nối. Chi tiết lỗi: ${supabaseErrorMsg || 'Mất kết nối mạng hoặc sai khóa API.'}`
+                  }
+                </p>
+              </div>
+            </div>
+            
+            <button
+              onClick={async () => {
+                showToast('Đang quét kiểm tra kết nối cơ sở dữ liệu...');
+                await onCheckConnection();
+              }}
+              disabled={isSyncing}
+              className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1.5 transition shrink-0 cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isSyncing ? 'animate-spin' : ''}`} />
+              Kiểm tra lại kết nối
+            </button>
+          </div>
+
+          {/* 2. Record counts compare dashboard */}
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden p-4 space-y-4 shadow-xs">
+            <div>
+              <h4 className="font-extrabold text-slate-800 text-xs md:text-sm uppercase tracking-wider flex items-center gap-1.5">
+                <Database className="w-4 h-4 text-blue-900" /> Bản đồ dữ liệu & Đồng bộ logic
+              </h4>
+              <p className="text-[11px] text-slate-500 mt-1">
+                Ứng dụng tự động lưu trữ dự phòng tại máy (LocalStorage) và ghi nhận trực tiếp lên máy chủ khi có mạng.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Item 1: Users table */}
+              <div className="bg-slate-50 border border-slate-150 p-3 rounded-lg space-y-1.5">
+                <div className="flex items-center justify-between text-slate-500 font-bold text-[10px] uppercase">
+                  <span>1. Bảng Nhân sự</span>
+                  <span className="text-[9px] font-mono bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded">users</span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-2xl font-black text-slate-800">{users.length}</span>
+                  <span className="text-[10px] text-slate-400 font-medium">Cán bộ / GV</span>
+                </div>
+                <p className="text-[9px] text-slate-500 leading-tight">Lưu thông tin đăng nhập, chức vụ, tổ chuyên môn và tài khoản.</p>
+              </div>
+
+              {/* Item 2: OKRs table */}
+              <div className="bg-slate-50 border border-slate-150 p-3 rounded-lg space-y-1.5">
+                <div className="flex items-center justify-between text-slate-500 font-bold text-[10px] uppercase">
+                  <span>2. Bản ghi OKR</span>
+                  <span className="text-[9px] font-mono bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded">okrs</span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-2xl font-black text-slate-800">
+                    {Object.values(allOkrs).reduce((acc, curr) => acc + (curr ? curr.length : 0), 0)}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium">Bản ghi OKRs</span>
+                </div>
+                <p className="text-[9px] text-slate-500 leading-tight">Mục tiêu chiến lược, kết quả then chốt và tiến độ từng nhân sự.</p>
+              </div>
+
+              {/* Item 3: KPIs table */}
+              <div className="bg-slate-50 border border-slate-150 p-3 rounded-lg space-y-1.5">
+                <div className="flex items-center justify-between text-slate-500 font-bold text-[10px] uppercase">
+                  <span>3. Tiêu chí KPI</span>
+                  <span className="text-[9px] font-mono bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded">kpis</span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-2xl font-black text-slate-800">
+                    {Object.values(allKpis).reduce((acc, curr) => acc + (curr ? curr.length : 0), 0)}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium">Chỉ số KPI</span>
+                </div>
+                <p className="text-[9px] text-slate-500 leading-tight">Danh mục tiêu chí đánh giá, minh chứng đính kèm và điểm số.</p>
+              </div>
+
+              {/* Item 4: Settings table */}
+              <div className="bg-slate-50 border border-slate-150 p-3 rounded-lg space-y-1.5">
+                <div className="flex items-center justify-between text-slate-500 font-bold text-[10px] uppercase">
+                  <span>4. Cấu hình chung</span>
+                  <span className="text-[9px] font-mono bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded">settings</span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-base font-black text-emerald-600 flex items-center gap-0.5">
+                    <Check className="w-4 h-4" /> Đã lưu
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium">Hệ thống</span>
+                </div>
+                <p className="text-[9px] text-slate-500 leading-tight">Trọng số biểu điểm, thông tin học kỳ hoạt động, dòng chữ chạy.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Action Controls */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Action 1: Push manual */}
+            <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between gap-3 shadow-xs">
+              <div className="space-y-1">
+                <h5 className="font-extrabold text-blue-900 text-xs md:text-sm flex items-center gap-1.5">
+                  🚀 Đẩy dữ liệu (Push to Cloud)
+                </h5>
+                <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
+                  Gửi toàn bộ thông tin nhân sự, OKR, KPI và thiết lập hiện hữu từ trình duyệt máy này ghi đè lên máy chủ Supabase Cloud.
+                </p>
+                <p className="text-[10px] text-red-500 font-bold">
+                  ⚠️ Lưu ý: Thao tác này sẽ dọn sạch dữ liệu cũ trên Cloud để ưu tiên đồng nhất dữ liệu máy này.
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  if (confirm("CẢNH BÁO: Bạn có chắc chắn muốn đẩy toàn bộ dữ liệu máy này lên Supabase không? Thao tác này sẽ ghi đè và đồng nhất dữ liệu đám mây theo máy này!")) {
+                    await onForcePush();
+                  }
+                }}
+                disabled={supabaseStatus !== 'connected' || isSyncing}
+                className="w-full bg-blue-900 hover:bg-blue-950 text-white font-bold py-2 px-3 rounded-lg text-xs text-center transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSyncing ? 'Đang đồng bộ...' : 'Đẩy toàn bộ lên Supabase Cloud'}
+              </button>
+            </div>
+
+            {/* Action 2: Pull manual */}
+            <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between gap-3 shadow-xs">
+              <div className="space-y-1">
+                <h5 className="font-extrabold text-teal-900 text-xs md:text-sm flex items-center gap-1.5">
+                  📥 Kéo dữ liệu (Pull to Local)
+                </h5>
+                <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
+                  Tải toàn bộ cơ sở dữ liệu thực tế từ máy chủ Supabase Cloud về thiết lập ghi đè vào trình duyệt máy này.
+                </p>
+                <p className="text-[10px] text-amber-600 font-bold">
+                  💡 Khuyên dùng: Sử dụng khi cán bộ mở hệ thống trên thiết bị mới hoặc muốn khôi phục dữ liệu chuẩn nhất.
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  if (confirm("XÁC NHẬN: Bạn có chắc chắn muốn tải lại toàn bộ dữ liệu từ máy chủ về máy không? Các thay đổi chưa đồng bộ trên máy này có thể bị mất!")) {
+                    await onForcePull();
+                  }
+                }}
+                disabled={supabaseStatus !== 'connected' || isSyncing}
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-3 rounded-lg text-xs text-center transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSyncing ? 'Đang tải dữ liệu...' : 'Tải cơ sở dữ liệu về máy này'}
+              </button>
+            </div>
+
+            {/* Action 3: Reset Cache */}
+            <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between gap-3 shadow-xs">
+              <div className="space-y-1">
+                <h5 className="font-extrabold text-red-900 text-xs md:text-sm flex items-center gap-1.5">
+                  🗑️ Xóa bộ nhớ đệm máy
+                </h5>
+                <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
+                  Xóa sạch dữ liệu lưu trữ tạm tại trình duyệt này (LocalStorage) để hệ thống tự động tải lại dữ liệu mới nhất từ đầu.
+                </p>
+                <p className="text-[10px] text-red-600 font-bold">
+                  🔒 An toàn: Không ảnh hưởng đến dữ liệu trực tuyến đang lưu trữ trên Supabase Cloud.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  if (confirm("CẢNH BÁO QUAN TRỌNG: Bạn sắp xóa sạch bộ nhớ tạm trình duyệt trên máy này. Hệ thống sẽ làm mới trang để tải lại từ đầu. Tiếp tục?")) {
+                    localStorage.clear();
+                    showToast('Đã xóa sạch bộ nhớ đệm máy! Đang tải lại hệ thống...');
+                    setTimeout(() => window.location.reload(), 1500);
+                  }
+                }}
+                className="w-full bg-slate-100 hover:bg-red-50 hover:text-red-800 text-slate-700 font-bold py-2 px-3 rounded-lg text-xs text-center border border-slate-200 hover:border-red-200 transition cursor-pointer"
+              >
+                Làm sạch bộ nhớ đệm (Reset Cache)
+              </button>
+            </div>
+          </div>
+
+          {/* 4. Quick SQL Migration Tools */}
+          <div className="bg-slate-950 border border-slate-800 text-slate-300 rounded-xl p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-2.5">
+              <div className="space-y-0.5">
+                <h5 className="font-extrabold text-slate-100 text-xs md:text-sm flex items-center gap-1.5">
+                  <Database className="w-4 h-4 text-teal-400" /> Mã khởi tạo SQL khởi chạy nhanh
+                </h5>
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  Nhập mã lệnh dưới đây vào mục SQL Editor của Supabase để tự động chuẩn bị các bảng cần thiết.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(SQL_MIGRATION_SCRIPT);
+                  setIsSqlCopied(true);
+                  setTimeout(() => setIsSqlCopied(false), 2000);
+                  showToast('Đã sao chép mã SQL vào bộ nhớ đệm!');
+                }}
+                className="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 px-3 py-1.5 rounded-lg text-[10px] md:text-xs font-bold flex items-center gap-1.5 cursor-pointer transition shrink-0"
+              >
+                {isSqlCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {isSqlCopied ? 'Đã sao chép' : 'Sao chép mã SQL khởi tạo'}
+              </button>
+            </div>
+
+            <div className="relative">
+              <pre className="text-[10px] md:text-xs font-mono overflow-x-auto max-h-[180px] p-3 rounded-lg bg-slate-900/60 border border-slate-900 leading-relaxed text-slate-400">
+                {SQL_MIGRATION_SCRIPT}
+              </pre>
+            </div>
+
+            <div className="p-3 bg-teal-950/40 border border-teal-900/50 rounded-lg text-[10px] leading-relaxed text-teal-300/90 font-medium">
+              💡 <strong>Mẹo vận hành:</strong> Khi bạn đã chạy xong đoạn Script này trên Supabase, hãy ấn vào nút <strong>"Kiểm tra lại kết nối"</strong> ở phía trên để hệ thống tự động nhận diện bảng trực tuyến ngay lập tức mà không cần tải lại trang.
             </div>
           </div>
         </div>

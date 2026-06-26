@@ -142,60 +142,68 @@ export default function App() {
     }, 3500);
   };
 
+  const handleCheckSupabaseConnection = async () => {
+    setSupabaseStatus('connecting');
+    try {
+      const conn = await checkSupabaseConnection();
+      if (!conn.connected) {
+        setSupabaseStatus('error');
+        setSupabaseErrorMsg(conn.error || 'Không thể kết nối đến máy chủ Supabase.');
+        return false;
+      } else if (!conn.tablesExist) {
+        setSupabaseStatus('no-tables');
+        setSupabaseErrorMsg('Chưa khởi tạo cấu trúc bảng trên Supabase.');
+        return false;
+      } else {
+        setSupabaseStatus('connected');
+        return true;
+      }
+    } catch (err: any) {
+      setSupabaseStatus('error');
+      setSupabaseErrorMsg(err.message || 'Lỗi kết nối máy chủ Supabase.');
+      return false;
+    }
+  };
+
   // 1. Tải dữ liệu từ Supabase hoặc Local Storage khi khởi chạy
   useEffect(() => {
     async function initSupabase() {
-      setSupabaseStatus('connecting');
-      try {
-        const conn = await checkSupabaseConnection();
-        if (!conn.connected) {
-          setSupabaseStatus('error');
-          setSupabaseErrorMsg(conn.error || 'Không thể kết nối đến máy chủ Supabase.');
-          loadLocalData();
-        } else if (!conn.tablesExist) {
-          setSupabaseStatus('no-tables');
-          setSupabaseErrorMsg('Chưa khởi tạo cấu trúc bảng trên Supabase.');
-          loadLocalData();
-        } else {
-          // Kết nối thành công và các bảng đã tồn tại!
-          try {
-            const data = await loadAllDataFromSupabase();
-            
-            // Chỉ hiển thị các dữ liệu thực tế có trong database Supabase
-            setUsers(data.users || []);
-            localStorage.setItem('thcs_hp_users', JSON.stringify(data.users || []));
-            
-            setAllOkrs(data.allOkrs || {});
-            localStorage.setItem('thcs_hp_okrs', JSON.stringify(data.allOkrs || {}));
-            
-            setAllKpis(data.allKpis || {});
-            localStorage.setItem('thcs_hp_kpis', JSON.stringify(data.allKpis || {}));
-            
-            if (data.settings) {
-              setSettings(data.settings);
-              localStorage.setItem('thcs_hp_settings', JSON.stringify(data.settings));
-            } else {
-              setSettings(DEFAULT_SETTINGS);
-              localStorage.setItem('thcs_hp_settings', JSON.stringify(DEFAULT_SETTINGS));
-            }
-            
-            setSupabaseStatus('connected');
-            if (data.users && data.users.length > 0) {
-              showToast('Đã kết nối và tải dữ liệu từ Supabase thành công!');
-            } else {
-              showToast('Đã kết nối Supabase! Cơ sở dữ liệu trống, không có nhân sự nào.');
-            }
-          } catch (fetchErr: any) {
-            console.error('Fetch error:', fetchErr);
-            setSupabaseStatus('error');
-            setSupabaseErrorMsg(fetchErr.message || 'Lỗi tải dữ liệu từ Supabase.');
-            loadLocalData();
+      const isConnected = await handleCheckSupabaseConnection();
+      if (isConnected) {
+        // Kết nối thành công và các bảng đã tồn tại!
+        try {
+          const data = await loadAllDataFromSupabase();
+          
+          // Chỉ hiển thị các dữ liệu thực tế có trong database Supabase
+          setUsers(data.users || []);
+          localStorage.setItem('thcs_hp_users', JSON.stringify(data.users || []));
+          
+          setAllOkrs(data.allOkrs || {});
+          localStorage.setItem('thcs_hp_okrs', JSON.stringify(data.allOkrs || {}));
+          
+          setAllKpis(data.allKpis || {});
+          localStorage.setItem('thcs_hp_kpis', JSON.stringify(data.allKpis || {}));
+          
+          if (data.settings) {
+            setSettings(data.settings);
+            localStorage.setItem('thcs_hp_settings', JSON.stringify(data.settings));
+          } else {
+            setSettings(DEFAULT_SETTINGS);
+            localStorage.setItem('thcs_hp_settings', JSON.stringify(DEFAULT_SETTINGS));
           }
+          
+          if (data.users && data.users.length > 0) {
+            showToast('Đã kết nối và tải dữ liệu từ Supabase thành công!');
+          } else {
+            showToast('Đã kết nối Supabase! Cơ sở dữ liệu trống, không có nhân sự nào.');
+          }
+        } catch (fetchErr: any) {
+          console.error('Fetch error:', fetchErr);
+          setSupabaseStatus('error');
+          setSupabaseErrorMsg(fetchErr.message || 'Lỗi tải dữ liệu từ Supabase.');
+          loadLocalData();
         }
-      } catch (err: any) {
-        console.error('Connection error:', err);
-        setSupabaseStatus('error');
-        setSupabaseErrorMsg(err.message || 'Lỗi kết nối máy chủ Supabase.');
+      } else {
         loadLocalData();
       }
     }
@@ -1721,6 +1729,18 @@ export default function App() {
               semester={semester}
               schoolYear={schoolYear}
               onSaveSemester={handleSaveSemester}
+
+              // Database and Sync props
+              supabaseStatus={supabaseStatus}
+              supabaseErrorMsg={supabaseErrorMsg}
+              onForcePush={handleForcePushToSupabase}
+              onForcePull={handleForcePullFromSupabase}
+              onCheckConnection={async () => { await handleCheckSupabaseConnection(); }}
+              users={users}
+              allOkrs={allOkrs}
+              allKpis={allKpis}
+              isSyncing={isSyncing}
+              setShowSqlModal={setShowSqlModal}
             />
           </div>
 
