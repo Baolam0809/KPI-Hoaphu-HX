@@ -32,6 +32,7 @@ import {
   deleteOkrFromSupabase, 
   saveUserKpisToSupabase, 
   saveSettingsToSupabase,
+  saveGroupAssignmentsToSupabase,
   seedSupabaseInitialData,
   SQL_MIGRATION_SCRIPT
 } from './supabaseClient';
@@ -190,6 +191,11 @@ export default function App() {
           } else {
             setSettings(DEFAULT_SETTINGS);
             localStorage.setItem('thcs_hp_settings', JSON.stringify(DEFAULT_SETTINGS));
+          }
+
+          if (data.groupAssignments && data.groupAssignments.length > 0) {
+            setGroupAssignments(data.groupAssignments);
+            localStorage.setItem('thcs_hp_group_assignments', JSON.stringify(data.groupAssignments));
           }
           
           if (data.users && data.users.length > 0) {
@@ -376,7 +382,7 @@ export default function App() {
     setIsSyncing(true);
     showToast('Đang tiến hành đẩy toàn bộ dữ liệu máy lên Supabase...');
     try {
-      await seedSupabaseInitialData(users, allOkrs, allKpis, settings);
+      await seedSupabaseInitialData(users, allOkrs, allKpis, settings, groupAssignments);
       showToast('Đồng bộ đẩy toàn bộ dữ liệu lên Supabase thành công!');
     } catch (err: any) {
       console.error(err);
@@ -408,6 +414,11 @@ export default function App() {
         if (data.settings) {
           setSettings(data.settings);
           localStorage.setItem('thcs_hp_settings', JSON.stringify(data.settings));
+        }
+
+        if (data.groupAssignments && data.groupAssignments.length > 0) {
+          setGroupAssignments(data.groupAssignments);
+          localStorage.setItem('thcs_hp_group_assignments', JSON.stringify(data.groupAssignments));
         }
         showToast('Đồng bộ tải dữ liệu từ Supabase thành công!');
       } else {
@@ -771,6 +782,12 @@ export default function App() {
     }
     setGroupAssignments(updated);
     localStorage.setItem('thcs_hp_group_assignments', JSON.stringify(updated));
+
+    if (supabaseStatus === 'connected') {
+      saveGroupAssignmentsToSupabase(updated).catch(err => {
+        console.error('Error syncing group assignments:', err);
+      });
+    }
 
     // Tìm các cán bộ/giáo viên/nhân viên thuộc Tổ/Khối này để tạo thông báo riêng chi tiết
     const getGroupMembers = (groupId: string, userList: User[]): User[] => {

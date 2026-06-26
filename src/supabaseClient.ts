@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { User, OKR, KPI, SystemSettings } from './types';
+import { User, OKR, KPI, SystemSettings, GroupAssignment } from './types';
 
 // Read from environment variables, or fallback to the provided credentials
 const metaEnv = (import.meta as any).env || {};
@@ -107,6 +107,7 @@ export async function loadAllDataFromSupabase(): Promise<{
   allOkrs: Record<string, OKR[]>;
   allKpis: Record<string, KPI[]>;
   settings: SystemSettings | null;
+  groupAssignments?: GroupAssignment[] | null;
 }> {
   // 1. Fetch Users
   const { data: usersData, error: usersError } = await supabase
@@ -142,6 +143,18 @@ export async function loadAllDataFromSupabase(): Promise<{
   let settings: SystemSettings | null = null;
   if (!settingsError && settingsData) {
     settings = settingsData.value as SystemSettings;
+  }
+
+  // 5. Fetch Group Assignments
+  const { data: groupAssignmentsData, error: groupAssignmentsError } = await supabase
+    .from('thcs_hp_settings')
+    .select('*')
+    .eq('key', 'group_assignments')
+    .single();
+
+  let groupAssignments: GroupAssignment[] | null = null;
+  if (!groupAssignmentsError && groupAssignmentsData) {
+    groupAssignments = groupAssignmentsData.value as GroupAssignment[];
   }
 
   // Parse arrays into dictionary records mapped by user_id
@@ -199,7 +212,8 @@ export async function loadAllDataFromSupabase(): Promise<{
     users: (usersData || []) as User[],
     allOkrs,
     allKpis,
-    settings
+    settings,
+    groupAssignments
   };
 }
 
@@ -305,6 +319,20 @@ export async function saveUserKpisToSupabase(userId: string, kpis: KPI[]): Promi
 }
 
 /**
+ * Save group assignments to Supabase
+ */
+export async function saveGroupAssignmentsToSupabase(groupAssignments: GroupAssignment[]): Promise<void> {
+  const { error } = await supabase
+    .from('thcs_hp_settings')
+    .upsert({
+      key: 'group_assignments',
+      value: groupAssignments
+    });
+
+  if (error) throw error;
+}
+
+/**
  * Save system settings
  */
 export async function saveSettingsToSupabase(settings: SystemSettings): Promise<void> {
@@ -325,7 +353,8 @@ export async function seedSupabaseInitialData(
   users: User[],
   allOkrs: Record<string, OKR[]>,
   allKpis: Record<string, KPI[]>,
-  settings: SystemSettings
+  settings: SystemSettings,
+  groupAssignments?: GroupAssignment[]
 ): Promise<void> {
   // 1. Seed users
   for (const user of users) {
@@ -346,4 +375,9 @@ export async function seedSupabaseInitialData(
 
   // 4. Seed Settings
   await saveSettingsToSupabase(settings);
+
+  // 5. Seed Group Assignments
+  if (groupAssignments && groupAssignments.length > 0) {
+    await saveGroupAssignmentsToSupabase(groupAssignments);
+  }
 }
