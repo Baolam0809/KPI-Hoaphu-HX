@@ -106,6 +106,69 @@ const EXPERT_TEMPLATES: Record<string, { okr: { title: string, kr1: string, kr2:
   }
 };
 
+const REALISTIC_KPI_SUGGESTIONS = [
+  {
+    category: 'Chuyên môn Giảng dạy',
+    title: 'Nghiệp vụ dạy học & Chất lượng hồ sơ giáo án',
+    desc: 'Soạn giáo án đúng phân phối chương trình, chuẩn kiến thức kỹ năng. Chấm trả bài kiểm tra đúng kỳ hạn, lưu trữ hồ sơ minh chứng khoa học. Thước đo: 100% giáo án hoàn thành trước tiết dạy; không có phản hồi tiêu cực về nề nếp chấm bài.'
+  },
+  {
+    category: 'Chuyên môn Giảng dạy',
+    title: 'Chất lượng giờ dạy thực tế & Đổi mới phương pháp',
+    desc: 'Áp dụng hiệu quả các phương pháp dạy học tích cực (sơ đồ tư duy, làm việc nhóm, lớp học ngược). Thước đo: Đạt tỷ lệ trên 85% giờ dạy thực tế xếp loại Giỏi qua thanh tra của Tổ chuyên môn và BGH.'
+  },
+  {
+    category: 'Chuyển đổi số',
+    title: 'Số hóa tài liệu & Thiết kế học liệu số E-learning',
+    desc: 'Số hóa giáo án đưa lên hệ thống dùng chung của nhà trường; thiết kế các bài giảng điện tử tương tác cao (PowerPoint, Canva, Quizizz, Kahoot). Thước đo: Đăng tải tối thiểu 5 bộ học liệu tương tác chuẩn hóa lên Google Drive chung của trường trong học kỳ.'
+  },
+  {
+    category: 'Chuyển đổi số',
+    title: 'Ứng dụng Công nghệ Thông tin & Trí tuệ Nhân tạo',
+    desc: 'Ứng dụng phần mềm quản lý điểm, học bạ điện tử đúng hạn; áp dụng AI (như Gemini) hỗ trợ soạn đề kiểm tra, ngân hàng câu hỏi. Thước đo: 100% hồ sơ học bạ điện tử hoàn thiện trước hạn; tổ chức hoặc tham gia 1 buổi chia sẻ kinh nghiệm ứng dụng công nghệ.'
+  },
+  {
+    category: 'Công tác Chủ nhiệm & Học sinh',
+    title: 'Quản lý nề nếp lớp chủ nhiệm & Kỷ cương học đường',
+    desc: 'Duy trì tỷ lệ chuyên cần của học sinh lớp chủ nhiệm; giáo dục đạo đức, ngăn chặn bạo lực học đường; tổ chức các chuyên đề trải nghiệm. Thước đo: Lớp đạt danh hiệu Lớp Tiên tiến trở lên; tỷ lệ chuyên cần đạt trên 98%; không có học sinh vi phạm kỷ luật nghiêm trọng.'
+  },
+  {
+    category: 'Công tác Chủ nhiệm & Học sinh',
+    title: 'Phối hợp gia đình học sinh & Tư vấn tâm lý học đường',
+    desc: 'Duy trì liên lạc thường xuyên qua sổ liên lạc điện tử, Zalo nhóm lớp; tổ chức họp phụ huynh sáng tạo; kịp thời hỗ trợ học sinh có hoàn cảnh khó khăn hoặc vấn đề tâm lý. Thước đo: Đạt tỷ lệ 100% phụ huynh đồng thuận; thực hiện tối thiểu 3 ca tư vấn tâm lý chuyên sâu.'
+  },
+  {
+    category: 'Bồi dưỡng & Thi đua',
+    title: 'Bồi dưỡng đội tuyển Học sinh giỏi & Nâng cao chất lượng mũi nhọn',
+    desc: 'Xây dựng giáo trình, tài liệu chuyên sâu bồi dưỡng học sinh giỏi khối lớp đảm nhiệm; tổ chức ôn luyện đều đặn bám sát đề thi. Thước đo: Đạt tối thiểu 01 giải cấp Huyện trở lên; tỷ lệ học sinh đạt điểm Khá/Giỏi môn chuyên sâu tăng 5% so với cùng kỳ.'
+  },
+  {
+    category: 'Bồi dưỡng & Thi đua',
+    title: 'Phụ đạo học sinh yếu kém & Nâng cao chất lượng đại trà',
+    desc: 'Phát hiện sớm học sinh hổng kiến thức để lập kế hoạch phụ đạo riêng biệt; tổ chức mô hình học tập hỗ trợ lẫn nhau (Đôi bạn cùng tiến). Thước đo: Giảm tỷ lệ học sinh học lực yếu xuống dưới 2%; 100% học sinh thi đạt điểm trung bình trở lên.'
+  },
+  {
+    category: 'Hành chính & Nghiệp vụ Văn phòng',
+    title: 'Quản lý văn thư, lưu trữ hồ sơ công văn đi đến',
+    desc: 'Cập nhật và số hóa 100% công văn đi và đến kịp thời; lưu trữ hồ sơ học bạ, hồ sơ cán bộ khoa học, bảo mật tuyệt đối. Thước đo: Không để thất lạc công văn; tra cứu thông tin nhanh chóng dưới 3 phút.'
+  },
+  {
+    category: 'Hành chính & Nghiệp vụ Văn phòng',
+    title: 'Công tác Tài chính Kế toán & Quyết toán ngân sách',
+    desc: 'Thực hiện chi trả lương, bảo hiểm đầy đủ, chính xác; hoàn thiện hồ sơ quyết toán thuế, ngân sách đúng hạn định pháp luật. Thước đo: Hồ sơ kế toán kiểm toán đạt loại Xuất sắc; không xảy ra sai sót số liệu tài chính; nộp báo cáo đúng hạn 100%.'
+  },
+  {
+    category: 'Phục vụ & Hỗ trợ kỹ thuật',
+    title: 'Công tác Thư viện & Phát triển văn hóa đọc',
+    desc: 'Quản lý nề nếp thư viện mượn trả sách; tổ chức các buổi giới thiệu sách hay, tuần lễ đọc sách; số hóa danh mục thẻ thư viện. Thước đo: Tăng lượt đọc sách của học sinh lên 20%; hoàn thành số hóa thẻ thư viện đúng tiến độ.'
+  },
+  {
+    category: 'Phục vụ & Hỗ trợ kỹ thuật',
+    title: 'Chuẩn bị thiết bị thí nghiệm & Hỗ trợ thực hành',
+    desc: 'Quản lý, bảo dưỡng và chuẩn bị đầy đủ thiết bị, hóa chất trước giờ thực hành của giáo viên và học sinh; bảo đảm an toàn phòng thí nghiệm. Thước đo: 100% các tiết thực hành có đầy đủ trang thiết bị hoạt động tốt; không xảy ra sự cố mất an toàn cháy nổ.'
+  }
+];
+
 export default function BghAssignTab({ 
   currentUser, 
   groupAssignments, 
@@ -165,6 +228,11 @@ export default function BghAssignTab({
   const [previewKpi3Desc, setPreviewKpi3Desc] = useState('');
 
   const [generatingKpiNum, setGeneratingKpiNum] = useState<number | null>(null);
+
+  // States for manual suggestions and OKR reference suggestions
+  const [activeKpiForSuggestion, setActiveKpiForSuggestion] = useState<number | null>(null);
+  const [suggestionSearch, setSuggestionSearch] = useState('');
+  const [selectedSuggestionCategory, setSelectedSuggestionCategory] = useState<string>('Tất cả');
 
   const currentAssignment = groupAssignments.find(a => a.id === selectedGroup.id);
 
@@ -397,63 +465,164 @@ export default function BghAssignTab({
     }
   };
 
-  const handleGenerateSingleKpiDesc = async (kpiNum: number) => {
-    let criterionName = '';
-    let currentDesc = '';
-    if (kpiNum === 1) {
-      criterionName = previewKpi1Name;
-      currentDesc = previewKpi1Desc;
-    } else if (kpiNum === 2) {
-      criterionName = previewKpi2Name;
-      currentDesc = previewKpi2Desc;
-    } else if (kpiNum === 3) {
-      criterionName = previewKpi3Name;
-      currentDesc = previewKpi3Desc;
-    }
+  const renderKpiSuggestions = (
+    kpiNum: number,
+    currentKr: string,
+    setKpiName: (v: string) => void,
+    setKpiDesc: (v: string) => void
+  ) => {
+    // Filter suggestions
+    const filtered = REALISTIC_KPI_SUGGESTIONS.filter(item => {
+      const matchSearch = item.title.toLowerCase().includes(suggestionSearch.toLowerCase()) || 
+                          item.desc.toLowerCase().includes(suggestionSearch.toLowerCase()) ||
+                          item.category.toLowerCase().includes(suggestionSearch.toLowerCase());
+      if (selectedSuggestionCategory === 'Tất cả') return matchSearch;
+      return item.category === selectedSuggestionCategory && matchSearch;
+    });
 
-    if (!criterionName.trim()) {
-      showToast(`Vui lòng nhập tên Tiêu chí KPI ${kpiNum} trước khi sinh mô tả!`);
-      return;
-    }
+    const categories = ['Tất cả', 'Chuyên môn Giảng dạy', 'Chuyển đổi số', 'Công tác Chủ nhiệm & Học sinh', 'Bồi dưỡng & Thi đua', 'Hành chính & Nghiệp vụ Văn phòng', 'Phục vụ & Hỗ trợ kỹ thuật'];
 
-    setGeneratingKpiNum(kpiNum);
-    try {
-      const response = await fetch('/api/generate-kpi-desc', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          criterionName: criterionName.trim(),
-          groupName: selectedGroup.name,
-          direction: assignDirection,
-          currentDesc: currentDesc.trim()
-        })
-      });
+    return (
+      <div className="mt-3 p-3 bg-gradient-to-br from-slate-50 to-indigo-50/50 border border-slate-200 rounded-lg space-y-3 text-xs shadow-xs animate-fade-in relative z-10" id={`kpi-suggestion-panel-${kpiNum}`}>
+        <div className="flex items-center justify-between border-b border-slate-150 pb-2">
+          <div className="flex items-center gap-1.5 font-bold text-slate-800">
+            <ListChecks className="w-4 h-4 text-indigo-600" />
+            <span>Thư viện gợi ý tham chiếu KPI {kpiNum}</span>
+          </div>
+          <button 
+            type="button" 
+            onClick={() => setActiveKpiForSuggestion(null)}
+            className="p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
 
-      if (!response.ok) {
-        throw new Error("Lỗi kết nối API");
-      }
+        {/* 1. Dynamic OKR Suggestion Section */}
+        {previewOkrTitle.trim() && (
+          <div className="p-2.5 bg-indigo-50/80 border border-indigo-150 rounded-lg space-y-1.5 text-left">
+            <div className="flex items-center gap-1 text-[10px] font-black text-indigo-800 uppercase tracking-wide">
+              <Award className="w-3.5 h-3.5 text-indigo-700" />
+              <span>Gợi ý ăn khớp theo OKR Chiến lược</span>
+            </div>
+            <div className="space-y-1 text-[11px] leading-relaxed text-slate-700 font-medium">
+              <p>🎯 <strong>Mục tiêu Tổ:</strong> {previewOkrTitle}</p>
+              {currentKr ? (
+                <p>🔑 <strong>Kết quả then chốt (KR{kpiNum}):</strong> {currentKr}</p>
+              ) : (
+                <p className="text-slate-500 italic">Chưa nhập Kết quả then chốt KR{kpiNum}. Nhập KR để nhận gợi ý cụ thể hơn!</p>
+              )}
+            </div>
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  let suggestedTitle = '';
+                  let suggestedDesc = '';
 
-      const data = await response.json();
-      if (data && data.description) {
-        if (kpiNum === 1) {
-          setPreviewKpi1Desc(data.description);
-        } else if (kpiNum === 2) {
-          setPreviewKpi2Desc(data.description);
-        } else if (kpiNum === 3) {
-          setPreviewKpi3Desc(data.description);
-        }
-        showToast(`Đã sinh thành công mô tả chi tiết & thước đo định lượng cho KPI ${kpiNum}!`);
-      } else {
-        throw new Error("Không nhận được phản hồi phù hợp từ AI");
-      }
-    } catch (e) {
-      console.error(e);
-      showToast("Không thể kết nối với AI Gemini để sinh thêm mô tả. Vui lòng thử lại sau.");
-    } finally {
-      setGeneratingKpiNum(null);
-    }
+                  if (currentKr) {
+                    // Extract core concept from KR
+                    let cleanedKr = currentKr;
+                    if (cleanedKr.match(/^\d+%/)) {
+                      cleanedKr = cleanedKr.replace(/^\d+%\s*/, '');
+                    }
+                    suggestedTitle = `${kpiNum}. Thực hiện ${cleanedKr.length > 50 ? cleanedKr.slice(0, 50) + '...' : cleanedKr}`;
+                    suggestedDesc = `Tập trung thực hiện các hoạt động thực tế để hoàn thành Kết quả then chốt KR${kpiNum}: "${currentKr}".\n\nThước đo đo lường hiệu quả:\n- Đạt 100% các chỉ tiêu số lượng và tiến độ đã cam kết.\n- Có đầy đủ tài liệu minh chứng, báo cáo số liệu trung thực gửi Tổ trưởng chuyên môn đúng hạn.`;
+                  } else {
+                    suggestedTitle = `${kpiNum}. Đồng bộ theo Mục tiêu OKR`;
+                    suggestedDesc = `Phối hợp triển khai các hành động nghiệp vụ bám sát mục tiêu: "${previewOkrTitle}".\n\nThước đo đo lường hiệu quả:\n- Hoàn thành đầy đủ các nhiệm vụ trọng tâm được BGH và Tổ giao.\n- Không có sai sót hoặc phản hồi tiêu cực về tác phong công tác.`;
+                  }
+
+                  setKpiName(suggestedTitle);
+                  setKpiDesc(suggestedDesc);
+                  setActiveKpiForSuggestion(null);
+                  showToast(`Đã đồng bộ KPI ${kpiNum} bám sát mục tiêu OKR chiến lược!`);
+                }}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-md text-[11px] text-center transition cursor-pointer flex items-center justify-center gap-1 shadow-3xs"
+              >
+                <Check className="w-3.5 h-3.5" />
+                Áp dụng thiết lập bám sát OKR/KR này
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 2. Manual Catalog Selector */}
+        <div className="space-y-2 text-left">
+          <div className="flex items-center gap-1 text-[10px] font-black text-teal-800 uppercase tracking-wide">
+            <HelpCircle className="w-3.5 h-3.5 text-teal-700" />
+            <span>Tham chiếu tiêu chí chuẩn sư phạm / Nghiệp vụ văn phòng</span>
+          </div>
+
+          {/* Category Tabs */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 max-w-full scrollbar-none">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedSuggestionCategory(cat)}
+                className={`px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap cursor-pointer transition ${
+                  selectedSuggestionCategory === cat 
+                    ? 'bg-teal-600 text-white shadow-4xs' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Search Box */}
+          <div className="relative">
+            <input
+              type="text"
+              value={suggestionSearch}
+              onChange={(e) => setSuggestionSearch(e.target.value)}
+              placeholder="Tìm kiếm gợi ý nhanh..."
+              className="w-full border border-slate-300 rounded-md py-1 px-2.5 text-[11px] font-medium bg-white focus:outline-indigo-500"
+            />
+          </div>
+
+          {/* Suggestions List */}
+          <div className="max-h-[200px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+            {filtered.length > 0 ? (
+              filtered.map((item, index) => (
+                <div 
+                  key={index} 
+                  className="p-2.5 bg-white border border-slate-200 hover:border-teal-300 rounded-lg hover:bg-teal-50/20 transition text-left space-y-1 flex flex-col justify-between"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-extrabold text-slate-800 text-[11px]">{item.title}</span>
+                      <span className="text-[8px] bg-slate-100 text-slate-500 font-bold px-1.5 py-0.2 rounded-full uppercase shrink-0">
+                        {item.category}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-600 leading-normal">{item.desc}</p>
+                  </div>
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setKpiName(`${kpiNum}. ${item.title}`);
+                        setKpiDesc(item.desc);
+                        setActiveKpiForSuggestion(null);
+                        showToast(`Đã áp dụng mẫu gợi ý: "${item.title}" cho KPI ${kpiNum}`);
+                      }}
+                      className="bg-teal-600 hover:bg-teal-700 text-white font-extrabold px-2.5 py-1 rounded text-[10px] cursor-pointer transition shadow-4xs"
+                    >
+                      Áp dụng mẫu này
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-slate-400 py-3 text-[11px]">Không tìm thấy gợi ý nào phù hợp.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const handleApproveAndPublish = () => {
@@ -808,13 +977,16 @@ export default function BghAssignTab({
                           <label className="block text-[10px] font-bold text-slate-400 uppercase">Mô tả và thước đo cụ thể</label>
                           <button
                             type="button"
-                            onClick={() => handleGenerateSingleKpiDesc(1)}
-                            disabled={generatingKpiNum === 1 || !previewKpi1Name}
-                            className="text-[10px] text-indigo-700 hover:text-indigo-950 font-bold flex items-center gap-1 transition cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed"
-                            title="Tự động sinh mô tả chi tiết và thước đo định lượng bằng AI"
+                            onClick={() => {
+                              setActiveKpiForSuggestion(activeKpiForSuggestion === 1 ? null : 1);
+                              setSuggestionSearch('');
+                              setSelectedSuggestionCategory('Tất cả');
+                            }}
+                            className="text-[10px] text-indigo-700 hover:text-indigo-950 font-bold flex items-center gap-1 transition cursor-pointer"
+                            title="Mở thư viện gợi ý tham chiếu bám sát OKR và bộ tiêu chí"
                           >
-                            <Sparkles className={`w-3 h-3 text-indigo-600 ${generatingKpiNum === 1 ? 'animate-spin' : ''}`} />
-                            {generatingKpiNum === 1 ? 'Đang sinh...' : 'Sinh thêm mô tả (AI)'}
+                            <ListChecks className="w-3.5 h-3.5 text-indigo-600" />
+                            {activeKpiForSuggestion === 1 ? 'Đóng gợi ý' : '💡 Gợi ý tham chiếu & liên kết OKR'}
                           </button>
                         </div>
                         <textarea
@@ -829,6 +1001,7 @@ export default function BghAssignTab({
                             {previewKpi1Desc}
                           </div>
                         )}
+                        {activeKpiForSuggestion === 1 && renderKpiSuggestions(1, previewKr1, setPreviewKpi1Name, setPreviewKpi1Desc)}
                       </div>
                     </div>
 
@@ -865,13 +1038,16 @@ export default function BghAssignTab({
                           <label className="block text-[10px] font-bold text-slate-400 uppercase">Mô tả và thước đo cụ thể</label>
                           <button
                             type="button"
-                            onClick={() => handleGenerateSingleKpiDesc(2)}
-                            disabled={generatingKpiNum === 2 || !previewKpi2Name}
-                            className="text-[10px] text-indigo-700 hover:text-indigo-950 font-bold flex items-center gap-1 transition cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed"
-                            title="Tự động sinh mô tả chi tiết và thước đo định lượng bằng AI"
+                            onClick={() => {
+                              setActiveKpiForSuggestion(activeKpiForSuggestion === 2 ? null : 2);
+                              setSuggestionSearch('');
+                              setSelectedSuggestionCategory('Tất cả');
+                            }}
+                            className="text-[10px] text-indigo-700 hover:text-indigo-950 font-bold flex items-center gap-1 transition cursor-pointer"
+                            title="Mở thư viện gợi ý tham chiếu bám sát OKR và bộ tiêu chí"
                           >
-                            <Sparkles className={`w-3 h-3 text-indigo-600 ${generatingKpiNum === 2 ? 'animate-spin' : ''}`} />
-                            {generatingKpiNum === 2 ? 'Đang sinh...' : 'Sinh thêm mô tả (AI)'}
+                            <ListChecks className="w-3.5 h-3.5 text-indigo-600" />
+                            {activeKpiForSuggestion === 2 ? 'Đóng gợi ý' : '💡 Gợi ý tham chiếu & liên kết OKR'}
                           </button>
                         </div>
                         <textarea
@@ -886,6 +1062,7 @@ export default function BghAssignTab({
                             {previewKpi2Desc}
                           </div>
                         )}
+                        {activeKpiForSuggestion === 2 && renderKpiSuggestions(2, previewKr2, setPreviewKpi2Name, setPreviewKpi2Desc)}
                       </div>
                     </div>
 
@@ -922,13 +1099,16 @@ export default function BghAssignTab({
                           <label className="block text-[10px] font-bold text-slate-400 uppercase">Mô tả và thước đo cụ thể</label>
                           <button
                             type="button"
-                            onClick={() => handleGenerateSingleKpiDesc(3)}
-                            disabled={generatingKpiNum === 3 || !previewKpi3Name}
-                            className="text-[10px] text-indigo-700 hover:text-indigo-950 font-bold flex items-center gap-1 transition cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed"
-                            title="Tự động sinh mô tả chi tiết và thước đo định lượng bằng AI"
+                            onClick={() => {
+                              setActiveKpiForSuggestion(activeKpiForSuggestion === 3 ? null : 3);
+                              setSuggestionSearch('');
+                              setSelectedSuggestionCategory('Tất cả');
+                            }}
+                            className="text-[10px] text-indigo-700 hover:text-indigo-950 font-bold flex items-center gap-1 transition cursor-pointer"
+                            title="Mở thư viện gợi ý tham chiếu bám sát OKR và bộ tiêu chí"
                           >
-                            <Sparkles className={`w-3 h-3 text-indigo-600 ${generatingKpiNum === 3 ? 'animate-spin' : ''}`} />
-                            {generatingKpiNum === 3 ? 'Đang sinh...' : 'Sinh thêm mô tả (AI)'}
+                            <ListChecks className="w-3.5 h-3.5 text-indigo-600" />
+                            {activeKpiForSuggestion === 3 ? 'Đóng gợi ý' : '💡 Gợi ý tham chiếu & liên kết OKR'}
                           </button>
                         </div>
                         <textarea
@@ -943,6 +1123,7 @@ export default function BghAssignTab({
                             {previewKpi3Desc}
                           </div>
                         )}
+                        {activeKpiForSuggestion === 3 && renderKpiSuggestions(3, previewKr3, setPreviewKpi3Name, setPreviewKpi3Desc)}
                       </div>
                     </div>
                   </div>
