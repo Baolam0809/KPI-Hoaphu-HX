@@ -548,15 +548,6 @@ export default function UsersTab({
                       >
                         <Eye className="w-3 h-3" /> Xem
                       </button>
-                      {onOpenAssignModal && user.type !== 'BGH' && user.id !== 'admin' && (
-                        <button 
-                          onClick={() => onOpenAssignModal(user)}
-                          className="text-[11px] bg-rose-700 hover:bg-rose-800 text-white font-bold px-2 py-1 rounded transition border border-rose-700 cursor-pointer flex items-center gap-0.5 shadow-sm"
-                          title="Giao nhiệm vụ & tự sinh OKR-KPI thông minh"
-                        >
-                          <Sparkles className="w-3 h-3 text-yellow-300 animate-pulse" /> Giao OKR-KPI
-                        </button>
-                      )}
                       <button 
                         onClick={() => handleOpenResetPwdModal(user)}
                         className="text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold px-2 py-1 rounded transition border border-amber-200 cursor-pointer flex items-center gap-0.5"
