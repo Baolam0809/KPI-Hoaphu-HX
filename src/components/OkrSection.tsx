@@ -91,6 +91,50 @@ const DEFAULT_OKR_TEMPLATES: OKRTemplate[] = [
     kr2Progress: 0,
     kr3: '98% học sinh xếp loại rèn luyện (đạo đức) Khá/Tốt trở lên, không có học sinh trung bình.',
     kr3Progress: 0
+  },
+  {
+    id: 'tmpl-8',
+    name: 'Mẫu 8: Về chính trị tư tưởng',
+    title: 'Thực hiện nghiêm túc chủ trương, đường lối của Đảng, chính sách pháp luật của Nhà nước và các chỉ thị của Ngành Giáo dục',
+    kr1: 'Tham gia đầy đủ 100% các lớp bồi dưỡng chính trị, tập huấn nghị quyết của Đảng và đạt kết quả đánh giá xếp loại Tốt.',
+    kr1Progress: 0,
+    kr2: '100% các bài giảng lồng ghép giáo dục tư tưởng chính trị, đạo đức công dân và tình yêu quê hương đất nước hiệu quả.',
+    kr2Progress: 0,
+    kr3: 'Không có biểu hiện suy thoái về tư tưởng chính trị, tự diễn biến, tự chuyển hóa; gương mẫu trong mọi hoạt động.',
+    kr3Progress: 0
+  },
+  {
+    id: 'tmpl-9',
+    name: 'Mẫu 9: Đạo đức, lối sống',
+    title: 'Giữ gìn phẩm chất đạo đức nhà giáo, lối sống giản dị, lành mạnh, không ngừng tự học và giúp đỡ đồng nghiệp',
+    kr1: 'Đạt điểm đánh giá tuyệt đối (100%) về Chuẩn nghề nghiệp giáo viên ở tiêu chí Đạo đức nhà giáo.',
+    kr1Progress: 0,
+    kr2: 'Thực hiện ít nhất 2 buổi chia sẻ kinh nghiệm, giúp đỡ đồng nghiệp trong tổ chuyên môn cùng tiến bộ.',
+    kr2Progress: 0,
+    kr3: 'Đảm bảo tác phong sư phạm chuẩn mực, ngôn phong mẫu mực, thân thiện và bao dung đối với học sinh.',
+    kr3Progress: 0
+  },
+  {
+    id: 'tmpl-10',
+    name: 'Mẫu 10: Tác phong lề lối làm việc',
+    title: 'Cải tiến tác phong làm việc khoa học, đúng giờ, chủ động ứng dụng công nghệ trong công việc hành chính và giảng dạy',
+    kr1: '100% hồ sơ giáo án, sổ sách chuyên môn được hoàn thành đúng hạn, khoa học và đạt xếp loại Khá/Tốt trở lên.',
+    kr1Progress: 0,
+    kr2: 'Nâng cao hiệu suất xử lý công việc hành chính, giảm 20% thời gian soạn thảo báo cáo nhờ ứng dụng CNTT hiệu quả.',
+    kr2Progress: 0,
+    kr3: 'Tuân thủ nghiêm túc 100% thời gian biểu của nhà trường, ra vào lớp đúng giờ, tác phong sư phạm chuẩn mực.',
+    kr3Progress: 0
+  },
+  {
+    id: 'tmpl-11',
+    name: 'Mẫu 11: Ý thức tổ chức kỷ luật',
+    title: 'Nâng cao ý thức tổ chức kỷ luật, chấp hành sự phân công của tổ chức và tuân thủ các nội quy, quy chế của đơn vị',
+    kr1: 'Tham gia đầy đủ 100% các cuộc họp, hội nghị và hoạt động tập thể do nhà trường và Công đoàn tổ chức.',
+    kr1Progress: 0,
+    kr2: 'Nghiêm túc thực hiện 100% các quy định về báo cáo tiến độ, công khai minh bạch thông tin chuyên môn.',
+    kr2Progress: 0,
+    kr3: 'Chấp hành nghiêm chỉnh quy chế phát ngôn, tích cực xây dựng khối đoàn kết nội bộ vững mạnh trong cơ quan.',
+    kr3Progress: 0
   }
 ];
 
