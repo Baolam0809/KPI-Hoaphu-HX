@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Users, Search, Download, FileSpreadsheet, UserPlus, Trash2, Edit, X, FileCheck, Info, Eye, Key } from 'lucide-react';
+import { Users, Search, Download, FileSpreadsheet, UserPlus, Trash2, Edit, X, FileCheck, Info, Eye, Key, Sparkles } from 'lucide-react';
 import { User } from '../types';
 import * as XLSX from 'xlsx';
 
@@ -10,6 +10,7 @@ interface UsersTabProps {
   onDeleteUser: (id: string) => void;
   onViewEmployee: (userId: string) => void;
   showToast: (msg: string) => void;
+  onOpenAssignModal?: (user: User) => void;
 }
 
 export default function UsersTab({
@@ -18,7 +19,8 @@ export default function UsersTab({
   onUpdateUser,
   onDeleteUser,
   onViewEmployee,
-  showToast
+  showToast,
+  onOpenAssignModal
 }: UsersTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleGroup, setRoleGroup] = useState<'all' | 'BGH' | 'GiaoVien' | 'NhanVien'>('all');
@@ -498,7 +500,7 @@ export default function UsersTab({
                     </span>
                   </td>
                   <td className="p-3">
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex items-center justify-center flex-wrap gap-1">
                       <button 
                         onClick={() => onViewEmployee(user.id)}
                         className="text-[11px] bg-slate-100 hover:bg-blue-50 hover:text-blue-900 font-bold px-2 py-1 rounded transition border border-slate-200 cursor-pointer flex items-center gap-0.5"
@@ -506,6 +508,15 @@ export default function UsersTab({
                       >
                         <Eye className="w-3 h-3" /> Xem
                       </button>
+                      {onOpenAssignModal && (
+                        <button 
+                          onClick={() => onOpenAssignModal(user)}
+                          className="text-[11px] bg-rose-700 hover:bg-rose-800 text-white font-bold px-2 py-1 rounded transition border border-rose-700 cursor-pointer flex items-center gap-0.5 shadow-sm"
+                          title="Giao nhiệm vụ & tự sinh OKR-KPI thông minh"
+                        >
+                          <Sparkles className="w-3 h-3 text-yellow-300 animate-pulse" /> Giao OKR-KPI
+                        </button>
+                      )}
                       <button 
                         onClick={() => handleOpenResetPwdModal(user)}
                         className="text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold px-2 py-1 rounded transition border border-amber-200 cursor-pointer flex items-center gap-0.5"

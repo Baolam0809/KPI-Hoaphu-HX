@@ -80,6 +80,33 @@ export default function App() {
   const [showSqlModal, setShowSqlModal] = useState(false);
   const [isSqlCopied, setIsSqlCopied] = useState(false);
 
+  // States cho tính năng Giao việc & Tự sinh OKR-KPI bằng AI Gemini
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [selectedUserForAssign, setSelectedUserForAssign] = useState<User | null>(null);
+  
+  // States cho form giao việc & tự sinh
+  const [assignDirection, setAssignDirection] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationQuote, setGenerationQuote] = useState('');
+  
+  // States cho dữ liệu preview sau khi tự sinh
+  const [previewOkrTitle, setPreviewOkrTitle] = useState('');
+  const [previewKr1, setPreviewKr1] = useState('');
+  const [previewKr2, setPreviewKr2] = useState('');
+  const [previewKr3, setPreviewKr3] = useState('');
+  
+  const [previewKpi1Name, setPreviewKpi1Name] = useState('');
+  const [previewKpi1Weight, setPreviewKpi1Weight] = useState(40);
+  const [previewKpi1Desc, setPreviewKpi1Desc] = useState('');
+  
+  const [previewKpi2Name, setPreviewKpi2Name] = useState('');
+  const [previewKpi2Weight, setPreviewKpi2Weight] = useState(30);
+  const [previewKpi2Desc, setPreviewKpi2Desc] = useState('');
+  
+  const [previewKpi3Name, setPreviewKpi3Name] = useState('');
+  const [previewKpi3Weight, setPreviewKpi3Weight] = useState(30);
+  const [previewKpi3Desc, setPreviewKpi3Desc] = useState('');
+
   // Realtime clock state for the school marquee bar
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -390,7 +417,8 @@ export default function App() {
 
   // Lấy ID cán bộ hiện tại đang làm việc
   const activeUserId = viewedUserId || (currentUser === 'admin' ? 'THCS-HP-020' : (currentUser?.id || 'THCS-HP-020'));
-  const canEditActiveData = currentUser === 'admin' || (currentUser && currentUser !== 'admin' && activeUserId === currentUser.id);
+  const isBghOrToTruong = currentUser === 'admin' || (currentUser && currentUser !== 'admin' && (currentUser.type === 'BGH' || currentUser.role?.includes('Tổ trưởng') || currentUser.role?.includes('Tổ phó') || currentUser.role?.includes('Trưởng bộ môn')));
+  const canEditActiveData = currentUser === 'admin' || isBghOrToTruong || (currentUser && currentUser !== 'admin' && activeUserId === currentUser.id);
   const isBghOrAdmin = currentUser === 'admin' || (currentUser && currentUser !== 'admin' && currentUser.type === 'BGH');
 
   const activeUser = users.find(u => u.id === activeUserId);
@@ -523,6 +551,104 @@ export default function App() {
     } else {
       showToast('Đã cập nhật chỉ số vận hành KPI mới thành công!');
     }
+  };
+
+  const generateFallbackLocalTemplate = () => {
+    if (!selectedUserForAssign) return;
+    
+    if (selectedUserForAssign.type === 'GiaoVien') {
+      setPreviewOkrTitle("Nâng cao chất lượng bồi dưỡng học sinh giỏi và số hóa tài liệu học tập bộ môn");
+      setPreviewKr1("Số hóa 100% tài liệu ôn tập nâng cao lên hệ thống Drive của nhà trường.");
+      setPreviewKr2("Bồi dưỡng đội tuyển học sinh giỏi đạt ít nhất 02 giải cấp Huyện.");
+      setPreviewKr3("Thành công thực hiện 02 chuyên đề dạy học tích cực đổi mới.");
+      
+      setPreviewKpi1Name("1. Chất lượng giảng dạy chuyên môn");
+      setPreviewKpi1Weight(40);
+      setPreviewKpi1Desc("Giảng dạy đúng phân phối chương trình, đạt 100% hồ sơ giáo án chuẩn và có kiểm tra đánh giá chất lượng đúng kỳ hạn.");
+      
+      setPreviewKpi2Name("2. Phối hợp công tác chủ nhiệm & Quản lý lớp");
+      setPreviewKpi2Weight(30);
+      setPreviewKpi2Desc("Đảm bảo nề nếp kỷ luật học sinh lớp chủ nhiệm, phối hợp tích cực với gia dịch và duy trì sĩ số đạt trên 98%.");
+      
+      setPreviewKpi3Name("3. Tập huấn và Hoạt động phong trào");
+      setPreviewKpi3Weight(30);
+      setPreviewKpi3Desc("Hoàn thành 100% chỉ tiêu chương trình tập huấn GDPT mới, tham gia đầy đủ công tác phong trào thi đua của tổ chuyên môn.");
+    } else {
+      setPreviewOkrTitle("Cải tiến số hóa quy trình nghiệp vụ văn phòng và tối ưu hoạt động hỗ trợ hành chính");
+      setPreviewKr1("Số hóa và lưu trữ trực tuyến 100% công văn đi - đến và hồ sơ cán bộ.");
+      setPreviewKr2("Cắt giảm 20% thời gian xử lý thủ tục cấp phát học bạ và giấy chứng nhận học sinh.");
+      setPreviewKr3("Thiết kế 02 biểu mẫu theo dõi tài chính/thu chi không dùng tiền mặt quản lý tự động.");
+      
+      setPreviewKpi1Name("1. Hoàn thành nghiệp vụ công tác hành chính");
+      setPreviewKpi1Weight(40);
+      setPreviewKpi1Desc("Sổ sách kế toán, chứng từ rõ ràng, hồ sơ văn thư lưu trữ khoa học, chính xác, không xảy ra sai sót thanh tra.");
+      
+      setPreviewKpi2Name("2. Chấp hành nề nếp tác phong văn hóa sở");
+      setPreviewKpi2Weight(30);
+      setPreviewKpi2Desc("Bảo đảm trực giờ hành chính, đón tiếp phụ huynh và học sinh chu đáo, lịch thiệp, giữ gìn kỷ luật phòng ban xuất sắc.");
+      
+      setPreviewKpi3Name("3. Phối hợp liên phòng ban và công tác khẩn cấp");
+      setPreviewKpi3Weight(30);
+      setPreviewKpi3Desc("Sẵn sàng phối hợp thực hiện kỹ thuật hội trường, phục vụ đại hội, sự kiện chính thức và công tác an ninh, xanh sạch học đường.");
+    }
+  };
+
+  const handleAssignOkrKpis = async (targetUserId: string, newOkrs: OKR[], newKpis: KPI[]) => {
+    // 1. Cập nhật OKRs
+    const updatedOkrs = {
+      ...allOkrs,
+      [targetUserId]: newOkrs
+    };
+    setAllOkrs(updatedOkrs);
+    localStorage.setItem('thcs_hp_okrs', JSON.stringify(updatedOkrs));
+
+    // 2. Cập nhật KPIs
+    const updatedKpis = {
+      ...allKpis,
+      [targetUserId]: newKpis
+    };
+    setAllKpis(updatedKpis);
+    localStorage.setItem('thcs_hp_kpis', JSON.stringify(updatedKpis));
+
+    // 3. Đồng bộ lên Supabase nếu có kết nối
+    if (supabaseStatus === 'connected') {
+      try {
+        // Xóa OKRs cũ trên Supabase và ghi đè
+        const oldOkrs = allOkrs[targetUserId] || [];
+        for (const oldOkr of oldOkrs) {
+          try {
+            await deleteOkrFromSupabase(oldOkr.id);
+          } catch (e) {
+            console.error('Error deleting old OKR:', e);
+          }
+        }
+        // Lưu OKRs mới
+        for (const newOkr of newOkrs) {
+          await saveOkrToSupabase(targetUserId, newOkr);
+        }
+        // Lưu KPIs mới (hàm này đã tự động xóa KPIs cũ và thêm KPIs mới trên Supabase)
+        await saveUserKpisToSupabase(targetUserId, newKpis);
+      } catch (err: any) {
+        console.error('Error syncing assigned OKRs/KPIs to Supabase:', err);
+      }
+    }
+
+    // 4. Tạo thông báo tự động cho nhân sự được giao
+    const targetUser = users.find(u => u.id === targetUserId);
+    const assignerName = currentUser === 'admin' ? 'Ban Giám Hiệu' : (typeof currentUser === 'object' ? currentUser.name : 'Ban Giám Hiệu');
+    const newNotif: Notification = {
+      id: `notif-${Date.now()}`,
+      title: `🎯 [Giao việc] ${assignerName} đã giao bộ mục tiêu OKR mới kèm 3 chỉ số KPI vận hành chuẩn cho học kỳ này. Hãy bắt tay thực hiện ngay!`,
+      time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' — ' + new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }),
+      read: false,
+      type: 'urgent'
+    };
+    
+    const updatedNotifs = [newNotif, ...notifications];
+    setNotifications(updatedNotifs);
+    localStorage.setItem('thcs_hp_notifications', JSON.stringify(updatedNotifs));
+
+    showToast(`Đã giao OKR & KPI thành công cho: ${targetUser?.name || targetUserId}!`);
   };
 
   const getDefaultKpisForUser = (role: string, type: string): KPI[] => {
@@ -1131,7 +1257,7 @@ export default function App() {
           </div>
 
           {/* ====== TAB 3: DANH SÁCH NHÂN SỰ ====== */}
-          {currentUser === 'admin' && (
+          {(currentUser === 'admin' || isBghOrToTruong) && (
             <div className={activeTab === 'tab-users' ? 'animate-fade-in block' : 'hidden'}>
               <UsersTab 
                 users={users}
@@ -1140,6 +1266,10 @@ export default function App() {
                 onDeleteUser={handleDeleteUser}
                 onViewEmployee={handleViewEmployee}
                 showToast={showToast}
+                onOpenAssignModal={(user) => {
+                  setSelectedUserForAssign(user);
+                  setIsAssignModalOpen(true);
+                }}
               />
             </div>
           )}
@@ -1564,6 +1694,500 @@ export default function App() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ====== DIALOG: GIAO VIỆC & TỰ SINH OKR-KPI CHO CBGV-NV ====== */}
+      {isAssignModalOpen && selectedUserForAssign && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in overflow-y-auto" id="assign-okr-kpi-modal">
+          <div className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all my-8">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-rose-900 to-rose-950 px-6 py-4 flex items-center justify-between select-none">
+              <div className="flex items-center gap-2 text-white">
+                <div className="bg-rose-500/20 p-1.5 rounded-lg border border-rose-500/30">
+                  <Sparkles className="w-4 h-4 text-yellow-300 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm uppercase tracking-wide text-white">Giao Việc & Tự Sinh OKR-KPI Thông Minh</h3>
+                  <p className="text-[10px] text-rose-200">BGH và Tổ trưởng chuyên môn kiến tạo mục tiêu cho nhân sự toàn trường</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setIsAssignModalOpen(false);
+                  setSelectedUserForAssign(null);
+                  setAssignDirection('');
+                  setPreviewOkrTitle('');
+                  setPreviewKr1('');
+                  setPreviewKr2('');
+                  setPreviewKr3('');
+                  setPreviewKpi1Name('');
+                  setPreviewKpi2Name('');
+                  setPreviewKpi3Name('');
+                }}
+                className="text-white/80 hover:text-white hover:bg-white/10 rounded-full p-1.5 transition cursor-pointer text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Content body */}
+            <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto text-xs md:text-sm">
+              {/* Target employee profile card */}
+              <div className="bg-rose-50/50 border border-rose-100 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-rose-100 border border-rose-200 flex items-center justify-center text-rose-800 font-black text-base shrink-0 select-none overflow-hidden">
+                    {selectedUserForAssign.avatar && (selectedUserForAssign.avatar.startsWith('http') || selectedUserForAssign.avatar.startsWith('data:') || selectedUserForAssign.avatar.startsWith('/')) ? (
+                      <img src={selectedUserForAssign.avatar} alt={selectedUserForAssign.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                      selectedUserForAssign.avatar || selectedUserForAssign.name.split(' ').pop()?.substring(0, 2).toUpperCase()
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-black text-slate-900 text-sm md:text-base flex items-center gap-1.5">
+                      {selectedUserForAssign.name}
+                      <span className="font-mono text-[10px] bg-rose-150 text-rose-800 px-1.5 py-0.5 rounded font-bold">
+                        {selectedUserForAssign.id}
+                      </span>
+                    </h4>
+                    <p className="text-xs text-slate-500 font-semibold mt-0.5">
+                      Chức vụ: <span className="text-slate-800 font-bold">{selectedUserForAssign.role}</span> | Loại hình: <span className="text-slate-800 font-bold">{selectedUserForAssign.type === 'GiaoVien' ? 'Giáo viên giảng dạy' : selectedUserForAssign.type === 'NhanVien' ? 'Nhân viên hành chính' : 'Ban Giám Hiệu'}</span>
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-white px-3 py-2 rounded-lg border border-rose-100 text-[11px] leading-snug shrink-0">
+                  <span className="font-black text-rose-900 block uppercase tracking-wider text-[10px]">Học kỳ hiện tại</span>
+                  <span className="font-bold text-slate-800">{semester} | Năm học {schoolYear}</span>
+                </div>
+              </div>
+
+              {/* Assigner Directives Input & Assist */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                  Định hướng giao việc & Chỉ đạo của BGH / Tổ trưởng chuyên môn
+                </label>
+                <textarea
+                  value={assignDirection}
+                  onChange={(e) => setAssignDirection(e.target.value)}
+                  placeholder="Ví dụ: Nâng cao thành tích bồi dưỡng học sinh giỏi Ngữ văn lớp 9, đẩy mạnh soạn giảng E-learning trên hệ thống trường học thông minh..."
+                  className="w-full border border-slate-300 rounded-xl p-3 text-xs focus:ring-1 focus:ring-rose-800 focus:outline-none font-medium text-slate-800 min-h-[80px]"
+                />
+                
+                {/* Quick Assist prompts */}
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500">💡 Gợi ý nhanh định hướng theo phân ban:</span>
+                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                    {selectedUserForAssign.type === 'GiaoVien' ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setAssignDirection("Đẩy mạnh chuyển đổi số trong dạy học, tích cực xây dựng bài giảng điện tử E-learning, nâng cao chất lượng CNTT.")}
+                          className="text-[10px] bg-slate-100 hover:bg-rose-50 hover:text-rose-900 border border-slate-200 text-slate-600 px-2.5 py-1 rounded-md font-bold transition cursor-pointer"
+                        >
+                          🌐 Số hóa & E-learning
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAssignDirection("Tập trung ôn tập bồi dưỡng đội tuyển Học sinh giỏi cấp huyện, đổi mới phương pháp giảng dạy tích cực nâng cao học lực.")}
+                          className="text-[10px] bg-slate-100 hover:bg-rose-50 hover:text-rose-900 border border-slate-200 text-slate-600 px-2.5 py-1 rounded-md font-bold transition cursor-pointer"
+                        >
+                          🏆 Bồi dưỡng HSG giỏi
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAssignDirection("Nâng cao hiệu quả quản lý nề nếp lớp chủ nhiệm, xây dựng tập thể lớp kỷ luật tốt và gắn kết tốt với phụ huynh.")}
+                          className="text-[10px] bg-slate-100 hover:bg-rose-50 hover:text-rose-900 border border-slate-200 text-slate-600 px-2.5 py-1 rounded-md font-bold transition cursor-pointer"
+                        >
+                          🏫 Công tác Chủ nhiệm
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setAssignDirection("Ứng dụng phần mềm tự động hóa báo cáo, tối ưu hóa công tác lưu trữ sổ sách học đường và thông tin công văn.")}
+                          className="text-[10px] bg-slate-100 hover:bg-rose-50 hover:text-rose-900 border border-slate-200 text-slate-600 px-2.5 py-1 rounded-md font-bold transition cursor-pointer"
+                        >
+                          📂 Lưu trữ & Số hóa sổ sách
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAssignDirection("Nâng cao nghiệp vụ tài chính kế toán trường học, hỗ trợ phụ huynh đóng học phí không dùng tiền mặt đạt 100%.")}
+                          className="text-[10px] bg-slate-100 hover:bg-rose-50 hover:text-rose-900 border border-slate-200 text-slate-600 px-2.5 py-1 rounded-md font-bold transition cursor-pointer"
+                        >
+                          💳 Thu học phí không tiền mặt
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAssignDirection("Đảm bảo công tác y tế học đường, vệ sinh môi trường, an toàn học tập và phòng chống cháy nổ tuyệt đối.")}
+                          className="text-[10px] bg-slate-100 hover:bg-rose-50 hover:text-rose-900 border border-slate-200 text-slate-600 px-2.5 py-1 rounded-md font-bold transition cursor-pointer"
+                        >
+                          🏥 Y tế & Vệ sinh môi trường
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Trigger Generation Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isGenerating}
+                  onClick={async () => {
+                    setIsGenerating(true);
+                    
+                    const quotes = [
+                      "Trí tuệ nhân tạo Gemini đang phân tích định hướng giáo dục...",
+                      "Đang kết nối thư viện mục tiêu THCS chuẩn quốc gia...",
+                      "Đang tự động sinh mục tiêu OKR đổi mới sáng tạo...",
+                      "Đang định lượng hóa chỉ số vận hành KPI cân bằng...",
+                      "Đang rà soát ngôn ngữ chuẩn quy chế chuyên môn..."
+                    ];
+                    
+                    let quoteIndex = 0;
+                    setGenerationQuote(quotes[0]);
+                    const quoteInterval = setInterval(() => {
+                      quoteIndex = (quoteIndex + 1) % quotes.length;
+                      setGenerationQuote(quotes[quoteIndex]);
+                    }, 1200);
+
+                    try {
+                      const response = await fetch("/api/generate-okr-kpi", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          name: selectedUserForAssign.name,
+                          role: selectedUserForAssign.role,
+                          type: selectedUserForAssign.type,
+                          direction: assignDirection
+                        })
+                      });
+                      
+                      if (!response.ok) {
+                        throw new Error("Failed to call Gemini server API");
+                      }
+                      
+                      const data = await response.json();
+                      
+                      // Cập nhật các preview state
+                      setPreviewOkrTitle(data.okr.title);
+                      setPreviewKr1(data.okr.kr1);
+                      setPreviewKr2(data.okr.kr2);
+                      setPreviewKr3(data.okr.kr3);
+                      
+                      if (data.kpis && data.kpis[0]) {
+                        setPreviewKpi1Name(data.kpis[0].criterion);
+                        setPreviewKpi1Weight(data.kpis[0].weight);
+                        setPreviewKpi1Desc(data.kpis[0].desc);
+                      }
+                      if (data.kpis && data.kpis[1]) {
+                        setPreviewKpi2Name(data.kpis[1].criterion);
+                        setPreviewKpi2Weight(data.kpis[1].weight);
+                        setPreviewKpi2Desc(data.kpis[1].desc);
+                      }
+                      if (data.kpis && data.kpis[2]) {
+                        setPreviewKpi3Name(data.kpis[2].criterion);
+                        setPreviewKpi3Weight(data.kpis[2].weight);
+                        setPreviewKpi3Desc(data.kpis[2].desc);
+                      }
+                      
+                      showToast("Đã tự sinh OKR và KPI thành công bằng AI Gemini!");
+                    } catch (error: any) {
+                      console.error("AI Generation failed, falling back to local expert template...", error);
+                      generateFallbackLocalTemplate();
+                      showToast("Đã kích hoạt chế độ tự sinh bằng Mẫu chuyên gia (Offline)!");
+                    } finally {
+                      clearInterval(quoteInterval);
+                      setIsGenerating(false);
+                    }
+                  }}
+                  className="flex-1 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white font-bold py-3 px-4 rounded-xl text-center transition cursor-pointer flex items-center justify-center gap-2 shadow-md hover:scale-[1.01]"
+                >
+                  <Sparkles className="w-4 h-4 text-yellow-300 animate-pulse" /> 
+                  {isGenerating ? "Đang xử lý tự sinh..." : "🤖 Tự sinh bằng Trí tuệ Nhân tạo Gemini (Khuyên dùng)"}
+                </button>
+                
+                <button
+                  type="button"
+                  disabled={isGenerating}
+                  onClick={() => {
+                    generateFallbackLocalTemplate();
+                    showToast("Đã sinh OKR-KPI từ Mẫu chuyên gia thành công!");
+                  }}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold py-3 px-4 rounded-xl text-center transition cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4 text-emerald-600" /> Tự sinh nhanh từ Mẫu Chuyên gia
+                </button>
+              </div>
+
+              {/* Animated Loading Panel */}
+              {isGenerating && (
+                <div className="bg-slate-900 text-slate-100 p-6 rounded-xl flex flex-col items-center justify-center gap-4 border border-slate-800 shadow-inner select-none animate-pulse">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full border-4 border-rose-500/20 border-t-rose-500 animate-spin"></div>
+                    <Sparkles className="w-5 h-5 text-yellow-300 absolute inset-0 m-auto animate-ping" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-black text-white">{generationQuote}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">Xin vui lòng đợi vài giây để Gemini xây dựng mục tiêu chất lượng cao...</p>
+                  </div>
+                </div>
+              )}
+
+              {/* LIVE PREVIEW & FINE-TUNING PANEL */}
+              {(previewOkrTitle || previewKpi1Name) && !isGenerating && (
+                <div className="space-y-4 border border-slate-200 bg-slate-50/50 rounded-xl p-5 animate-fade-in">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <h5 className="font-black text-slate-950 flex items-center gap-1.5 uppercase tracking-wide text-xs">
+                      🔍 Xem trước & Tinh chỉnh dữ liệu trước khi Giao
+                    </h5>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                      Bản thảo hoàn chỉnh
+                    </span>
+                  </div>
+
+                  {/* Section A: OKR */}
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center gap-1.5 font-black text-rose-800 text-[11px] uppercase tracking-wider">
+                      <Award className="w-4 h-4 text-rose-600" /> Phần A: Mục tiêu Đổi mới Sáng tạo (OKR)
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="space-y-1">
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase">Mục tiêu (Objective)</label>
+                        <input
+                          type="text"
+                          value={previewOkrTitle}
+                          onChange={(e) => setPreviewOkrTitle(e.target.value)}
+                          className="w-full border border-slate-300 rounded-lg p-2 text-xs font-bold text-slate-800 bg-slate-50 focus:bg-white"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase">Kết quả then chốt 1 (KR1)</label>
+                          <input
+                            type="text"
+                            value={previewKr1}
+                            onChange={(e) => setPreviewKr1(e.target.value)}
+                            className="w-full border border-slate-300 rounded-lg p-2 text-xs font-medium text-slate-800 bg-slate-50 focus:bg-white"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase">Kết quả then chốt 2 (KR2)</label>
+                          <input
+                            type="text"
+                            value={previewKr2}
+                            onChange={(e) => setPreviewKr2(e.target.value)}
+                            className="w-full border border-slate-300 rounded-lg p-2 text-xs font-medium text-slate-800 bg-slate-50 focus:bg-white"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase">Kết quả then chốt 3 (KR3)</label>
+                          <input
+                            type="text"
+                            value={previewKr3}
+                            onChange={(e) => setPreviewKr3(e.target.value)}
+                            className="w-full border border-slate-300 rounded-lg p-2 text-xs font-medium text-slate-800 bg-slate-50 focus:bg-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section B: KPI */}
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 font-black text-rose-800 text-[11px] uppercase tracking-wider">
+                        <Database className="w-4 h-4 text-rose-600" /> Phần B: 3 Chỉ số vận hành cốt lõi (KPI)
+                      </div>
+                      <span className={`text-xs font-black px-2 py-0.5 rounded ${
+                        (previewKpi1Weight + previewKpi2Weight + previewKpi3Weight) === 100 
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200" 
+                          : "bg-red-50 text-red-600 border border-red-200 animate-pulse"
+                      }`}>
+                        Tổng Trọng số: {previewKpi1Weight + previewKpi2Weight + previewKpi3Weight}% {
+                          (previewKpi1Weight + previewKpi2Weight + previewKpi3Weight) !== 100 && " (Yêu cầu phải bằng 100%)"
+                        }
+                      </span>
+                    </div>
+
+                    <div className="space-y-3">
+                      {/* KPI 1 */}
+                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+                        <div className="grid grid-cols-4 gap-3">
+                          <div className="col-span-3 space-y-1">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Tiêu chí đánh giá 1</label>
+                            <input
+                              type="text"
+                              value={previewKpi1Name}
+                              onChange={(e) => setPreviewKpi1Name(e.target.value)}
+                              className="w-full border border-slate-300 rounded-md p-1.5 text-xs font-bold text-slate-800 bg-white"
+                            />
+                          </div>
+                          <div className="col-span-1 space-y-1">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Trọng số (%)</label>
+                            <input
+                              type="number"
+                              value={previewKpi1Weight}
+                              onChange={(e) => setPreviewKpi1Weight(parseInt(e.target.value) || 0)}
+                              className="w-full border border-slate-300 rounded-md p-1.5 text-xs font-bold text-slate-800 bg-white text-center"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase">Hướng dẫn đo lường & Tiêu chuẩn đạt</label>
+                          <textarea
+                            value={previewKpi1Desc}
+                            onChange={(e) => setPreviewKpi1Desc(e.target.value)}
+                            className="w-full border border-slate-300 rounded-md p-1.5 text-xs font-medium text-slate-800 bg-white min-h-[45px]"
+                          />
+                        </div>
+                      </div>
+
+                      {/* KPI 2 */}
+                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+                        <div className="grid grid-cols-4 gap-3">
+                          <div className="col-span-3 space-y-1">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Tiêu chí đánh giá 2</label>
+                            <input
+                              type="text"
+                              value={previewKpi2Name}
+                              onChange={(e) => setPreviewKpi2Name(e.target.value)}
+                              className="w-full border border-slate-300 rounded-md p-1.5 text-xs font-bold text-slate-800 bg-white"
+                            />
+                          </div>
+                          <div className="col-span-1 space-y-1">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Trọng số (%)</label>
+                            <input
+                              type="number"
+                              value={previewKpi2Weight}
+                              onChange={(e) => setPreviewKpi2Weight(parseInt(e.target.value) || 0)}
+                              className="w-full border border-slate-300 rounded-md p-1.5 text-xs font-bold text-slate-800 bg-white text-center"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase">Hướng dẫn đo lường & Tiêu chuẩn đạt</label>
+                          <textarea
+                            value={previewKpi2Desc}
+                            onChange={(e) => setPreviewKpi2Desc(e.target.value)}
+                            className="w-full border border-slate-300 rounded-md p-1.5 text-xs font-medium text-slate-800 bg-white min-h-[45px]"
+                          />
+                        </div>
+                      </div>
+
+                      {/* KPI 3 */}
+                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+                        <div className="grid grid-cols-4 gap-3">
+                          <div className="col-span-3 space-y-1">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Tiêu chí đánh giá 3</label>
+                            <input
+                              type="text"
+                              value={previewKpi3Name}
+                              onChange={(e) => setPreviewKpi3Name(e.target.value)}
+                              className="w-full border border-slate-300 rounded-md p-1.5 text-xs font-bold text-slate-800 bg-white"
+                            />
+                          </div>
+                          <div className="col-span-1 space-y-1">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Trọng số (%)</label>
+                            <input
+                              type="number"
+                              value={previewKpi3Weight}
+                              onChange={(e) => setPreviewKpi3Weight(parseInt(e.target.value) || 0)}
+                              className="w-full border border-slate-300 rounded-md p-1.5 text-xs font-bold text-slate-800 bg-white text-center"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase">Hướng dẫn đo lường & Tiêu chuẩn đạt</label>
+                          <textarea
+                            value={previewKpi3Desc}
+                            onChange={(e) => setPreviewKpi3Desc(e.target.value)}
+                            className="w-full border border-slate-300 rounded-md p-1.5 text-xs font-medium text-slate-800 bg-white min-h-[45px]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer actions */}
+            <div className="bg-slate-50 border-t border-slate-100 px-6 py-4 flex items-center justify-end gap-3 font-bold text-xs md:text-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAssignModalOpen(false);
+                  setSelectedUserForAssign(null);
+                  setAssignDirection('');
+                  setPreviewOkrTitle('');
+                  setPreviewKr1('');
+                  setPreviewKr2('');
+                  setPreviewKr3('');
+                  setPreviewKpi1Name('');
+                  setPreviewKpi2Name('');
+                  setPreviewKpi3Name('');
+                }}
+                className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-4 py-2.5 rounded-lg transition cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                disabled={isGenerating || (!previewOkrTitle && !previewKpi1Name)}
+                onClick={() => {
+                  if (!previewOkrTitle) {
+                    showToast("Vui lòng tự sinh dữ liệu mục tiêu OKR trước khi phê duyệt!");
+                    return;
+                  }
+                  const totalWeight = previewKpi1Weight + previewKpi2Weight + previewKpi3Weight;
+                  if (totalWeight !== 100) {
+                    showToast(`Tổng trọng số KPI là ${totalWeight}%. Yêu cầu tổng phải bằng chính xác 100%!`);
+                    return;
+                  }
+
+                  // Build OKR & KPI list
+                  const generatedOkrs: OKR[] = [
+                    {
+                      id: `okr-assign-${Date.now()}`,
+                      title: previewOkrTitle,
+                      kr1: previewKr1,
+                      kr1Progress: 0,
+                      kr2: previewKr2,
+                      kr2Progress: 0,
+                      kr3: previewKr3,
+                      kr3Progress: 0
+                    }
+                  ];
+
+                  const generatedKpis: KPI[] = [
+                    { criterion: previewKpi1Name, weight: previewKpi1Weight, desc: previewKpi1Desc, value: 0 },
+                    { criterion: previewKpi2Name, weight: previewKpi2Weight, desc: previewKpi2Desc, value: 0 },
+                    { criterion: previewKpi3Name, weight: previewKpi3Weight, desc: previewKpi3Desc, value: 0 }
+                  ];
+
+                  handleAssignOkrKpis(selectedUserForAssign.id, generatedOkrs, generatedKpis);
+                  setIsAssignModalOpen(false);
+                  setSelectedUserForAssign(null);
+                  setAssignDirection('');
+                  setPreviewOkrTitle('');
+                  setPreviewKr1('');
+                  setPreviewKr2('');
+                  setPreviewKr3('');
+                  setPreviewKpi1Name('');
+                  setPreviewKpi2Name('');
+                  setPreviewKpi3Name('');
+                }}
+                className="bg-rose-800 hover:bg-rose-900 text-white px-5 py-2.5 rounded-lg shadow-sm transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Check className="w-4 h-4 text-white" /> Phê duyệt & Giao việc chính thức
+              </button>
+            </div>
           </div>
         </div>
       )}
