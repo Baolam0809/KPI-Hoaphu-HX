@@ -156,18 +156,36 @@ export default function OkrSection({ okrs, onAddOkr, onUpdateOkr, onDeleteOkr, r
   const [isMainTemplateDropdownOpen, setIsMainTemplateDropdownOpen] = useState(false);
   const [templates, setTemplates] = useState<OKRTemplate[]>(() => {
     const cached = localStorage.getItem('thcs_hp_okr_templates');
+    const fixVietnameseTypos = (text: string): string => {
+      if (!text) return text;
+      return text
+        .replace(/bảo dung/g, 'bao dung')
+        .replace(/giáo sư phạm/g, 'sư phạm')
+        .replace(/văn phong mẫu mực/g, 'ngôn phong mẫu mực')
+        .replace(/hoạt động sư phạm chuẩn mực/g, 'tác phong sư phạm chuẩn mực');
+    };
+
     if (cached) {
       try {
         const parsed = JSON.parse(cached) as OKRTemplate[];
-        // Merge: Keep all user cached templates, but if any default template is missing by ID, append it!
-        const parsedIds = new Set(parsed.map(t => t.id));
+        // Auto-correct spelling errors in parsed cached templates
+        const corrected = parsed.map(t => ({
+          ...t,
+          title: fixVietnameseTypos(t.title),
+          kr1: fixVietnameseTypos(t.kr1),
+          kr2: fixVietnameseTypos(t.kr2),
+          kr3: fixVietnameseTypos(t.kr3)
+        }));
+
+        const parsedIds = new Set(corrected.map(t => t.id));
         const missingDefaults = DEFAULT_OKR_TEMPLATES.filter(t => !parsedIds.has(t.id));
         if (missingDefaults.length > 0) {
-          const merged = [...parsed, ...missingDefaults];
+          const merged = [...corrected, ...missingDefaults];
           localStorage.setItem('thcs_hp_okr_templates', JSON.stringify(merged));
           return merged;
         }
-        return parsed;
+        localStorage.setItem('thcs_hp_okr_templates', JSON.stringify(corrected));
+        return corrected;
       } catch (e) {
         console.error('Error parsing cached OKR templates:', e);
       }

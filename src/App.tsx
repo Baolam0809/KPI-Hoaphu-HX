@@ -160,14 +160,38 @@ export default function App() {
       const cachedNotifications = localStorage.getItem('thcs_hp_notifications');
       const cachedSchedules = localStorage.getItem('thcs_hp_schedules');
 
+      const fixVietnameseTypos = (text: string): string => {
+        if (!text) return text;
+        return text
+          .replace(/bảo dung/g, 'bao dung')
+          .replace(/giáo sư phạm/g, 'sư phạm')
+          .replace(/văn phong mẫu mực/g, 'ngôn phong mẫu mực')
+          .replace(/hoạt động sư phạm chuẩn mực/g, 'tác phong sư phạm chuẩn mực');
+      };
+
       if (cachedUsers) setUsers(JSON.parse(cachedUsers));
       else {
         setUsers(INITIAL_USERS);
         localStorage.setItem('thcs_hp_users', JSON.stringify(INITIAL_USERS));
       }
 
-      if (cachedOkrs) setAllOkrs(JSON.parse(cachedOkrs));
-      else {
+      if (cachedOkrs) {
+        try {
+          const parsed = JSON.parse(cachedOkrs);
+          const fixed = parsed.map((okr: any) => ({
+            ...okr,
+            title: fixVietnameseTypos(okr.title),
+            kr1: fixVietnameseTypos(okr.kr1),
+            kr2: fixVietnameseTypos(okr.kr2),
+            kr3: fixVietnameseTypos(okr.kr3)
+          }));
+          setAllOkrs(fixed);
+          localStorage.setItem('thcs_hp_okrs', JSON.stringify(fixed));
+        } catch (e) {
+          console.error('Error parsing cached OKRs:', e);
+          setAllOkrs(INITIAL_OKRS);
+        }
+      } else {
         setAllOkrs(INITIAL_OKRS);
         localStorage.setItem('thcs_hp_okrs', JSON.stringify(INITIAL_OKRS));
       }
