@@ -13,6 +13,7 @@ interface UsersTabProps {
   onOpenAssignModal?: (user: User) => void;
   allKpis?: Record<string, any[]>;
   currentUser?: User | 'admin';
+  kpiSubmissions?: Record<string, string>;
 }
 
 export default function UsersTab({
@@ -24,7 +25,8 @@ export default function UsersTab({
   showToast,
   onOpenAssignModal,
   allKpis,
-  currentUser
+  currentUser,
+  kpiSubmissions = {}
 }: UsersTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleGroup, setRoleGroup] = useState<'all' | 'BGH' | 'GiaoVien' | 'NhanVien'>('all');
@@ -521,11 +523,21 @@ export default function UsersTab({
                       const finalLeaderScore = totalWeight > 0 ? Math.round(leaderScoreSum / totalWeight) : 0;
                       const finalBghScore = totalWeight > 0 ? Math.round(bghScoreSum / totalWeight) : 0;
 
+                      const isSubmitted = !!kpiSubmissions[user.id];
+
                       return (
                         <div className="flex flex-col gap-1 items-center">
-                          <span className="font-extrabold text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded shadow-3xs">
-                            Đã nộp
-                          </span>
+                          {isSubmitted ? (
+                            <span className="font-extrabold text-[9px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded shadow-3xs flex items-center gap-0.5 uppercase tracking-wider">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 animate-ping"></span>
+                              Đã nộp
+                            </span>
+                          ) : (
+                            <span className="font-extrabold text-[9px] text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded shadow-3xs flex items-center gap-0.5 uppercase tracking-wider">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+                              Đang nháp
+                            </span>
+                          )}
                           <div className="flex flex-col gap-0.5 text-[10px] text-left font-semibold">
                             <span className="text-slate-500 whitespace-nowrap">
                               🙋‍♂️ Tự chấm: <strong className="text-slate-800 font-bold">{finalSelfScore || 0}</strong>

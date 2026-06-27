@@ -18,7 +18,10 @@ import {
   Paperclip,
   RotateCcw,
   Edit3,
-  Save
+  Save,
+  Send,
+  CheckCircle,
+  Check
 } from 'lucide-react';
 import { KPI, Evidence, User } from '../types';
 
@@ -34,6 +37,8 @@ interface KpiSectionProps {
   onUpdateUserRatingOverride?: (rating?: string) => void;
   isBghOrAdmin?: boolean;
   isBghOrToTruong?: boolean;
+  kpiSubmissions?: Record<string, string>;
+  onKpiSubmit?: (userId: string) => void;
 }
 
 const getEvidenceIcon = (type: string, fileType?: string) => {
@@ -79,7 +84,9 @@ export default function KpiSection({
   activeUser,
   onUpdateUserRatingOverride,
   isBghOrAdmin = false,
-  isBghOrToTruong = false
+  isBghOrToTruong = false,
+  kpiSubmissions = {},
+  onKpiSubmit
 }: KpiSectionProps) {
   
   // Custom states for adding evidence modal
@@ -553,6 +560,53 @@ export default function KpiSection({
             </div>
           )
         )
+      )}
+
+      {activeUser && !isBghOrToTruong && !readOnly && (
+        <div className="mb-4">
+          {kpiSubmissions[activeUser.id] ? (
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg p-4 shadow-3xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex gap-2 items-start">
+                <CheckCircle className="w-5 h-5 shrink-0 text-emerald-600 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-sm text-emerald-950">Đã nộp báo cáo OKR-KPI thành công!</h4>
+                  <p className="text-xs text-emerald-700 mt-0.5">
+                    Bạn đã gửi kết quả tự chấm điểm và đăng ký KPI lên Tổ trưởng & Ban Giám Hiệu vào lúc{' '}
+                    <strong className="text-emerald-900">
+                      {new Date(kpiSubmissions[activeUser.id]).toLocaleString('vi-VN')}
+                    </strong>.
+                  </p>
+                  <p className="text-[11px] text-emerald-600 mt-1 italic">
+                    * Bạn hiện có thể tiếp tục xem hồ sơ của mình, điểm chính thức đang được hội đồng sư phạm đánh giá.
+                  </p>
+                </div>
+              </div>
+              <span className="shrink-0 bg-emerald-600 text-white font-extrabold text-[10px] px-2.5 py-1 rounded shadow-3xs uppercase tracking-wider flex items-center gap-1">
+                <Check className="w-3.5 h-3.5" /> Đã nộp lên BGH
+              </span>
+            </div>
+          ) : (
+            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 text-indigo-950 rounded-lg p-4 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex gap-2.5 items-start">
+                <Send className="w-5 h-5 shrink-0 text-indigo-600 mt-0.5 animate-pulse" />
+                <div>
+                  <h4 className="font-bold text-sm text-indigo-950">Hoàn tất tự chấm & Nộp báo cáo OKR-KPI</h4>
+                  <p className="text-xs text-indigo-700 mt-0.5 leading-relaxed">
+                    Sau khi đã tự kéo thanh điểm "Tự chấm" cho tất cả các tiêu chuẩn và đính kèm đầy đủ minh chứng ở dưới, vui lòng click nút bên cạnh để chính thức nộp hồ sơ lên Tổ trưởng & BGH.
+                  </p>
+                </div>
+              </div>
+              {onKpiSubmit && (
+                <button
+                  onClick={() => onKpiSubmit(activeUser.id)}
+                  className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition shadow-sm hover:shadow flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider"
+                >
+                  <Send className="w-3.5 h-3.5" /> Nộp báo cáo ngay
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* KPI Items Table */}

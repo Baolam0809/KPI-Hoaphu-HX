@@ -35,6 +35,7 @@ import {
   saveGroupAssignmentsToSupabase,
   saveAuditLogToSupabase,
   seedSupabaseInitialData,
+  saveKpiSubmissionsToSupabase,
   SQL_MIGRATION_SCRIPT
 } from './supabaseClient';
 
@@ -66,6 +67,7 @@ export default function App() {
   const [users, setUsers] = useState<User[]>([]);
   const [allOkrs, setAllOkrs] = useState<Record<string, OKR[]>>({});
   const [allKpis, setAllKpis] = useState<Record<string, KPI[]>>({});
+  const [kpiSubmissions, setKpiSubmissions] = useState<Record<string, string>>({});
   const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
   const [notifications, setNotifications] = useState<Notification[]>(DEFAULT_NOTIFICATIONS);
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>(DEFAULT_SCHEDULE_ITEMS);
@@ -187,6 +189,10 @@ export default function App() {
           setAllKpis(data.allKpis || {});
           localStorage.setItem('thcs_hp_kpis', JSON.stringify(data.allKpis || {}));
           
+          const submissions = (data as any).kpiSubmissions || {};
+          setKpiSubmissions(submissions);
+          localStorage.setItem('thcs_hp_kpi_submissions', JSON.stringify(submissions));
+          
           if (data.settings) {
             setSettings(data.settings);
             localStorage.setItem('thcs_hp_settings', JSON.stringify(data.settings));
@@ -269,6 +275,13 @@ export default function App() {
       else {
         setAllKpis(INITIAL_KPIS);
         localStorage.setItem('thcs_hp_kpis', JSON.stringify(INITIAL_KPIS));
+      }
+
+      const cachedSubmissions = localStorage.getItem('thcs_hp_kpi_submissions');
+      if (cachedSubmissions) {
+        setKpiSubmissions(JSON.parse(cachedSubmissions));
+      } else {
+        setKpiSubmissions({});
       }
 
       if (cachedSettings) setSettings(JSON.parse(cachedSettings));
@@ -695,6 +708,50 @@ export default function App() {
         console.error('Error syncing KPIs scores:', err);
       }
     }
+  };
+
+  const handleKpiSubmit = async (userId: string) => {
+    const timestamp = new Date().toISOString();
+    const updatedSubmissions = {
+      ...kpiSubmissions,
+      [userId]: timestamp
+    };
+    setKpiSubmissions(updatedSubmissions);
+    localStorage.setItem('thcs_hp_kpi_submissions', JSON.stringify(updatedSubmissions));
+
+    // Get user details
+    const targetUser = users.find(u => u.id === userId);
+    const userName = targetUser ? targetUser.name : userId;
+    const userRole = targetUser ? targetUser.role : '';
+
+    // Log activity
+    logActivity(
+      'Nộp báo cáo OKR-KPI',
+      `Cá nhân [${userName}] đã hoàn tất tự đánh giá và chính thức nộp báo cáo OKR-KPI lên Tổ trưởng & BGH.`
+    );
+
+    // Save to Supabase if connected
+    if (supabaseStatus === 'connected') {
+      try {
+        await saveKpiSubmissionsToSupabase(updatedSubmissions);
+      } catch (err: any) {
+        console.error('Error syncing KPI submission to Supabase:', err);
+      }
+    }
+
+    // Add a system notification
+    const newNotif: Notification = {
+      id: `notif-${Date.now()}`,
+      title: 'Báo cáo OKR-KPI mới',
+      content: `Nhân sự [${userName}] (${userRole}) đã nộp kết quả tự chấm điểm và đăng ký KPI học kỳ này.`,
+      time: 'Vừa xong',
+      type: 'info',
+      read: false
+    };
+    const updatedNotifs = [newNotif, ...notifications];
+    saveNotificationsToCache(updatedNotifs);
+
+    showToast('Nộp báo cáo OKR-KPI thành công!');
   };
 
   const handleKpiEvidencesChange = async (index: number, evidences: any[]) => {
@@ -1814,6 +1871,8 @@ export default function App() {
               }}
               isBghOrAdmin={isBghOrAdmin}
               isBghOrToTruong={isBghOrToTruong}
+              kpiSubmissions={kpiSubmissions}
+              onKpiSubmit={handleKpiSubmit}
             />
           </div>
 
@@ -1842,6 +1901,7 @@ export default function App() {
                 }}
                 allKpis={allKpis}
                 currentUser={currentUser}
+                kpiSubmissions={kpiSubmissions}
               />
             </div>
           )}

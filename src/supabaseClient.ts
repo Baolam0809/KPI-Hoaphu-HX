@@ -125,6 +125,7 @@ export async function loadAllDataFromSupabase(): Promise<{
   settings: SystemSettings | null;
   groupAssignments?: GroupAssignment[] | null;
   auditLogs?: AuditLog[] | null;
+  kpiSubmissions?: Record<string, string>;
 }> {
   // 1. Fetch Users
   const { data: usersData, error: usersError } = await supabase
@@ -172,6 +173,18 @@ export async function loadAllDataFromSupabase(): Promise<{
   let groupAssignments: GroupAssignment[] | null = null;
   if (!groupAssignmentsError && groupAssignmentsData) {
     groupAssignments = groupAssignmentsData.value as GroupAssignment[];
+  }
+
+  // 5.5. Fetch KPI Submissions
+  const { data: kpiSubmissionsData, error: kpiSubmissionsError } = await supabase
+    .from('thcs_hp_settings')
+    .select('*')
+    .eq('key', 'kpi_submissions')
+    .single();
+
+  let kpiSubmissions: Record<string, string> = {};
+  if (!kpiSubmissionsError && kpiSubmissionsData) {
+    kpiSubmissions = kpiSubmissionsData.value as Record<string, string>;
   }
 
   // 6. Fetch Audit Logs
@@ -239,19 +252,42 @@ export async function loadAllDataFromSupabase(): Promise<{
         
         let desc = rest.desc || '';
         let evidences: any[] = [];
-        const match = desc.match(/ \[EVIDENCES_JSON_METADATA:(.*)\]$/);
-        if (match) {
+        let selfScore: number | undefined = undefined;
+        let leaderScore: number | undefined = undefined;
+        let bghScore: number | undefined = undefined;
+
+        // Try new KPI_METADATA_JSON match first
+        const metaMatch = desc.match(/ \[KPI_METADATA_JSON:(.*)\]$/);
+        if (metaMatch) {
           try {
-            evidences = JSON.parse(match[1]);
-            desc = desc.replace(/ \[EVIDENCES_JSON_METADATA:(.*)\]$/, '');
+            const meta = JSON.parse(metaMatch[1]);
+            evidences = meta.evidences || [];
+            if (meta.selfScore !== undefined) selfScore = meta.selfScore;
+            if (meta.leaderScore !== undefined) leaderScore = meta.leaderScore;
+            if (meta.bghScore !== undefined) bghScore = meta.bghScore;
+            desc = desc.replace(/ \[KPI_METADATA_JSON:(.*)\]$/, '');
           } catch (e) {
-            console.error('Error parsing evidences metadata:', e);
+            console.error('Error parsing KPI_METADATA_JSON:', e);
+          }
+        } else {
+          // Fallback to legacy EVIDENCES_JSON_METADATA match
+          const match = desc.match(/ \[EVIDENCES_JSON_METADATA:(.*)\]$/);
+          if (match) {
+            try {
+              evidences = JSON.parse(match[1]);
+              desc = desc.replace(/ \[EVIDENCES_JSON_METADATA:(.*)\]$/, '');
+            } catch (e) {
+              console.error('Error parsing evidences metadata:', e);
+            }
           }
         }
         
         allKpis[user_id].push({
           ...rest,
           desc,
+          selfScore,
+          leaderScore,
+          bghScore,
           evidences: evidences.length > 0 ? evidences : undefined
         });
       }
@@ -264,7 +300,8 @@ export async function loadAllDataFromSupabase(): Promise<{
     allKpis,
     settings,
     groupAssignments,
-    auditLogs
+    auditLogs,
+    kpiSubmissions
   };
 }
 
@@ -350,8 +387,16 @@ export async function saveUserKpisToSupabase(userId: string, kpis: KPI[]): Promi
 
   const rowsToInsert = kpis.map(kpi => {
     let finalDesc = kpi.desc;
+    const meta: Record<string, any> = {};
     if (kpi.evidences && kpi.evidences.length > 0) {
-      finalDesc = `${kpi.desc} [EVIDENCES_JSON_METADATA:${JSON.stringify(kpi.evidences)}]`;
+      meta.evidences = kpi.evidences;
+    }
+    if (kpi.selfScore !== undefined) meta.selfScore = kpi.selfScore;
+    if (kpi.leaderScore !== undefined) meta.leaderScore = kpi.leaderScore;
+    if (kpi.bghScore !== undefined) meta.bghScore = kpi.bghScore;
+
+    if (Object.keys(meta).length > 0) {
+      finalDesc = `${kpi.desc} [KPI_METADATA_JSON:${JSON.stringify(meta)}]`;
     }
     return {
       user_id: userId,
@@ -378,6 +423,20 @@ export async function saveGroupAssignmentsToSupabase(groupAssignments: GroupAssi
     .upsert({
       key: 'group_assignments',
       value: groupAssignments
+    });
+
+  if (error) throw error;
+}
+
+/**
+ * Save KPI Submissions to Supabase
+ */
+export async function saveKpiSubmissionsToSupabase(submissions: Record<string, string>): Promise<void> {
+  const { error } = await supabase
+    .from('thcs_hp_settings')
+    .upsert({
+      key: 'kpi_submissions',
+      value: submissions
     });
 
   if (error) throw error;
