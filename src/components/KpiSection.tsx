@@ -405,7 +405,7 @@ export default function KpiSection({
         
         <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto">
           {/* Reset button */}
-          {!readOnly && onResetKpis && (
+          {!readOnly && isBghOrAdmin && onResetKpis && (
             <button
               onClick={onResetKpis}
               type="button"
@@ -418,7 +418,7 @@ export default function KpiSection({
           )}
 
           {/* Edit/Save button */}
-          {!readOnly && onKpisChange && (
+          {!readOnly && isBghOrAdmin && onKpisChange && (
             isEditing ? (
               <div className="flex items-center gap-1.5">
                 <button
