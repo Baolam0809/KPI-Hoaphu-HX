@@ -21,9 +21,12 @@ import {
   Save,
   Send,
   CheckCircle,
-  Check
+  Check,
+  Users,
+  ChevronDown
 } from 'lucide-react';
 import { KPI, Evidence, User } from '../types';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface KpiSectionProps {
   kpis: KPI[];
@@ -39,6 +42,8 @@ interface KpiSectionProps {
   isBghOrToTruong?: boolean;
   kpiSubmissions?: Record<string, string>;
   onKpiSubmit?: (userId: string) => void;
+  users?: User[];
+  currentUser?: User | 'admin' | null;
 }
 
 const getEvidenceIcon = (type: string, fileType?: string) => {
@@ -86,7 +91,9 @@ export default function KpiSection({
   isBghOrAdmin = false,
   isBghOrToTruong = false,
   kpiSubmissions = {},
-  onKpiSubmit
+  onKpiSubmit,
+  users = [],
+  currentUser
 }: KpiSectionProps) {
   
   // Custom states for adding evidence modal
@@ -98,6 +105,8 @@ export default function KpiSection({
   const [imageBase64, setImageBase64] = useState<string>('');
   const [uploadError, setUploadError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [showReceivers, setShowReceivers] = useState(false);
 
   // States for editing criteria and weights
   const [isEditing, setIsEditing] = useState(false);
@@ -205,6 +214,104 @@ export default function KpiSection({
 
   const totals = calculateTotals();
   const finalScore = totals.bgh;
+
+  const userRoleLower = activeUser?.role?.toLowerCase() || '';
+  const isUserToTruong = userRoleLower.includes('tổ trưởng') || userRoleLower.includes('tổ phó') || userRoleLower.includes('trưởng bộ môn');
+  const isUserBgh = activeUser?.type === 'BGH';
+
+  // Find BGH and Tổ trưởng receivers for the active user
+  const getReceivers = () => {
+    if (!activeUser || !users || users.length === 0) return [];
+
+    const list: { id: string; name: string; role: string; type: string }[] = [];
+
+    // 1. All BGH members receive
+    const bghMembers = users.filter(u => u.type === 'BGH' || u.role?.toLowerCase().includes('hiệu trưởng') || u.role?.toLowerCase().includes('bgh'));
+    bghMembers.forEach(u => {
+      list.push({
+        id: u.id,
+        name: u.name,
+        role: u.role,
+        type: 'BGH'
+      });
+    });
+
+    // 2. The specific Group Leader (Tổ trưởng) for this user, if the user themselves is NOT a Tổ trưởng or BGH
+    if (!isUserToTruong && !isUserBgh) {
+      // Find which group this user belongs to
+      let activeUserGroup = '';
+      if (userRoleLower.includes('tự nhiên') || userRoleLower.includes('vật lý') || userRoleLower.includes('toán') || userRoleLower.includes('hóa') || userRoleLower.includes('sinh') || userRoleLower.includes('tin học')) {
+        activeUserGroup = 'tu-nhien';
+      } else if (userRoleLower.includes('xã hội') || userRoleLower.includes('văn') || userRoleLower.includes('sử') || userRoleLower.includes('địa') || userRoleLower.includes('ngoại ngữ') || userRoleLower.includes('tiếng anh')) {
+        activeUserGroup = 'xa-hoi';
+      } else if (userRoleLower.includes('thể mỹ') || userRoleLower.includes('thể dục') || userRoleLower.includes('nhạc') || userRoleLower.includes('họa') || userRoleLower.includes('văn thể mỹ')) {
+        activeUserGroup = 'van-the-my';
+      } else {
+        activeUserGroup = 'van-phong';
+      }
+
+      // Now find leaders matching that group
+      const leaders = users.filter(u => {
+        const rLower = u.role?.toLowerCase() || '';
+        const isLeader = rLower.includes('tổ trưởng') || rLower.includes('tổ phó') || rLower.includes('trưởng bộ môn');
+        if (!isLeader) return false;
+
+        // Check if leader matches the same group
+        if (activeUserGroup === 'tu-nhien') {
+          return rLower.includes('tự nhiên') || rLower.includes('vật lý') || rLower.includes('toán') || rLower.includes('hóa') || rLower.includes('sinh') || rLower.includes('tin học');
+        } else if (activeUserGroup === 'xa-hoi') {
+          return rLower.includes('xã hội') || rLower.includes('văn') || rLower.includes('sử') || rLower.includes('địa') || rLower.includes('ngoại ngữ') || rLower.includes('tiếng anh');
+        } else if (activeUserGroup === 'van-the-my') {
+          return rLower.includes('thể mỹ') || rLower.includes('thể dục') || rLower.includes('nhạc') || rLower.includes('họa') || rLower.includes('văn thể mỹ');
+        } else {
+          return rLower.includes('văn phòng') || rLower.includes('kế toán') || rLower.includes('thủ quỹ') || rLower.includes('văn thư') || rLower.includes('y tế') || rLower.includes('thư viện') || rLower.includes('thiết bị') || rLower.includes('nhân viên');
+        }
+      });
+
+      leaders.forEach(u => {
+        if (!list.some(existing => existing.id === u.id)) {
+          list.push({
+            id: u.id,
+            name: u.name,
+            role: u.role,
+            type: 'Tổ trưởng'
+          });
+        }
+      });
+    }
+
+    // Deduplicate list by id
+    const uniqueList = list.filter((item, index) => 
+      list.findIndex(l => l.id === item.id) === index
+    );
+
+    return uniqueList;
+  };
+
+  const receivers = getReceivers();
+
+  const isViewingOwnProfile = activeUser && currentUser && currentUser !== 'admin' && activeUser.id === currentUser.id;
+  const isUserBghOrAdmin = currentUser === 'admin' || (currentUser && currentUser.type === 'BGH');
+  const showSubmitSection = isViewingOwnProfile && !isUserBghOrAdmin;
+
+  // Compute chart data for Recharts
+  const chartData = displayedKpis.map((kpi, idx) => {
+    // Get short label (e.g. "Tiêu chuẩn 1", "Tiêu chuẩn 2" or clean name)
+    const labelMatch = kpi.criterion.match(/^(\d+)\.\s*(.*)/);
+    const criterionNum = labelMatch ? `TC ${labelMatch[1]}` : `TC ${idx + 1}`;
+    
+    const selfVal = kpi.selfScore !== undefined ? kpi.selfScore : kpi.value;
+    const leaderVal = kpi.leaderScore !== undefined ? kpi.leaderScore : Math.max(0, kpi.value - (kpi.value % 5 || 2));
+    const bghVal = kpi.bghScore !== undefined ? kpi.bghScore : Math.max(0, kpi.value - (kpi.value % 7 || 3));
+
+    return {
+      name: criterionNum,
+      fullName: kpi.criterion,
+      'Tự chấm': selfVal,
+      'Tổ trưởng': leaderVal,
+      'BGH chấm': bghVal,
+    };
+  });
 
   const getRatingInfo = (score: number) => {
     if (score >= 90) return { text: 'Xuất sắc', class: 'bg-emerald-600 text-white font-bold' };
@@ -528,6 +635,60 @@ export default function KpiSection({
         </div>
       </div>
 
+      {/* Recharts Column Chart for Visualizing KPI Scores */}
+      {displayedKpis.length > 0 && (
+        <div className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-4 mb-5 shadow-3xs" id="kpi-score-chart">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-100">
+            <h4 className="font-extrabold text-[11px] text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <span>📊 Biểu đồ so sánh kết quả tự chấm &amp; Đánh giá tiêu chuẩn KPI</span>
+            </h4>
+            <span className="text-[10px] text-slate-500 font-semibold italic">
+              * TC: Tiêu chuẩn, thang điểm từ 0 đến 100
+            </span>
+          </div>
+          <div className="h-64 w-full" id="recharts-container">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 10, fontWeight: 700, fill: '#475569' }}
+                  axisLine={{ stroke: '#cbd5e1' }}
+                  tickLine={false}
+                />
+                <YAxis 
+                  domain={[0, 100]}
+                  tick={{ fontSize: 10, fontWeight: 700, fill: '#475569' }}
+                  axisLine={{ stroke: '#cbd5e1' }}
+                  tickLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  labelFormatter={(value, items) => {
+                    if (items && items[0]) {
+                      return <strong className="text-slate-900 block mb-1">{items[0].payload.fullName}</strong>;
+                    }
+                    return value;
+                  }}
+                  itemStyle={{ fontWeight: 'bold' }}
+                />
+                <Legend 
+                  wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '8px' }}
+                  iconSize={10}
+                  iconType="circle"
+                />
+                <Bar name="Tự chấm" dataKey="Tự chấm" fill="#64748b" radius={[4, 4, 0, 0]} barSize={16} />
+                <Bar name="Tổ trưởng" dataKey="Tổ trưởng" fill="#4f46e5" radius={[4, 4, 0, 0]} barSize={16} />
+                <Bar name="BGH chấm" dataKey="BGH chấm" fill="#e11d48" radius={[4, 4, 0, 0]} barSize={16} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
       {validationError && (
         <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex gap-1.5 items-center">
           <AlertTriangle className="w-4 h-4 shrink-0 text-red-600 animate-pulse" />
@@ -562,7 +723,7 @@ export default function KpiSection({
         )
       )}
 
-      {activeUser && !isBghOrToTruong && !readOnly && (
+      {showSubmitSection && activeUser && (
         <div className="mb-4">
           {kpiSubmissions[activeUser.id] ? (
             <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg p-4 shadow-3xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -571,7 +732,7 @@ export default function KpiSection({
                 <div>
                   <h4 className="font-bold text-sm text-emerald-950">Đã nộp báo cáo OKR-KPI thành công!</h4>
                   <p className="text-xs text-emerald-700 mt-0.5">
-                    Bạn đã gửi kết quả tự chấm điểm và đăng ký KPI lên Tổ trưởng & Ban Giám Hiệu vào lúc{' '}
+                    Bạn đã gửi kết quả tự chấm điểm và đăng ký KPI lên {isUserToTruong ? 'Ban Giám Hiệu' : 'Tổ trưởng & Ban Giám Hiệu'} vào lúc{' '}
                     <strong className="text-emerald-900">
                       {new Date(kpiSubmissions[activeUser.id]).toLocaleString('vi-VN')}
                     </strong>.
@@ -581,9 +742,54 @@ export default function KpiSection({
                   </p>
                 </div>
               </div>
-              <span className="shrink-0 bg-emerald-600 text-white font-extrabold text-[10px] px-2.5 py-1 rounded shadow-3xs uppercase tracking-wider flex items-center gap-1">
-                <Check className="w-3.5 h-3.5" /> Đã nộp lên BGH
-              </span>
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0 relative">
+                <span className="shrink-0 bg-emerald-600 text-white font-extrabold text-[10px] px-2.5 py-1.5 rounded shadow-3xs uppercase tracking-wider flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5" /> Đã nộp lên BGH
+                </span>
+                
+                {/* Popover/Sổ danh sách Tổ trưởng/BGH nhận */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowReceivers(!showReceivers)}
+                    type="button"
+                    className="bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-900 font-extrabold text-[10px] px-3 py-1.5 rounded-lg shadow-3xs transition cursor-pointer flex items-center gap-1.5 uppercase tracking-wider select-none whitespace-nowrap"
+                  >
+                    <Users className="w-3.5 h-3.5 text-emerald-700" />
+                    Người nhận
+                    <ChevronDown className={`w-3 h-3 text-emerald-600 transition-transform ${showReceivers ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {showReceivers && (
+                    <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-3.5 text-left animate-fade-in border-t-4 border-t-emerald-600">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+                        <span className="font-extrabold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-1">
+                          <Users className="w-3.5 h-3.5 text-indigo-600" />
+                          Cán bộ tiếp nhận ({receivers.length})
+                        </span>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto space-y-2">
+                        {receivers.map((r) => (
+                          <div key={r.id} className="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg transition border border-slate-50 hover:border-slate-100">
+                            <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center border border-indigo-200 uppercase">
+                              {r.name.split(' ').pop()?.substring(0, 2)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h5 className="font-bold text-xs text-slate-900 truncate">{r.name}</h5>
+                              <p className="text-[10px] text-slate-500 truncate">{r.role}</p>
+                            </div>
+                            <span className={`shrink-0 text-[8.5px] font-extrabold px-1.5 py-0.5 rounded tracking-wider uppercase ${r.type === 'BGH' ? 'bg-rose-50 border border-rose-100 text-rose-700' : 'bg-indigo-50 border border-indigo-100 text-indigo-700'}`}>
+                              {r.type}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-emerald-700 font-semibold italic leading-snug">
+                        ✓ Báo cáo của bạn đã được chuyển trực tiếp đến tài khoản của các cán bộ trên để thẩm định và cho điểm chính thức.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           ) : (
             <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 text-indigo-950 rounded-lg p-4 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -592,7 +798,7 @@ export default function KpiSection({
                 <div>
                   <h4 className="font-bold text-sm text-indigo-950">Hoàn tất tự chấm & Nộp báo cáo OKR-KPI</h4>
                   <p className="text-xs text-indigo-700 mt-0.5 leading-relaxed">
-                    Sau khi đã tự kéo thanh điểm "Tự chấm" cho tất cả các tiêu chuẩn và đính kèm đầy đủ minh chứng ở dưới, vui lòng click nút bên cạnh để chính thức nộp hồ sơ lên Tổ trưởng & BGH.
+                    Sau khi đã tự kéo thanh điểm "Tự chấm" cho tất cả các tiêu chuẩn và đính kèm đầy đủ minh chứng ở dưới, vui lòng click nút bên cạnh để chính thức nộp hồ sơ lên {isUserToTruong ? 'Ban Giám Hiệu (BGH)' : 'Tổ trưởng & BGH'}.
                   </p>
                 </div>
               </div>

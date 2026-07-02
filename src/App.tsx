@@ -1873,6 +1873,8 @@ export default function App() {
               isBghOrToTruong={isBghOrToTruong}
               kpiSubmissions={kpiSubmissions}
               onKpiSubmit={handleKpiSubmit}
+              users={users}
+              currentUser={currentUser}
             />
           </div>
 
